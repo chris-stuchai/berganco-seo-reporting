@@ -6,16 +6,324 @@
   <title>Analytics - SEO Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="/shared-layout.js"></script>
   <style>
-    /* Same styles as index.html - import from there */
-    @import url('index.html');
+    /* Apple Design System - Dark Mode */
+    :root {
+      /* Typography Scale (Apple HIG) */
+      --font-large-title: 34px;
+      --font-title-1: 28px;
+      --font-title-2: 22px;
+      --font-title-3: 20px;
+      --font-body: 17px;
+      --font-footnote: 13px;
+      --font-caption: 12px;
+      --font-caption-2: 11px;
+      
+      /* 8pt Grid Spacing */
+      --spacing-1: 4px;
+      --spacing-2: 8px;
+      --spacing-3: 12px;
+      --spacing-4: 16px;
+      --spacing-5: 20px;
+      --spacing-6: 24px;
+      --spacing-8: 32px;
+      
+      /* Dark Mode Colors */
+      --color-bg-primary: #1C1C1E;
+      --color-bg-secondary: #2C2C2E;
+      --color-bg-tertiary: #3A3A3C;
+      --color-label-primary: #FFFFFF;
+      --color-label-secondary: #E5E5EA;
+      --color-label-tertiary: #98989D;
+      --color-separator: #48484A;
+      --color-blue: #0A84FF;
+      --color-green: #30D158;
+      --color-red: #FF453A;
+      --color-orange: #FF9F0A;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background: var(--color-bg-primary);
+      color: var(--color-label-primary);
+      font-size: var(--font-body);
+      line-height: 1.47;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--color-bg-secondary);
+      border-right: 1px solid var(--color-separator);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    
+    .sidebar-header {
+      padding: var(--spacing-6) var(--spacing-4);
+      border-bottom: 1px solid var(--color-separator);
+    }
+    
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      margin-bottom: var(--spacing-2);
+    }
+    
+    .sidebar-brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--color-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: var(--font-body);
+    }
+    
+    .sidebar-brand-text {
+      font-size: var(--font-body);
+      font-weight: 600;
+      color: var(--color-label-primary);
+    }
+    
+    .sidebar-tagline {
+      font-size: var(--font-caption);
+      color: var(--color-label-tertiary);
+      margin-left: 44px;
+    }
+    
+    .sidebar-nav {
+      flex: 1;
+      padding: var(--spacing-4) 0;
+      overflow-y: auto;
+    }
+    
+    .nav-section {
+      margin-bottom: var(--spacing-6);
+    }
+    
+    .nav-section-title {
+      font-size: var(--font-caption);
+      font-weight: 600;
+      color: var(--color-label-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 var(--spacing-4);
+      margin-bottom: var(--spacing-2);
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      padding: var(--spacing-2) var(--spacing-4);
+      color: var(--color-label-secondary);
+      text-decoration: none;
+      font-size: var(--font-body);
+      transition: background-color 0.2s;
+      cursor: pointer;
+    }
+    
+    .nav-item:hover {
+      background: var(--color-bg-tertiary);
+    }
+    
+    .nav-item.active {
+      background: var(--color-blue);
+      color: white;
+    }
+    
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .top-bar {
+      background: var(--color-bg-secondary);
+      border-bottom: 1px solid var(--color-separator);
+      padding: var(--spacing-4) var(--spacing-6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    
+    .page-title {
+      font-size: var(--font-title-2);
+      font-weight: 700;
+      color: var(--color-label-primary);
+      margin-bottom: var(--spacing-1);
+    }
+    
+    .page-subtitle {
+      font-size: var(--font-footnote);
+      color: var(--color-label-tertiary);
+    }
+    
+    .date-filters {
+      display: flex;
+      gap: var(--spacing-2);
+    }
+    
+    .date-filter-btn {
+      padding: var(--spacing-2) var(--spacing-3);
+      border-radius: 8px;
+      border: 1px solid var(--color-separator);
+      background: transparent;
+      color: var(--color-label-secondary);
+      font-size: var(--font-footnote);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .date-filter-btn:hover {
+      background: var(--color-bg-tertiary);
+      color: var(--color-label-primary);
+    }
+    
+    .date-filter-btn.active {
+      background: var(--color-blue);
+      color: white;
+      border-color: var(--color-blue);
+    }
+    
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-6);
+    }
+    
+    /* Cards */
+    .card {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-separator);
+      border-radius: 12px;
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-6);
+    }
+    
+    .section-title {
+      font-size: var(--font-title-3);
+      font-weight: 600;
+      color: var(--color-label-primary);
+      margin-bottom: var(--spacing-4);
+    }
+    
+    .grid {
+      display: grid;
+      gap: var(--spacing-6);
+    }
+    
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    
+    @media (min-width: 1024px) {
+      .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
   </style>
-  <link rel="stylesheet" href="/shared-styles.css">
 </head>
-<body onload="initPage('analytics')">
-  <!-- Sidebar (shared) -->
-  <script src="/shared-sidebar.js"></script>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon" id="brandIcon">B</div>
+        <div class="sidebar-brand-text" id="brandText">BerganCo</div>
+      </div>
+      <div class="sidebar-tagline" id="brandTagline">SEO Analytics</div>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <a href="/" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11V6a2 2 0 00-2-2h-4M9 21h6"/>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/analytics" class="nav-item active">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          <span>Analytics</span>
+        </a>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">SEO</div>
+        <a href="/pages" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+          <span>Pages</span>
+        </a>
+        <a href="/queries" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <span>Queries</span>
+        </a>
+      </div>
+      
+      <div class="nav-section" id="adminNavSection" style="display: none;">
+        <div class="nav-section-title">Admin</div>
+        <a href="/employee" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span>Admin</span>
+        </a>
+      </div>
+      
+      <div class="nav-section" id="impersonationSection" style="display: none; margin-top: auto; padding-top: var(--spacing-6); border-top: 1px solid var(--color-separator);">
+        <a href="#" onclick="stopImpersonation()" class="nav-item" style="background: rgba(255, 159, 10, 0.15); color: var(--color-orange);">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>Stop Viewing As</span>
+        </a>
+      </div>
+      
+      <div class="nav-section" style="margin-top: auto; padding-top: var(--spacing-6); border-top: 1px solid var(--color-separator);">
+        <a href="#" onclick="handleLogout()" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span>Sign Out</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
 
   <!-- Main Content -->
   <div class="main-content">
@@ -25,42 +333,146 @@
         <p class="page-subtitle">Historical trends and insights</p>
       </div>
       <div class="date-filters">
-        <button class="date-filter-btn active" onclick="setDays(7)" id="btn-7">7 Days</button>
-        <button class="date-filter-btn" onclick="setDays(30)" id="btn-30">30 Days</button>
+        <button class="date-filter-btn" onclick="setDays(7)" id="btn-7">7 Days</button>
+        <button class="date-filter-btn active" onclick="setDays(30)" id="btn-30">30 Days</button>
         <button class="date-filter-btn" onclick="setDays(90)" id="btn-90">90 Days</button>
       </div>
     </header>
 
     <main class="content-area">
       <!-- Performance Trends -->
-      <div class="card mb-6">
-        <h2 class="section-title mb-4">Performance Trends</h2>
-        <canvas id="trendsChart"></canvas>
+      <div class="card">
+        <h2 class="section-title">Performance Trends</h2>
+        <canvas id="trendsChart" style="max-height: 400px;"></canvas>
       </div>
 
       <!-- Enhanced Analytics Insights -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 mb-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2">
         <div class="card">
-          <h2 class="section-title mb-4">Growth Metrics</h2>
+          <h2 class="section-title">Growth Metrics</h2>
           <div id="growthMetrics">Loading...</div>
         </div>
         <div class="card">
-          <h2 class="section-title mb-4">Engagement Analysis</h2>
+          <h2 class="section-title">Engagement Analysis</h2>
           <div id="engagementMetrics">Loading...</div>
         </div>
       </div>
 
       <!-- Weekly Patterns -->
       <div class="card">
-        <h2 class="section-title mb-4">Weekly Performance Patterns</h2>
-        <canvas id="weeklyChart"></canvas>
+        <h2 class="section-title">Weekly Performance Patterns</h2>
+        <canvas id="weeklyChart" style="max-height: 400px;"></canvas>
       </div>
     </main>
+  </div>
+
+  <!-- Impersonation Bar (hidden by default) -->
+  <div id="impersonationBar" style="display: none; background: #FF453A; color: white; padding: var(--spacing-2) var(--spacing-4); text-align: center; font-size: var(--font-footnote); font-weight: 500;">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+      <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+    </svg>
+    <span id="impersonationText"></span>
+    <a href="#" onclick="stopImpersonation(); return false;" style="color: white; text-decoration: underline; font-weight: 600; margin-left: 8px;">Stop viewing as</a>
   </div>
 
   <script>
     let trendsChart, weeklyChart;
     let currentDays = 30;
+    let currentUser = null;
+
+    // Initialize page
+    async function init() {
+      try {
+        // Check auth
+        const response = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!response.ok) {
+          window.location.href = '/login';
+          return;
+        }
+        
+        const data = await response.json();
+        currentUser = data.user;
+        
+        // Update sidebar branding
+        updateSidebar();
+        
+        // Check if impersonating
+        const originalAdminToken = getCookie('originalAdminToken');
+        if (originalAdminToken && currentUser.role === 'CLIENT') {
+          showImpersonationBar();
+          document.getElementById('impersonationSection').style.display = 'block';
+        }
+        
+        // Show admin section if needed
+        if (currentUser.role !== 'CLIENT') {
+          document.getElementById('adminNavSection').style.display = 'block';
+        }
+        
+        // Load analytics data
+        loadAnalytics();
+      } catch (error) {
+        console.error('Init error:', error);
+        window.location.href = '/login';
+      }
+    }
+
+    function updateSidebar() {
+      if (currentUser?.logoUrl) {
+        document.getElementById('brandIcon').innerHTML = `<img src="${currentUser.logoUrl}" alt="${currentUser.businessName || currentUser.name}" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover;">`;
+      } else {
+        const initial = (currentUser?.businessName || currentUser?.name || 'B')[0].toUpperCase();
+        document.getElementById('brandIcon').textContent = initial;
+      }
+      
+      if (currentUser?.businessName) {
+        document.getElementById('brandText').textContent = currentUser.businessName;
+        document.getElementById('brandTagline').textContent = `${currentUser.businessName} SEO Analytics`;
+      } else if (currentUser?.name) {
+        document.getElementById('brandText').textContent = currentUser.name;
+      }
+    }
+
+    function showImpersonationBar() {
+      const bar = document.getElementById('impersonationBar');
+      const text = document.getElementById('impersonationText');
+      if (bar && text && currentUser) {
+        text.textContent = `You are viewing as ${currentUser.name}.`;
+        bar.style.display = 'block';
+        document.body.insertBefore(bar, document.body.firstChild);
+      }
+    }
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    async function stopImpersonation() {
+      const res = await fetch('/api/auth/stop-impersonate', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (res.ok) {
+        window.location.href = '/employee';
+      } else {
+        alert('Failed to stop impersonation');
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/auth/logout', { 
+          method: 'POST',
+          credentials: 'include'
+        });
+        window.location.href = '/login';
+      } catch (error) {
+        window.location.href = '/login';
+      }
+    }
 
     function setDays(days) {
       currentDays = days;
@@ -71,11 +483,17 @@
 
     async function loadAnalytics() {
       try {
-        const response = await fetch(`/api/trends?days=${currentDays}`);
+        const response = await fetch(`/api/trends?days=${currentDays}`, { credentials: 'include' });
+        if (!response.ok) {
+          throw new Error('Failed to load analytics data');
+        }
+        
         const data = await response.json();
         
         if (!data || data.length === 0) {
-          document.getElementById('trendsChart').parentElement.innerHTML = '<p style="color: var(--color-label-tertiary); padding: var(--spacing-6);">No data available for this period.</p>';
+          document.getElementById('trendsChart').parentElement.innerHTML = '<p style="color: var(--color-label-tertiary); padding: var(--spacing-6); text-align: center;">No data available for this period.</p>';
+          document.getElementById('growthMetrics').innerHTML = '<p style="color: var(--color-label-tertiary);">No data available</p>';
+          document.getElementById('engagementMetrics').innerHTML = '<p style="color: var(--color-label-tertiary);">No data available</p>';
           return;
         }
 
@@ -94,37 +512,41 @@
               borderColor: '#0A84FF',
               backgroundColor: 'rgba(10, 132, 255, 0.1)',
               tension: 0.4,
-              fill: true
+              fill: true,
+              borderWidth: 2
             }, {
               label: 'Impressions',
               data: data.map(d => d.impressions),
               borderColor: '#AF52DE',
               backgroundColor: 'rgba(175, 82, 222, 0.1)',
               tension: 0.4,
-              fill: true
+              fill: true,
+              borderWidth: 2,
+              yAxisID: 'y1'
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { labels: { color: '#E5E5EA' } }
+              legend: { labels: { color: '#E5E5EA', font: { family: '-apple-system', size: 12 } } }
             },
             scales: {
               x: { grid: { color: '#48484A' }, ticks: { color: '#98989D' } },
-              y: { grid: { color: '#48484A' }, ticks: { color: '#98989D' }, beginAtZero: true }
+              y: { grid: { color: '#48484A' }, ticks: { color: '#98989D' }, beginAtZero: true },
+              y1: { grid: { drawOnChartArea: false }, ticks: { color: '#98989D' }, position: 'right', beginAtZero: true }
             }
           }
         });
 
         // Calculate growth metrics
-        const totalClicks = data.reduce((sum, d) => sum + d.clicks, 0);
-        const totalImpressions = data.reduce((sum, d) => sum + d.impressions, 0);
-        const avgCTR = data.reduce((sum, d) => sum + d.ctr, 0) / data.length;
+        const totalClicks = data.reduce((sum, d) => sum + (d.clicks || 0), 0);
+        const totalImpressions = data.reduce((sum, d) => sum + (d.impressions || 0), 0);
+        const avgCTR = data.length > 0 ? data.reduce((sum, d) => sum + (d.ctr || 0), 0) / data.length : 0;
         const firstHalf = data.slice(0, Math.floor(data.length / 2));
         const secondHalf = data.slice(Math.floor(data.length / 2));
-        const firstHalfClicks = firstHalf.reduce((sum, d) => sum + d.clicks, 0);
-        const secondHalfClicks = secondHalf.reduce((sum, d) => sum + d.clicks, 0);
+        const firstHalfClicks = firstHalf.reduce((sum, d) => sum + (d.clicks || 0), 0);
+        const secondHalfClicks = secondHalf.reduce((sum, d) => sum + (d.clicks || 0), 0);
         const growthRate = firstHalfClicks > 0 ? ((secondHalfClicks - firstHalfClicks) / firstHalfClicks * 100).toFixed(1) : 0;
 
         document.getElementById('growthMetrics').innerHTML = `
@@ -135,14 +557,14 @@
             </div>
             <div>
               <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Growth Rate</div>
-              <div style="font-size: 24px; font-weight: 600; color: ${growthRate >= 0 ? 'var(--color-green)' : 'var(--color-red)'};">
-                ${growthRate >= 0 ? '+' : ''}${growthRate}%
+              <div style="font-size: 24px; font-weight: 600; color: ${parseFloat(growthRate) >= 0 ? 'var(--color-green)' : 'var(--color-red)'};">
+                ${parseFloat(growthRate) >= 0 ? '+' : ''}${growthRate}%
               </div>
             </div>
             <div>
               <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Average Daily Clicks</div>
               <div style="font-size: 20px; font-weight: 600; color: var(--color-label-primary);">
-                ${(totalClicks / data.length).toFixed(1)}
+                ${data.length > 0 ? (totalClicks / data.length).toFixed(1) : '0'}
               </div>
             </div>
           </div>
@@ -157,7 +579,7 @@
             <div>
               <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Click-to-Impression Ratio</div>
               <div style="font-size: 20px; font-weight: 600; color: var(--color-label-primary);">
-                1:${(totalImpressions / totalClicks).toFixed(0)}
+                1:${totalClicks > 0 ? (totalImpressions / totalClicks).toFixed(0) : '0'}
               </div>
             </div>
             <div>
@@ -174,13 +596,13 @@
         data.forEach(d => {
           const day = new Date(d.date).getDay();
           if (!weeklyData[day]) weeklyData[day] = { clicks: 0, impressions: 0, count: 0 };
-          weeklyData[day].clicks += d.clicks;
-          weeklyData[day].impressions += d.impressions;
+          weeklyData[day].clicks += (d.clicks || 0);
+          weeklyData[day].impressions += (d.impressions || 0);
           weeklyData[day].count++;
         });
         const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const weeklyClicks = [0,1,2,3,4,5,6].map(d => weeklyData[d] ? weeklyData[d].clicks / weeklyData[d].count : 0);
-        const weeklyImpressions = [0,1,2,3,4,5,6].map(d => weeklyData[d] ? weeklyData[d].impressions / weeklyData[d].count : 0);
+        const weeklyClicks = [0,1,2,3,4,5,6].map(d => weeklyData[d] ? (weeklyData[d].clicks / weeklyData[d].count) : 0);
+        const weeklyImpressions = [0,1,2,3,4,5,6].map(d => weeklyData[d] ? (weeklyData[d].impressions / weeklyData[d].count) : 0);
 
         const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
         if (weeklyChart) weeklyChart.destroy();
@@ -203,7 +625,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { labels: { color: '#E5E5EA' } }
+              legend: { labels: { color: '#E5E5EA', font: { family: '-apple-system', size: 12 } } }
             },
             scales: {
               x: { grid: { color: '#48484A' }, ticks: { color: '#98989D' } },
@@ -215,10 +637,14 @@
 
       } catch (error) {
         console.error('Error loading analytics:', error);
+        document.getElementById('trendsChart').parentElement.innerHTML = '<p style="color: var(--color-red); padding: var(--spacing-6); text-align: center;">Error loading analytics data. Please try again.</p>';
+        document.getElementById('growthMetrics').innerHTML = '<p style="color: var(--color-red);">Error loading data</p>';
+        document.getElementById('engagementMetrics').innerHTML = '<p style="color: var(--color-red);">Error loading data</p>';
       }
     }
 
-    loadAnalytics();
+    // Initialize on page load
+    init();
   </script>
 </body>
 </html>
