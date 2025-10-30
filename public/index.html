@@ -737,15 +737,16 @@
 
     // Load dashboard
     async function loadDashboard() {
+      const loadingEl = document.getElementById('loading');
+      const dashboardEl = document.getElementById('dashboard');
+      
+      if (!loadingEl || !dashboardEl) {
+        console.error('Dashboard elements not found:', { loadingEl, dashboardEl });
+        return;
+      }
+      
       try {
-        const loadingEl = document.getElementById('loading');
-        const dashboardEl = document.getElementById('dashboard');
-        
-        if (!loadingEl || !dashboardEl) {
-          console.error('Dashboard elements not found');
-          return;
-        }
-        
+        // Show loading, hide dashboard
         loadingEl.classList.remove('hidden');
         dashboardEl.classList.add('hidden');
         
@@ -753,10 +754,12 @@
         const response = await fetch(`/api/dashboard?days=${currentDays}`, { credentials: 'include' });
         
         if (!response.ok) {
-          throw new Error(`Dashboard API returned ${response.status}: ${response.statusText}`);
+          const errorText = await response.text();
+          throw new Error(`Dashboard API returned ${response.status}: ${errorText || response.statusText}`);
         }
         
         const data = await response.json();
+        console.log('Dashboard data received:', data);
         
         // Always show dashboard, even if metrics are missing
         loadingEl.classList.add('hidden');
@@ -1365,16 +1368,30 @@
             }
             
             // Update sidebar branding
-            updateSidebarBranding(data.user);
-            
-            // Check if impersonating
-            if (originalAdminToken && data.user.role === 'CLIENT') {
-              document.getElementById('impersonationSection').style.display = 'block';
+            try {
+              updateSidebarBranding(data.user);
+            } catch (e) {
+              console.error('Error updating sidebar:', e);
             }
             
-            // Show admin section if employee/admin
-            if (data.user.role !== 'CLIENT') {
-              document.getElementById('adminNavSection').style.display = 'block';
+            // Check if impersonating
+            try {
+              if (originalAdminToken && data.user.role === 'CLIENT') {
+                const impersonationSection = document.getElementById('impersonationSection');
+                if (impersonationSection) {
+                  impersonationSection.style.display = 'block';
+                }
+              }
+              
+              // Show admin section if employee/admin
+              if (data.user.role !== 'CLIENT') {
+                const adminNavSection = document.getElementById('adminNavSection');
+                if (adminNavSection) {
+                  adminNavSection.style.display = 'block';
+                }
+              }
+            } catch (e) {
+              console.error('Error updating navigation:', e);
             }
             
             // Load dashboard after auth check passes
@@ -1390,8 +1407,18 @@
         }
       } catch (error) {
         console.error('Auth error:', error);
-        window.location.href = '/login';
-        return;
+        // Show dashboard anyway, let loadDashboard handle errors
+        const loadingEl = document.getElementById('loading');
+        const dashboardEl = document.getElementById('dashboard');
+        if (loadingEl) loadingEl.classList.add('hidden');
+        if (dashboardEl) dashboardEl.classList.remove('hidden');
+        
+        // Try to load dashboard even if auth check failed (might be CORS or network issue)
+        try {
+          loadDashboard();
+        } catch (e) {
+          console.error('Failed to load dashboard:', e);
+        }
       }
     }
 
