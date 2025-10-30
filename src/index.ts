@@ -337,7 +337,7 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
       orderBy: { weekStartDate: 'desc' },
     });
 
-    // Return calculated metrics
+    // Return calculated metrics with data coverage info
     res.json({
       period: {
         days,
@@ -354,10 +354,17 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
         ctrChange,
         positionChange,
         dataPoints: metricCount,
+        expectedDataPoints: days, // For diagnostic purposes
+        dataCoverage: metricCount > 0 ? (metricCount / days) * 100 : 0, // Percentage of days with data
       },
       latestMetrics: dailyMetrics,
       latestReport,
       lastUpdate: dailyMetrics[0]?.date || null,
+      diagnostics: {
+        missingDays: days - metricCount,
+        oldestDate: dailyMetrics.length > 0 ? dailyMetrics[dailyMetrics.length - 1]?.date : null,
+        newestDate: dailyMetrics.length > 0 ? dailyMetrics[0]?.date : null,
+      },
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);

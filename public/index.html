@@ -769,7 +769,27 @@
     }
 
     // Update metric cards
-    function updateMetricCards(metrics) {
+    function updateMetricCards(metrics, diagnostics) {
+      // Show data coverage warning if needed
+      if (diagnostics && diagnostics.dataCoverage < 100) {
+        const missingDays = diagnostics.missingDays || 0;
+        if (missingDays > 0) {
+          const warningMsg = `⚠️ Missing data for ${missingDays} day${missingDays > 1 ? 's' : ''}. Numbers may be lower than Google Search Console. Click "Collect Now" in Employee Portal to sync.`;
+          // Add a subtle notification at top of metrics
+          if (!document.getElementById('dataCoverageWarning')) {
+            const warning = document.createElement('div');
+            warning.id = 'dataCoverageWarning';
+            warning.style.cssText = 'padding: var(--spacing-3) var(--spacing-4); background: rgba(255, 159, 10, 0.15); border: 1px solid var(--color-orange); border-radius: 8px; margin-bottom: var(--spacing-4); color: var(--color-orange); font-size: var(--font-footnote);';
+            warning.textContent = warningMsg;
+            const dashboardContent = document.querySelector('.content-area') || document.querySelector('main');
+            if (dashboardContent && dashboardContent.firstChild) {
+              dashboardContent.insertBefore(warning, dashboardContent.firstChild);
+            }
+          } else {
+            document.getElementById('dataCoverageWarning').textContent = warningMsg;
+          }
+        }
+      }
       document.getElementById('totalClicks').textContent = formatNumber(metrics.totalClicks);
       document.getElementById('clicksChange').innerHTML = formatChange(metrics.clicksChange);
 
@@ -1328,7 +1348,7 @@
         const data = await res.json();
         // Update session token and redirect
         window.location.href = '/employee';
-      } else {
+        } else {
         const error = await res.json();
         alert(`Failed to stop impersonation: ${error.error || 'Unknown error'}`);
       }
