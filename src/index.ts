@@ -293,16 +293,21 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
     const avgCtr = metricCount > 0 ? totalCtr / metricCount : 0;
     const avgPosition = metricCount > 0 ? totalPosition / metricCount : 0;
 
-    // Get previous period for comparison
+    // Get previous period for comparison (in parallel with current period calculation)
     const prevStartDate = subDays(startDate, days);
-    const prevDailyMetrics = await prisma.dailyMetric.findMany({
-      where: {
-        date: {
-          gte: prevStartDate,
-          lt: startDate,
+    const [prevDailyMetrics, latestReport] = await Promise.all([
+      prisma.dailyMetric.findMany({
+        where: {
+          date: {
+            gte: prevStartDate,
+            lt: startDate,
+          },
         },
-      },
-    });
+      }),
+      prisma.weeklyReport.findFirst({
+        orderBy: { weekStartDate: 'desc' },
+      }),
+    ]);
 
     let prevTotalClicks = 0;
     let prevTotalImpressions = 0;
@@ -332,10 +337,6 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
       ? ((avgCtr - prevAvgCtr) / prevAvgCtr) * 100
       : 0;
     const positionChange = avgPosition - prevAvgPosition;
-
-    const latestReport = await prisma.weeklyReport.findFirst({
-      orderBy: { weekStartDate: 'desc' },
-    });
 
     // Return calculated metrics with data coverage info
     res.json({
@@ -765,14 +766,21 @@ You provide concise, actionable insights based on SEO data for www.berganco.com.
 });
 
 // Competitive Analysis endpoint
-app.get('/api/competitors', async (req, res) => {
+app.get('/api/competitors', optionalAuth, async (req, res) => {
   try {
-    const { analyzeCompetitors, getCompetitiveSummary } = await import('./services/competitor-analysis');
-    const summary = await getCompetitiveSummary();
+    const { getCompetitiveSummary } = await import('./services/competitor-analysis');
+    // Pass shared Prisma instance for better performance
+    const summary = await getCompetitiveSummary(prisma);
     res.json(summary);
   } catch (error) {
     console.error('Error fetching competitor analysis:', error);
-    res.status(500).json({ error: 'Failed to fetch competitor analysis' });
+    // Return cached/fallback data instead of error to avoid blocking UI
+    res.json({
+      summary: 'Competitive analysis unavailable. Please try again later.',
+      topCompetitors: [],
+      bergancoAdvantages: [],
+      competitorAdvantages: [],
+    });
   }
 });
 

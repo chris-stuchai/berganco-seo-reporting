@@ -741,7 +741,8 @@
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('dashboard').classList.add('hidden');
         
-        const response = await fetch(`/api/dashboard?days=${currentDays}`);
+        // Load main metrics first (show immediately)
+        const response = await fetch(`/api/dashboard?days=${currentDays}`, { credentials: 'include' });
         const data = await response.json();
         
         if (data.metrics) {
@@ -749,21 +750,25 @@
             dataCoverage: data.metrics.dataCoverage,
             missingDays: data.diagnostics?.missingDays || 0
           });
+          // Show dashboard immediately with metrics
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('dashboard').classList.remove('hidden');
         }
         
         if (data.latestReport) {
           updateReportInsights(data.latestReport);
         }
 
-        await Promise.all([
+        // Load secondary content (charts, lists) in parallel after metrics are shown
+        Promise.all([
           loadTrends(currentDays),
           loadTopPages(currentDays),
           loadTopQueries(currentDays),
           loadCompetitors()
-        ]);
-
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
+        ]).catch(error => {
+          console.error('Error loading secondary content:', error);
+          // Don't block UI if secondary content fails
+        });
       } catch (error) {
         console.error('Error:', error);
         document.getElementById('loading').classList.add('hidden');

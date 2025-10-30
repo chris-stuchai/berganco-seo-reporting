@@ -82,10 +82,11 @@ const DENVER_KEYWORDS = [
 
 /**
  * Analyzes competitive landscape for property management in Denver
+ * @param prismaInstance Optional shared Prisma instance for better performance
  */
-export async function analyzeCompetitors(): Promise<CompetitiveInsight> {
+export async function analyzeCompetitors(prismaInstance?: any): Promise<CompetitiveInsight> {
   // Get BerganCo's current performance
-  const bergancoMetrics = await getBergancoMetrics();
+  const bergancoMetrics = await getBergancoMetrics(prismaInstance);
   
   // Analyze competitor positioning
   const competitors = analyzeCompetitorPositioning();
@@ -117,49 +118,71 @@ export async function analyzeCompetitors(): Promise<CompetitiveInsight> {
 
 /**
  * Gets BerganCo's current SEO metrics
+ * Uses shared Prisma instance for better performance
  */
-async function getBergancoMetrics() {
-  const { PrismaClient } = await import('@prisma/client');
-  const prisma = new PrismaClient();
+async function getBergancoMetrics(prismaInstance?: any) {
+  // Use shared Prisma instance if provided, otherwise import singleton
+  let prisma: any;
+  if (prismaInstance) {
+    prisma = prismaInstance;
+  } else {
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+  }
   
-  // Get recent metrics
-  const recentMetrics = await prisma.dailyMetric.findMany({
-    orderBy: { date: 'desc' },
-    take: 30,
-  });
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   
-  // Get top queries (filter for Denver/keyword relevance)
-  const topQueries = await prisma.queryMetric.findMany({
-    where: {
-      date: {
-        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+  // Parallel queries for better performance
+  const [recentMetrics, topQueries] = await Promise.all([
+    prisma.dailyMetric.findMany({
+      where: {
+        date: {
+          gte: thirtyDaysAgo,
+        },
       },
-    },
-    take: 50,
-  });
+      orderBy: { date: 'desc' },
+      take: 30,
+    }),
+    prisma.queryMetric.findMany({
+      where: {
+        date: {
+          gte: thirtyDaysAgo,
+        },
+      },
+      take: 50,
+      select: {
+        query: true,
+      },
+    }),
+  ]);
   
   // Calculate keyword coverage
-  const denverKeywordMatches = topQueries.filter(q => 
+  const denverKeywordMatches = topQueries.filter((q: { query: string }) => 
     DENVER_KEYWORDS.some(keyword => 
       q.query.toLowerCase().includes(keyword.toLowerCase())
     )
   ).length;
   
   const avgPosition = recentMetrics.length > 0
-    ? recentMetrics.reduce((sum, m) => sum + m.position, 0) / recentMetrics.length
+    ? recentMetrics.reduce((sum: number, m: any) => sum + m.position, 0) / recentMetrics.length
     : 0;
   
   const avgCtr = recentMetrics.length > 0
-    ? recentMetrics.reduce((sum, m) => sum + m.ctr, 0) / recentMetrics.length
+    ? recentMetrics.reduce((sum: number, m: any) => sum + m.ctr, 0) / recentMetrics.length
     : 0;
+  
+  // Only disconnect if we created the instance
+  if (!prismaInstance && prisma) {
+    await prisma.$disconnect().catch(() => {});
+  }
   
   return {
     avgPosition,
     avgCtr,
     keywordCoverage: denverKeywordMatches,
     totalQueries: topQueries.length,
-    recentClicks: recentMetrics.reduce((sum, m) => sum + m.clicks, 0),
-    recentImpressions: recentMetrics.reduce((sum, m) => sum + m.impressions, 0),
+    recentClicks: recentMetrics.reduce((sum: number, m: any) => sum + m.clicks, 0),
+    recentImpressions: recentMetrics.reduce((sum: number, m: any) => sum + m.impressions, 0),
   };
 }
 
@@ -306,14 +329,15 @@ function estimateRank(metrics: any, competitors: Competitor[]): number {
 
 /**
  * Gets competitive analysis summary
+ * @param prismaInstance Optional shared Prisma instance for better performance
  */
-export async function getCompetitiveSummary(): Promise<{
+export async function getCompetitiveSummary(prismaInstance?: any): Promise<{
   summary: string;
   topCompetitors: Competitor[];
   bergancoAdvantages: string[];
   competitorAdvantages: string[];
 }> {
-  const analysis = await analyzeCompetitors();
+  const analysis = await analyzeCompetitors(prismaInstance);
   
   const topCompetitors = analysis.competitors
     .sort((a: any, b: any) => (a.estimatedPosition || 10) - (b.estimatedPosition || 10))
