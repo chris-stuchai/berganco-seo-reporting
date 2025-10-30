@@ -1381,8 +1381,8 @@
             
             // Check if user is admin or employee (not client)
             if ((userRole === 'ADMIN' || userRole === 'EMPLOYEE') && !originalAdminToken) {
-              console.log('Admin/Employee detected, redirecting to employee portal');
-              window.location.href = '/employee';
+              console.log('Admin/Employee detected on client page, redirecting to employee portal');
+              window.location.replace('/employee');
               return;
             }
             

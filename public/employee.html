@@ -245,8 +245,12 @@
           return;
         }
         const data = await res.json();
-        if (!data.user?.role || ['ADMIN', 'EMPLOYEE'].indexOf(data.user.role) === -1) {
-          window.location.href = '/login';
+        const userRole = data.user?.role;
+        console.log('Employee portal auth check, user role:', userRole);
+        
+        if (!userRole || (userRole !== 'ADMIN' && userRole !== 'EMPLOYEE')) {
+          console.warn('User is not admin/employee, redirecting to login. Role:', userRole);
+          window.location.replace('/login');
           return;
         }
         loadUsers();

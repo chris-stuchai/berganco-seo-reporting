@@ -333,14 +333,15 @@
         const userRole = data.user?.role;
         console.log('Login successful, user role:', userRole);
         
+        // Use replace instead of href to prevent back button issues
         if (userRole === 'CLIENT') {
-          window.location.href = '/';
+          window.location.replace('/');
         } else if (userRole === 'ADMIN' || userRole === 'EMPLOYEE') {
-          window.location.href = '/employee';
+          window.location.replace('/employee');
         } else {
           // Fallback - redirect to employee portal for unknown roles
           console.warn('Unknown role, redirecting to employee portal:', userRole);
-          window.location.href = '/employee';
+          window.location.replace('/employee');
         }
       } catch (error) {
         errorDiv.classList.add('show');
@@ -349,26 +350,35 @@
       }
     }
     
-    // Check if already logged in
+    // Check if already logged in (only on page load, not after successful login)
     async function checkAuth() {
       try {
         const response = await fetch('/api/auth/me', { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           if (data.user) {
-            if (data.user.role === 'CLIENT') {
+            const userRole = data.user.role;
+            console.log('Already logged in, user role:', userRole);
+            if (userRole === 'CLIENT') {
               window.location.href = '/';
-            } else {
+            } else if (userRole === 'ADMIN' || userRole === 'EMPLOYEE') {
               window.location.href = '/employee';
             }
           }
         }
       } catch (error) {
         // Not logged in, show login form
+        console.log('Not logged in, showing login form');
       }
     }
     
-    checkAuth();
+    // Only check auth on initial page load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkAuth);
+    } else {
+      // Small delay to avoid redirect loop after login
+      setTimeout(checkAuth, 100);
+    }
   </script>
 </body>
 </html>
