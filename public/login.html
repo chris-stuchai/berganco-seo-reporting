@@ -329,10 +329,17 @@
           throw new Error(data.error || 'Invalid credentials');
         }
         
-        // Redirect based on role
-        if (data.user.role === 'CLIENT') {
+        // Redirect based on role - be explicit about admin/employee
+        const userRole = data.user?.role;
+        console.log('Login successful, user role:', userRole);
+        
+        if (userRole === 'CLIENT') {
           window.location.href = '/';
+        } else if (userRole === 'ADMIN' || userRole === 'EMPLOYEE') {
+          window.location.href = '/employee';
         } else {
+          // Fallback - redirect to employee portal for unknown roles
+          console.warn('Unknown role, redirecting to employee portal:', userRole);
           window.location.href = '/employee';
         }
       } catch (error) {

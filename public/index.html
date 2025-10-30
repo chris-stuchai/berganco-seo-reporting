@@ -1377,9 +1377,18 @@
           if (data.user) {
             // Redirect admins/employees to employee portal (unless impersonating)
             const originalAdminToken = getCookie('originalAdminToken');
-            if (data.user.role !== 'CLIENT' && !originalAdminToken) {
+            const userRole = data.user.role;
+            
+            // Check if user is admin or employee (not client)
+            if ((userRole === 'ADMIN' || userRole === 'EMPLOYEE') && !originalAdminToken) {
+              console.log('Admin/Employee detected, redirecting to employee portal');
               window.location.href = '/employee';
               return;
+            }
+            
+            // If somehow a client is on admin page, allow it (they might be impersonated)
+            if (userRole === 'CLIENT' && !originalAdminToken) {
+              // Client is in the right place, continue loading
             }
             
             // Update sidebar branding
