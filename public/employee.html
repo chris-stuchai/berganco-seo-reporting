@@ -26,10 +26,35 @@
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: var(--color-bg-primary); color: var(--color-label-primary); margin: 0; }
     .container { max-width: 1400px; margin: 0 auto; padding: var(--spacing-6); }
-    .card { background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 12px; padding: var(--spacing-6); margin-bottom: var(--spacing-6); }
-    .btn { padding: var(--spacing-2) var(--spacing-4); border-radius: 8px; border: none; cursor: pointer; font-size: var(--font-body); transition: opacity 0.2s; }
-    .btn-primary { background: var(--color-blue); color: white; }
-    .btn-danger { background: var(--color-red); color: white; }
+    .card { 
+      background: var(--color-bg-secondary); 
+      border: 0.5px solid var(--color-separator); 
+      border-radius: 12px; 
+      padding: var(--spacing-6); 
+      margin-bottom: var(--spacing-6); 
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    /* Buttons - StuchAI Guidelines */
+    .btn { 
+      padding: var(--spacing-2) var(--spacing-4); 
+      border-radius: 12px; 
+      border: none; 
+      cursor: pointer; 
+      font-size: var(--font-body); 
+      font-weight: 500;
+      transition: opacity 0.2s; 
+    }
+    .btn-primary { 
+      background: var(--color-blue); 
+      color: white; 
+    }
+    .btn-primary:hover:not(:disabled) {
+      opacity: 0.85;
+    }
+    .btn-danger { 
+      background: var(--color-red); 
+      color: white; 
+    }
     .table { width: 100%; border-collapse: collapse; }
     .table th, .table td { padding: var(--spacing-3); text-align: left; border-bottom: 1px solid var(--color-separator); }
     .table th { color: var(--color-label-tertiary); font-size: var(--font-footnote); font-weight: 600; text-transform: uppercase; }
@@ -86,33 +111,40 @@
   </div>
 
   <!-- Create User Modal -->
-  <div id="createUserModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 16px; padding: var(--spacing-6); width: 90%; max-width: 500px;">
-      <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-4);">Create User</h2>
-      <div style="margin-bottom: var(--spacing-4);">
-        <label style="display: block; font-size: var(--font-footnote); color: var(--color-label-secondary); margin-bottom: var(--spacing-2);">Name</label>
-        <input type="text" id="createName" placeholder="Full Name">
-      </div>
-      <div style="margin-bottom: var(--spacing-4);">
-        <label style="display: block; font-size: var(--font-footnote); color: var(--color-label-secondary); margin-bottom: var(--spacing-2);">Email</label>
-        <input type="email" id="createEmail" placeholder="user@example.com">
-      </div>
-      <div style="margin-bottom: var(--spacing-4);">
-        <label style="display: block; font-size: var(--font-footnote); color: var(--color-label-secondary); margin-bottom: var(--spacing-2);">Password</label>
-        <input type="password" id="createPassword" placeholder="Password">
-      </div>
-      <div style="margin-bottom: var(--spacing-6);">
-        <label style="display: block; font-size: var(--font-footnote); color: var(--color-label-secondary); margin-bottom: var(--spacing-2);">Role</label>
-        <select id="createRole">
-          <option value="CLIENT">Client</option>
-          <option value="EMPLOYEE">Employee</option>
-          <option value="ADMIN">Admin</option>
-        </select>
-      </div>
-      <div style="display: flex; gap: var(--spacing-2);">
-        <button class="btn btn-primary" onclick="createUser()" style="flex: 1;">Create</button>
-        <button class="btn" onclick="closeCreateUserModal()" style="flex: 1; background: var(--color-bg-tertiary);">Cancel</button>
-      </div>
+  <div id="createUserModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: var(--spacing-4);">
+    <div style="background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); border-radius: 16px; padding: var(--spacing-6); width: 100%; max-width: 500px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);">
+      <h2 style="font-size: 28px; font-weight: 700; color: var(--color-label-primary); margin-bottom: var(--spacing-6);">Create User</h2>
+      
+      <form onsubmit="event.preventDefault(); createUser();">
+        <div class="form-group">
+          <label class="form-label" for="createName">Name</label>
+          <input type="text" id="createName" placeholder="Full Name" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="createEmail">Email</label>
+          <input type="email" id="createEmail" placeholder="user@example.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="createPassword">Password</label>
+          <input type="password" id="createPassword" placeholder="Enter a secure password" required>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: var(--spacing-6);">
+          <label class="form-label" for="createRole">Role</label>
+          <select id="createRole" required>
+            <option value="CLIENT">Client</option>
+            <option value="EMPLOYEE">Employee</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </div>
+        
+        <div style="display: flex; gap: var(--spacing-3);">
+          <button type="submit" class="btn btn-primary" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; font-weight: 500;">Create</button>
+          <button type="button" onclick="closeCreateUserModal()" class="btn" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary);">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -152,6 +184,11 @@
 
     function closeCreateUserModal() {
       document.getElementById('createUserModal').style.display = 'none';
+      // Reset form
+      document.getElementById('createName').value = '';
+      document.getElementById('createEmail').value = '';
+      document.getElementById('createPassword').value = '';
+      document.getElementById('createRole').value = 'CLIENT';
     }
 
     async function createUser() {
