@@ -803,11 +803,22 @@
         
         // Show error message to user
         const errorMsg = document.createElement('div');
+        errorMsg.id = 'dashboardError';
         errorMsg.style.cssText = 'padding: var(--spacing-4); background: rgba(255, 59, 48, 0.15); border: 1px solid var(--color-red); border-radius: 8px; margin-bottom: var(--spacing-4); color: var(--color-red);';
         errorMsg.textContent = `Failed to load dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`;
-        const contentArea = document.querySelector('.content-area') || document.querySelector('main');
-        if (contentArea) {
-          contentArea.insertBefore(errorMsg, contentArea.firstChild);
+        const dashboardDiv = document.getElementById('dashboard');
+        if (dashboardDiv) {
+          // Remove existing error if any
+          const existingError = document.getElementById('dashboardError');
+          if (existingError) {
+            existingError.remove();
+          }
+          // Insert at the beginning of dashboard
+          if (dashboardDiv.firstChild) {
+            dashboardDiv.insertBefore(errorMsg, dashboardDiv.firstChild);
+          } else {
+            dashboardDiv.appendChild(errorMsg);
+          }
         }
       }
     }
@@ -835,12 +846,15 @@
             </svg>
             <span>${warningMsg}</span>
           `;
-          const dashboardContent = document.querySelector('.content-area') || document.querySelector('main');
-          const metricsGrid = document.querySelector('.grid.grid-cols-4') || document.querySelector('.grid');
-          if (dashboardContent && metricsGrid) {
-            dashboardContent.insertBefore(warning, metricsGrid);
-          } else if (dashboardContent && dashboardContent.firstChild) {
-            dashboardContent.insertBefore(warning, dashboardContent.firstChild);
+          // Insert into dashboard div, before the metrics grid
+          const dashboardDiv = document.getElementById('dashboard');
+          const metricsGrid = dashboardDiv?.querySelector('.grid.grid-cols-4') || dashboardDiv?.querySelector('.grid');
+          if (dashboardDiv && metricsGrid && metricsGrid.parentNode === dashboardDiv) {
+            dashboardDiv.insertBefore(warning, metricsGrid);
+          } else if (dashboardDiv && dashboardDiv.firstChild) {
+            dashboardDiv.insertBefore(warning, dashboardDiv.firstChild);
+          } else if (dashboardDiv) {
+            dashboardDiv.appendChild(warning);
           }
         }
       } else {
