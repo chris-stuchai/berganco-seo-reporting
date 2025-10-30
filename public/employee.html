@@ -440,20 +440,26 @@
     async function sendReportFromPreview() {
       closePreviewModal();
       // Find the generate button and trigger it
-      const generateBtn = document.querySelector('[onclick="generateReport()"]');
-      if (generateBtn) {
+      const generateBtn = document.querySelector('button[onclick*="generateReport"]');
+      if (generateBtn && typeof generateBtn.click === 'function') {
         generateBtn.click();
       } else {
-        // Fallback: call generateReport directly
-        await generateReport();
+        // Fallback: manually trigger report generation
+        await generateReportFromButton(generateBtn || null);
       }
     }
 
     async function generateReport() {
+      await generateReportFromButton(event?.target || null);
+    }
+
+    async function generateReportFromButton(btn) {
       try {
-        const btn = event.target;
-        btn.disabled = true;
-        btn.textContent = 'Generating...';
+        const button = btn || document.querySelector('button[onclick*="generateReport"]');
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Generating...';
+        }
         
         const res = await fetch('/api/generate-report', { method: 'POST', credentials: 'include' });
         const data = await res.json();
@@ -468,9 +474,11 @@
         alert('❌ Error: Failed to generate report');
         console.error(error);
       } finally {
-        const btn = event.target;
-        btn.disabled = false;
-        btn.textContent = 'Generate Now';
+        const button = btn || document.querySelector('button[onclick*="generateReport"]');
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Generate Now';
+        }
       }
     }
 
