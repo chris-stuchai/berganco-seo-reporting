@@ -468,7 +468,8 @@ export async function sendWeeklyReport(reportData: ReportData) {
     throw new Error('SMTP configuration missing. Please set SMTP_USER and SMTP_PASSWORD in .env');
   }
 
-  const subject = `Weekly SEO Report: ${format(reportData.weekStartDate, 'MMM d')} - ${format(reportData.weekEndDate, 'MMM d, yyyy')} | ${reportData.clicksChange >= 0 ? '+' : ''}${reportData.clicksChange.toFixed(1)}% clicks`;
+  const periodLabel = reportData.periodType === 'week' ? 'Weekly' : reportData.periodType === 'month' ? 'Monthly' : 'Custom';
+  const subject = `${periodLabel} SEO Report: ${format(reportData.weekStartDate, 'MMM d')} - ${format(reportData.weekEndDate, 'MMM d, yyyy')} | ${reportData.clicksChange >= 0 ? '+' : ''}${reportData.clicksChange.toFixed(1)}% clicks`;
 
   const html = generateEmailHTML(reportData);
 
