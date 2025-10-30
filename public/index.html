@@ -738,21 +738,42 @@
     // Load dashboard
     async function loadDashboard() {
       try {
-        document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('dashboard').classList.add('hidden');
+        const loadingEl = document.getElementById('loading');
+        const dashboardEl = document.getElementById('dashboard');
+        
+        if (!loadingEl || !dashboardEl) {
+          console.error('Dashboard elements not found');
+          return;
+        }
+        
+        loadingEl.classList.remove('hidden');
+        dashboardEl.classList.add('hidden');
         
         // Load main metrics first (show immediately)
         const response = await fetch(`/api/dashboard?days=${currentDays}`, { credentials: 'include' });
+        
+        if (!response.ok) {
+          throw new Error(`Dashboard API returned ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        
+        // Always show dashboard, even if metrics are missing
+        loadingEl.classList.add('hidden');
+        dashboardEl.classList.remove('hidden');
         
         if (data.metrics) {
           updateMetricCards(data.metrics, {
             dataCoverage: data.metrics.dataCoverage,
             missingDays: data.diagnostics?.missingDays || 0
           });
-          // Show dashboard immediately with metrics
-          document.getElementById('loading').classList.add('hidden');
-          document.getElementById('dashboard').classList.remove('hidden');
+        } else {
+          console.warn('No metrics data received');
+          // Show placeholder values if no metrics
+          document.getElementById('totalClicks').textContent = '-';
+          document.getElementById('totalImpressions').textContent = '-';
+          document.getElementById('avgCtr').textContent = '-';
+          document.getElementById('avgPosition').textContent = '-';
         }
         
         if (data.latestReport) {
@@ -770,9 +791,21 @@
           // Don't block UI if secondary content fails
         });
       } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
+        console.error('Error loading dashboard:', error);
+        const loadingEl = document.getElementById('loading');
+        const dashboardEl = document.getElementById('dashboard');
+        
+        if (loadingEl) loadingEl.classList.add('hidden');
+        if (dashboardEl) dashboardEl.classList.remove('hidden');
+        
+        // Show error message to user
+        const errorMsg = document.createElement('div');
+        errorMsg.style.cssText = 'padding: var(--spacing-4); background: rgba(255, 59, 48, 0.15); border: 1px solid var(--color-red); border-radius: 8px; margin-bottom: var(--spacing-4); color: var(--color-red);';
+        errorMsg.textContent = `Failed to load dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        const contentArea = document.querySelector('.content-area') || document.querySelector('main');
+        if (contentArea) {
+          contentArea.insertBefore(errorMsg, contentArea.firstChild);
+        }
       }
     }
 
@@ -1324,11 +1357,17 @@
         if (response.ok) {
           const data = await response.json();
           if (data.user) {
+            // Redirect admins/employees to employee portal (unless impersonating)
+            const originalAdminToken = getCookie('originalAdminToken');
+            if (data.user.role !== 'CLIENT' && !originalAdminToken) {
+              window.location.href = '/employee';
+              return;
+            }
+            
             // Update sidebar branding
             updateSidebarBranding(data.user);
             
             // Check if impersonating
-            const originalAdminToken = getCookie('originalAdminToken');
             if (originalAdminToken && data.user.role === 'CLIENT') {
               document.getElementById('impersonationSection').style.display = 'block';
             }
