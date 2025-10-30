@@ -405,10 +405,10 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-brand">
-        <div class="sidebar-brand-icon">B</div>
-        <div class="sidebar-brand-text">BerganCo</div>
+        <div class="sidebar-brand-icon" id="sidebarBrandIcon">B</div>
+        <div class="sidebar-brand-text" id="sidebarBrandText">BerganCo</div>
         </div>
-      <div class="sidebar-tagline">SEO Analytics</div>
+      <div class="sidebar-tagline" id="sidebarTagline">SEO Analytics</div>
         </div>
     
     <nav class="sidebar-nav">
@@ -601,9 +601,14 @@
             </div>
           </div>
           <div id="aiChat" style="max-height: 400px; display: flex; flex-direction: column;">
+            <!-- Chat Header -->
+            <div style="padding: var(--spacing-3) var(--spacing-4); border-bottom: 1px solid var(--color-separator); display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: var(--font-footnote); color: var(--color-label-tertiary);">Chat with Stuchai AI</span>
+              <button onclick="clearChat()" class="btn btn-secondary" style="padding: var(--spacing-1) var(--spacing-3); font-size: var(--font-footnote);">New Conversation</button>
+            </div>
             <!-- Chat Messages -->
             <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: var(--spacing-4); min-height: 200px; max-height: 300px;">
-              <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; margin-bottom: var(--spacing-3); border: 1px solid var(--color-separator);">
+              <div id="welcomeMessage" style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; margin-bottom: var(--spacing-3); border: 1px solid var(--color-separator);">
                 <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0;">
                   Try asking: "Why did my clicks drop?", "What should I focus on for the next week?", or "How can I improve my rankings?"
                 </p>
@@ -987,6 +992,7 @@
 
       // Add user message to chat
       addChatMessage('user', message);
+      chatMessages.push({ role: 'user', content: message });
       input.value = '';
 
       // Add loading message
@@ -1014,7 +1020,9 @@
         
         // Remove loading message and add AI response
         removeChatMessage(loadingId);
-        addChatMessage('assistant', data.response || 'I apologize, but I encountered an error. Please try again.');
+        const aiResponse = data.response || 'I apologize, but I encountered an error. Please try again.';
+        addChatMessage('assistant', aiResponse);
+        chatMessages.push({ role: 'assistant', content: aiResponse });
       } catch (error) {
         console.error('Error sending chat message:', error);
         removeChatMessage(loadingId);
@@ -1058,6 +1066,44 @@
     function removeChatMessage(messageId) {
       const msg = document.getElementById(messageId);
       if (msg) msg.remove();
+    }
+
+    // Clear chat conversation
+    function clearChat() {
+      const messagesDiv = document.getElementById('chatMessages');
+      messagesDiv.innerHTML = `
+        <div id="welcomeMessage" style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; margin-bottom: var(--spacing-3); border: 1px solid var(--color-separator);">
+          <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0;">
+            Try asking: "Why did my clicks drop?", "What should I focus on for the next week?", or "How can I improve my rankings?"
+          </p>
+        </div>
+      `;
+      chatMessages = [];
+    }
+
+    let chatMessages = [];
+
+    // Update sidebar branding
+    function updateSidebarBranding(user) {
+      const brandIcon = document.getElementById('sidebarBrandIcon');
+      const brandText = document.getElementById('sidebarBrandText');
+      const brandTagline = document.getElementById('sidebarTagline');
+      
+      if (user.logoUrl) {
+        brandIcon.innerHTML = `<img src="${user.logoUrl}" alt="${user.businessName || 'Company'}" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover;">`;
+      } else {
+        const initial = (user.businessName || 'B')[0].toUpperCase();
+        brandIcon.textContent = initial;
+      }
+      
+      // Always use business name, fall back to default
+      if (user.businessName) {
+        brandText.textContent = user.businessName;
+        brandTagline.textContent = `${user.businessName} SEO Analytics`;
+      } else {
+        brandText.textContent = 'BerganCo';
+        brandTagline.textContent = 'SEO Analytics';
+      }
     }
 
     // Load competitive analysis
@@ -1222,6 +1268,9 @@
         if (response.ok) {
         const data = await response.json();
           if (data.user) {
+            // Update sidebar branding
+            updateSidebarBranding(data.user);
+            
             // Check if impersonating
             const originalAdminToken = getCookie('originalAdminToken');
             if (originalAdminToken && data.user.role === 'CLIENT') {

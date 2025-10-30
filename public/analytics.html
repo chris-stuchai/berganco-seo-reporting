@@ -363,6 +363,36 @@
         <h2 class="section-title">Weekly Performance Patterns</h2>
         <canvas id="weeklyChart" style="max-height: 400px;"></canvas>
       </div>
+
+      <!-- Trending Queries -->
+      <div class="card">
+        <h2 class="section-title">Trending Search Queries</h2>
+        <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">Queries with the biggest growth in impressions</p>
+        <div id="trendingQueries">Loading...</div>
+      </div>
+
+      <!-- Page Performance Comparison -->
+      <div class="card">
+        <h2 class="section-title">Top vs. Bottom Performers</h2>
+        <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">Compare your best and worst performing pages</p>
+        <div class="grid grid-cols-1 lg:grid-cols-2" style="gap: var(--spacing-4);">
+          <div>
+            <h3 style="font-size: var(--font-body); font-weight: 600; color: var(--color-green); margin-bottom: var(--spacing-3);">Top 5 Pages</h3>
+            <div id="topPagesList">Loading...</div>
+          </div>
+          <div>
+            <h3 style="font-size: var(--font-body); font-weight: 600; color: var(--color-red); margin-bottom: var(--spacing-3);">Pages Needing Attention</h3>
+            <div id="bottomPagesList">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Position Distribution -->
+      <div class="card">
+        <h2 class="section-title">Position Distribution</h2>
+        <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">How your pages are ranking in search results</p>
+        <canvas id="positionChart" style="max-height: 300px;"></canvas>
+      </div>
     </main>
   </div>
 
@@ -376,7 +406,7 @@
   </div>
 
   <script>
-    let trendsChart, weeklyChart;
+    let trendsChart, weeklyChart, positionChart;
     let currentDays = 30;
     let currentUser = null;
 
@@ -418,17 +448,19 @@
 
     function updateSidebar() {
       if (currentUser?.logoUrl) {
-        document.getElementById('brandIcon').innerHTML = `<img src="${currentUser.logoUrl}" alt="${currentUser.businessName || currentUser.name}" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover;">`;
+        document.getElementById('brandIcon').innerHTML = `<img src="${currentUser.logoUrl}" alt="${currentUser.businessName || 'Company'}" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover;">`;
       } else {
-        const initial = (currentUser?.businessName || currentUser?.name || 'B')[0].toUpperCase();
+        const initial = (currentUser?.businessName || 'B')[0].toUpperCase();
         document.getElementById('brandIcon').textContent = initial;
       }
       
+      // Always use business name, fall back to default
       if (currentUser?.businessName) {
         document.getElementById('brandText').textContent = currentUser.businessName;
         document.getElementById('brandTagline').textContent = `${currentUser.businessName} SEO Analytics`;
-      } else if (currentUser?.name) {
-        document.getElementById('brandText').textContent = currentUser.name;
+      } else {
+        document.getElementById('brandText').textContent = 'BerganCo';
+        document.getElementById('brandTagline').textContent = 'SEO Analytics';
       }
     }
 
@@ -635,11 +667,164 @@
           }
         });
 
+        // Load additional insights
+        loadTrendingQueries();
+        loadPageComparison();
+        loadPositionDistribution();
+
       } catch (error) {
         console.error('Error loading analytics:', error);
         document.getElementById('trendsChart').parentElement.innerHTML = '<p style="color: var(--color-red); padding: var(--spacing-6); text-align: center;">Error loading analytics data. Please try again.</p>';
         document.getElementById('growthMetrics').innerHTML = '<p style="color: var(--color-red);">Error loading data</p>';
         document.getElementById('engagementMetrics').innerHTML = '<p style="color: var(--color-red);">Error loading data</p>';
+      }
+    }
+
+    async function loadTrendingQueries() {
+      try {
+        const res = await fetch(`/api/top-queries?days=${currentDays}&limit=10`, { credentials: 'include' });
+        if (!res.ok) return;
+        
+        const queries = await res.json();
+        if (!queries || queries.length === 0) {
+          document.getElementById('trendingQueries').innerHTML = '<p style="color: var(--color-label-tertiary);">No query data available</p>';
+          return;
+        }
+        
+        const html = queries.slice(0, 10).map((q, idx) => {
+          const query = q.query || 'Unknown';
+          const impressions = q._sum?.impressions || 0;
+          const clicks = q._sum?.clicks || 0;
+          const position = q._avg?.position || 0;
+          
+          return `
+            <div style="padding: var(--spacing-3); background: var(--color-bg-tertiary); border-radius: 8px; margin-bottom: var(--spacing-2); display: flex; justify-content: space-between; align-items: center;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-1);">${query}</div>
+                <div style="font-size: var(--font-footnote); color: var(--color-label-tertiary);">
+                  ${impressions.toLocaleString()} impressions • ${clicks.toLocaleString()} clicks • Position ${position.toFixed(1)}
+                </div>
+              </div>
+              <span style="font-size: 20px; font-weight: 700; color: var(--color-blue);">#${idx + 1}</span>
+            </div>
+          `;
+        }).join('');
+        
+        document.getElementById('trendingQueries').innerHTML = html;
+      } catch (error) {
+        console.error('Error loading trending queries:', error);
+        document.getElementById('trendingQueries').innerHTML = '<p style="color: var(--color-red);">Error loading queries</p>';
+      }
+    }
+
+    async function loadPageComparison() {
+      try {
+        const res = await fetch(`/api/top-pages?days=${currentDays}&limit=20`, { credentials: 'include' });
+        if (!res.ok) return;
+        
+        const pages = await res.json();
+        if (!pages || pages.length === 0) {
+          document.getElementById('topPagesList').innerHTML = '<p style="color: var(--color-label-tertiary);">No data</p>';
+          document.getElementById('bottomPagesList').innerHTML = '<p style="color: var(--color-label-tertiary);">No data</p>';
+          return;
+        }
+        
+        // Top 5 pages
+        const top5 = pages.slice(0, 5);
+        const topHtml = top5.map((p, idx) => {
+          const page = p.page || '';
+          const clicks = p._sum?.clicks || 0;
+          return `
+            <div style="padding: var(--spacing-2); margin-bottom: var(--spacing-2); background: var(--color-bg-tertiary); border-radius: 8px;">
+              <div style="font-size: var(--font-footnote); color: var(--color-label-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${page}</div>
+              <div style="font-size: var(--font-body); font-weight: 600; color: var(--color-green);">${clicks.toLocaleString()} clicks</div>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('topPagesList').innerHTML = topHtml;
+        
+        // Bottom 5 pages (lowest CTR but with impressions)
+        const bottom5 = [...pages].sort((a, b) => {
+          const aCtr = (a._avg?.ctr || 0);
+          const bCtr = (b._avg?.ctr || 0);
+          return aCtr - bCtr;
+        }).slice(0, 5);
+        
+        const bottomHtml = bottom5.map(p => {
+          const page = p.page || '';
+          const clicks = p._sum?.clicks || 0;
+          const ctr = ((p._avg?.ctr || 0) * 100).toFixed(2);
+          const impressions = p._sum?.impressions || 0;
+          return `
+            <div style="padding: var(--spacing-2); margin-bottom: var(--spacing-2); background: var(--color-bg-tertiary); border-radius: 8px;">
+              <div style="font-size: var(--font-footnote); color: var(--color-label-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${page}</div>
+              <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-1);">
+                <span style="font-size: var(--font-body); font-weight: 600; color: var(--color-red);">CTR: ${ctr}%</span>
+                <span style="font-size: var(--font-footnote); color: var(--color-label-tertiary);">${impressions.toLocaleString()} imp.</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('bottomPagesList').innerHTML = bottomHtml;
+      } catch (error) {
+        console.error('Error loading page comparison:', error);
+      }
+    }
+
+    async function loadPositionDistribution() {
+      try {
+        const res = await fetch(`/api/top-queries?days=${currentDays}&limit=100`, { credentials: 'include' });
+        if (!res.ok) return;
+        
+        const queries = await res.json();
+        if (!queries || queries.length === 0) return;
+        
+        // Group by position ranges
+        const ranges = {
+          '1-3': 0,
+          '4-10': 0,
+          '11-20': 0,
+          '21-50': 0,
+          '51+': 0
+        };
+        
+        queries.forEach(q => {
+          const pos = q._avg?.position || 100;
+          if (pos <= 3) ranges['1-3']++;
+          else if (pos <= 10) ranges['4-10']++;
+          else if (pos <= 20) ranges['11-20']++;
+          else if (pos <= 50) ranges['21-50']++;
+          else ranges['51+']++;
+        });
+        
+        const ctx = document.getElementById('positionChart').getContext('2d');
+        if (positionChart) positionChart.destroy();
+        
+        positionChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Positions 1-3', 'Positions 4-10', 'Positions 11-20', 'Positions 21-50', 'Positions 51+'],
+            datasets: [{
+              data: [ranges['1-3'], ranges['4-10'], ranges['11-20'], ranges['21-50'], ranges['51+']],
+              backgroundColor: [
+                'rgba(48, 209, 88, 0.8)',
+                'rgba(10, 132, 255, 0.8)',
+                'rgba(255, 159, 10, 0.8)',
+                'rgba(255, 69, 58, 0.8)',
+                'rgba(142, 142, 147, 0.8)'
+              ]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#E5E5EA', font: { family: '-apple-system', size: 12 } } }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error loading position distribution:', error);
       }
     }
 

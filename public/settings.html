@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pages - SEO Dashboard</title>
+  <title>Settings - SEO Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* Apple Design System - Dark Mode */
     :root {
-      --font-large-title: 34px;
-      --font-title-1: 28px;
       --font-title-2: 22px;
       --font-title-3: 20px;
       --font-body: 17px;
@@ -176,33 +174,6 @@
       color: var(--color-label-tertiary);
     }
     
-    .date-filters {
-      display: flex;
-      gap: var(--spacing-2);
-    }
-    
-    .date-filter-btn {
-      padding: var(--spacing-2) var(--spacing-3);
-      border-radius: 8px;
-      border: 1px solid var(--color-separator);
-      background: transparent;
-      color: var(--color-label-secondary);
-      font-size: var(--font-footnote);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .date-filter-btn:hover {
-      background: var(--color-bg-tertiary);
-      color: var(--color-label-primary);
-    }
-    
-    .date-filter-btn.active {
-      background: var(--color-blue);
-      color: white;
-      border-color: var(--color-blue);
-    }
-    
     .content-area {
       flex: 1;
       overflow-y: auto;
@@ -225,55 +196,87 @@
       margin-bottom: var(--spacing-4);
     }
     
-    table {
+    .form-group {
+      margin-bottom: var(--spacing-4);
+    }
+    
+    .form-label {
+      display: block;
+      font-size: var(--font-footnote);
+      font-weight: 500;
+      color: var(--color-label-secondary);
+      margin-bottom: var(--spacing-2);
+    }
+    
+    input[type="text"],
+    input[type="email"] {
       width: 100%;
-      border-collapse: collapse;
-    }
-    
-    th, td {
-      padding: var(--spacing-3);
-      text-align: left;
-      border-bottom: 1px solid var(--color-separator);
-    }
-    
-    th {
-      font-size: var(--font-caption);
-      font-weight: 600;
-      color: var(--color-label-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    td {
+      padding: var(--spacing-3) var(--spacing-4);
+      background: var(--color-bg-tertiary);
+      border: 1px solid var(--color-separator);
+      border-radius: 12px;
       color: var(--color-label-primary);
+      font-size: var(--font-body);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     
-    tr:hover {
+    input[type="text"]:focus,
+    input[type="email"]:focus {
+      border-color: var(--color-blue);
+      box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+    }
+    
+    input::placeholder {
+      color: var(--color-label-tertiary);
+    }
+    
+    .btn {
+      padding: var(--spacing-2) var(--spacing-4);
+      border-radius: 8px;
+      font-size: var(--font-body);
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    
+    .btn-primary {
+      background: var(--color-blue);
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      opacity: 0.85;
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-blue);
+      border: 1px solid var(--color-separator);
+    }
+    
+    .btn-secondary:hover {
       background: var(--color-bg-tertiary);
     }
     
-    .url-cell {
-      max-width: 400px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .logo-preview {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--color-separator);
+      margin-top: var(--spacing-2);
     }
     
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    
-    .badge-positive {
-      background: rgba(48, 209, 88, 0.2);
-      color: var(--color-green);
-    }
-    
-    .badge-negative {
-      background: rgba(255, 69, 58, 0.2);
-      color: var(--color-red);
+    .powered-by {
+      padding: var(--spacing-4);
+      background: var(--color-bg-tertiary);
+      border-radius: 8px;
+      text-align: center;
+      margin-top: var(--spacing-6);
+      font-size: var(--font-footnote);
+      color: var(--color-label-tertiary);
     }
   </style>
 </head>
@@ -307,7 +310,7 @@
       
       <div class="nav-section">
         <div class="nav-section-title">SEO</div>
-        <a href="/pages" class="nav-item active">
+        <a href="/pages" class="nav-item">
           <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
           </svg>
@@ -319,32 +322,12 @@
           </svg>
           <span>Queries</span>
         </a>
-        <a href="/settings" class="nav-item">
+        <a href="/settings" class="nav-item active">
           <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
             <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
           <span>Settings</span>
-        </a>
-      </div>
-      
-      <div class="nav-section" id="adminNavSection" style="display: none;">
-        <div class="nav-section-title">Admin</div>
-        <a href="/employee" class="nav-item">
-          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          <span>Admin</span>
-        </a>
-      </div>
-      
-      <div class="nav-section" id="impersonationSection" style="display: none; margin-top: auto; padding-top: var(--spacing-6); border-top: 1px solid var(--color-separator);">
-        <a href="#" onclick="stopImpersonation()" class="nav-item" style="background: rgba(255, 159, 10, 0.15); color: var(--color-orange);">
-          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <span>Stop Viewing As</span>
         </a>
       </div>
       
@@ -363,47 +346,49 @@
   <div class="main-content">
     <header class="top-bar">
       <div>
-        <h1 class="page-title">Top Pages</h1>
-        <p class="page-subtitle">Best performing pages by traffic</p>
-      </div>
-      <div class="date-filters">
-        <button class="date-filter-btn" onclick="setDays(7)" id="btn-7">7 Days</button>
-        <button class="date-filter-btn active" onclick="setDays(30)" id="btn-30">30 Days</button>
-        <button class="date-filter-btn" onclick="setDays(90)" id="btn-90">90 Days</button>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-subtitle">Manage your profile and branding</p>
       </div>
     </header>
 
     <main class="content-area">
       <div class="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Page</th>
-              <th>Clicks</th>
-              <th>Impressions</th>
-              <th>CTR</th>
-              <th>Position</th>
-            </tr>
-          </thead>
-          <tbody id="pagesTable">
-            <tr><td colspan="5" style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">Loading...</td></tr>
-          </tbody>
-        </table>
+        <h2 class="section-title">Profile Settings</h2>
+        
+        <form id="profileForm" onsubmit="event.preventDefault(); saveProfile();">
+          <div class="form-group">
+            <label class="form-label" for="businessName">Business Name</label>
+            <input type="text" id="businessName" placeholder="Your business name" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email Address</label>
+            <input type="email" id="email" placeholder="your@email.com" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="logoUrl">Logo URL</label>
+            <input type="text" id="logoUrl" placeholder="https://example.com/logo.png" />
+            <small style="display: block; margin-top: var(--spacing-1); font-size: var(--font-caption); color: var(--color-label-tertiary);">
+              Enter a URL to your logo image. This will appear in the sidebar.
+            </small>
+            <img id="logoPreview" class="logo-preview" style="display: none;" alt="Logo preview" />
+          </div>
+
+          <div style="display: flex; gap: var(--spacing-3); margin-top: var(--spacing-6);">
+            <button type="submit" class="btn btn-primary" id="saveBtn">Save Changes</button>
+            <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+          </div>
+        </form>
+
+        <div class="powered-by">
+          Powered by Stuchai LLC
+        </div>
       </div>
     </main>
   </div>
 
-  <!-- Impersonation Bar -->
-  <div id="impersonationBar" style="display: none; background: #FF453A; color: white; padding: var(--spacing-2) var(--spacing-4); text-align: center; font-size: var(--font-footnote); font-weight: 500;">
-    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
-      <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-    </svg>
-    <span id="impersonationText"></span>
-    <a href="#" onclick="stopImpersonation(); return false;" style="color: white; text-decoration: underline; font-weight: 600; margin-left: 8px;">Stop viewing as</a>
-  </div>
-
   <script>
-    let currentDays = 30;
     let currentUser = null;
 
     async function init() {
@@ -418,18 +403,19 @@
         currentUser = data.user;
         
         updateSidebar();
+        loadProfile();
         
-        const originalAdminToken = getCookie('originalAdminToken');
-        if (originalAdminToken && currentUser.role === 'CLIENT') {
-          showImpersonationBar();
-          document.getElementById('impersonationSection').style.display = 'block';
-        }
-        
-        if (currentUser.role !== 'CLIENT') {
-          document.getElementById('adminNavSection').style.display = 'block';
-        }
-        
-        loadPages();
+        // Preview logo on URL change
+        document.getElementById('logoUrl').addEventListener('input', (e) => {
+          const url = e.target.value;
+          const preview = document.getElementById('logoPreview');
+          if (url && url.startsWith('http')) {
+            preview.src = url;
+            preview.style.display = 'block';
+          } else {
+            preview.style.display = 'none';
+          }
+        });
       } catch (error) {
         console.error('Init error:', error);
         window.location.href = '/login';
@@ -453,34 +439,58 @@
       }
     }
 
-    function showImpersonationBar() {
-      const bar = document.getElementById('impersonationBar');
-      const text = document.getElementById('impersonationText');
-      if (bar && text && currentUser) {
-        text.textContent = `You are viewing as ${currentUser.name}.`;
-        bar.style.display = 'block';
-        document.body.insertBefore(bar, document.body.firstChild);
+    function loadProfile() {
+      if (currentUser) {
+        document.getElementById('businessName').value = currentUser.businessName || '';
+        document.getElementById('email').value = currentUser.email || '';
+        document.getElementById('logoUrl').value = currentUser.logoUrl || '';
+        
+        if (currentUser.logoUrl) {
+          document.getElementById('logoPreview').src = currentUser.logoUrl;
+          document.getElementById('logoPreview').style.display = 'block';
+        }
       }
     }
 
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-      return null;
-    }
-
-    async function stopImpersonation() {
-      const res = await fetch('/api/auth/stop-impersonate', {
-        method: 'POST',
-        credentials: 'include'
-      });
+    async function saveProfile() {
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
       
-      if (res.ok) {
-        window.location.href = '/employee';
-      } else {
-        alert('Failed to stop impersonation');
+      try {
+        const res = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            businessName: document.getElementById('businessName').value.trim() || null,
+            email: document.getElementById('email').value.trim(),
+            logoUrl: document.getElementById('logoUrl').value.trim() || null
+          })
+        });
+        
+        if (res.ok) {
+          const updated = await res.json();
+          currentUser = updated;
+          updateSidebar();
+          
+          // Show success message
+          alert('Profile updated successfully!');
+        } else {
+          const error = await res.json();
+          alert(`Error: ${error.error || 'Failed to update profile'}`);
+        }
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        alert('Error saving profile. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
       }
+    }
+
+    function resetForm() {
+      loadProfile();
     }
 
     async function handleLogout() {
@@ -495,52 +505,8 @@
       }
     }
 
-    function setDays(days) {
-      currentDays = days;
-      document.querySelectorAll('.date-filter-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(`btn-${days}`).classList.add('active');
-      loadPages();
-    }
-
-    async function loadPages() {
-      try {
-        const res = await fetch(`/api/top-pages?days=${currentDays}&limit=50`, { credentials: 'include' });
-        if (!res.ok) {
-          throw new Error('Failed to load pages');
-        }
-        
-        const pages = await res.json();
-        const tbody = document.getElementById('pagesTable');
-        
-        if (!pages || pages.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">No data available for this period.</td></tr>';
-          return;
-        }
-        
-        tbody.innerHTML = pages.map(p => {
-          const page = p.page || '';
-          const clicks = p._sum?.clicks || 0;
-          const impressions = p._sum?.impressions || 0;
-          const ctr = (p._avg?.ctr || 0) * 100;
-          const position = p._avg?.position || 0;
-          
-          return `
-            <tr>
-              <td class="url-cell" title="${page}">${page}</td>
-              <td>${clicks.toLocaleString()}</td>
-              <td>${impressions.toLocaleString()}</td>
-              <td>${ctr.toFixed(2)}%</td>
-              <td>${position.toFixed(1)}</td>
-            </tr>
-          `;
-        }).join('');
-      } catch (error) {
-        console.error('Error loading pages:', error);
-        document.getElementById('pagesTable').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: var(--spacing-6); color: var(--color-red);">Error loading pages. Please try again.</td></tr>';
-      }
-    }
-
     init();
   </script>
 </body>
 </html>
+
