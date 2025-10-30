@@ -1375,20 +1375,29 @@
         if (response.ok) {
           const data = await response.json();
           if (data.user) {
-            // Redirect admins/employees to employee portal (unless impersonating)
+            // Handle admin/employee viewing client dashboard
             const originalAdminToken = getCookie('originalAdminToken');
             const userRole = data.user.role;
             
-            // Check if user is admin or employee (not client)
+            // If admin/employee is viewing client dashboard, show "Back to Employee Portal" button
+            // Don't redirect automatically - allow them to view client dashboard
             if ((userRole === 'ADMIN' || userRole === 'EMPLOYEE') && !originalAdminToken) {
-              console.log('Admin/Employee detected on client page, redirecting to employee portal');
-              window.location.replace('/employee');
-              return;
-            }
-            
-            // If somehow a client is on admin page, allow it (they might be impersonated)
-            if (userRole === 'CLIENT' && !originalAdminToken) {
-              // Client is in the right place, continue loading
+              console.log('Admin/Employee viewing client dashboard - showing back button');
+              // Show admin section with "Back to Employee Portal" button
+              const adminNavSection = document.getElementById('adminNavSection');
+              if (adminNavSection) {
+                adminNavSection.style.display = 'block';
+              }
+              // Also show a prominent back button in the impersonation section
+              const impersonationSection = document.getElementById('impersonationSection');
+              if (impersonationSection) {
+                impersonationSection.style.display = 'block';
+                // Change the text to indicate they can go back
+                const backLink = impersonationSection.querySelector('a[href="/employee"]');
+                if (backLink) {
+                  backLink.querySelector('span').textContent = 'Back to Employee Portal';
+                }
+              }
             }
             
             // Update sidebar branding
@@ -1398,12 +1407,29 @@
               console.error('Error updating sidebar:', e);
             }
             
-            // Check if impersonating
+            // Check if impersonating or admin viewing client dashboard
             try {
+              const impersonationSection = document.getElementById('impersonationSection');
+              const stopImpersonationBtn = document.getElementById('stopImpersonationBtn');
+              
               if (originalAdminToken && data.user.role === 'CLIENT') {
-                const impersonationSection = document.getElementById('impersonationSection');
+                // Actually impersonating a client
                 if (impersonationSection) {
                   impersonationSection.style.display = 'block';
+                  if (stopImpersonationBtn) {
+                    stopImpersonationBtn.style.display = 'block';
+                  }
+                }
+              } else if ((data.user.role === 'ADMIN' || data.user.role === 'EMPLOYEE')) {
+                // Admin/employee viewing client dashboard (not impersonating, just viewing)
+                if (impersonationSection) {
+                  impersonationSection.style.display = 'block';
+                  if (stopImpersonationBtn) {
+                    stopImpersonationBtn.style.display = 'none'; // Hide stop button, just show back button
+                  const backText = document.getElementById('backToEmployeeText');
+                  if (backText) {
+                    backText.textContent = 'Back to Employee Portal';
+                  }
                 }
               }
               

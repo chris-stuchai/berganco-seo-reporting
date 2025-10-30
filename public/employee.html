@@ -236,29 +236,34 @@
   </div>
 
   <script>
-    // Check auth
+    // Check auth - don't redirect away if user is admin/employee
     (async function() {
       try {
         const res = await fetch('/api/auth/me', { credentials: 'include' });
         if (!res.ok) {
-          window.location.href = '/login';
+          console.log('Auth check failed, redirecting to login');
+          window.location.replace('/login');
           return;
         }
         const data = await res.json();
         const userRole = data.user?.role;
         console.log('Employee portal auth check, user role:', userRole);
         
+        // Only redirect if user is not admin or employee
         if (!userRole || (userRole !== 'ADMIN' && userRole !== 'EMPLOYEE')) {
           console.warn('User is not admin/employee, redirecting to login. Role:', userRole);
           window.location.replace('/login');
           return;
         }
+        
+        // User is admin/employee - stay on this page
+        console.log('Admin/Employee authenticated, loading employee portal');
         loadUsers();
         loadUsageStats();
         loadSchedules();
       } catch (error) {
         console.error('Auth check failed:', error);
-        window.location.href = '/login';
+        window.location.replace('/login');
       }
     })();
 
