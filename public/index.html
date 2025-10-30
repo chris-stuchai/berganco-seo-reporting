@@ -455,6 +455,15 @@
         </a>
       </div>
       
+      <div class="nav-section" id="impersonationSection" style="display: none; margin-top: auto; padding-top: var(--spacing-6); border-top: 1px solid var(--color-separator);">
+        <a href="#" onclick="stopImpersonation()" class="nav-item" style="background: rgba(255, 159, 10, 0.15); color: var(--color-orange);">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>Stop Viewing As</span>
+        </a>
+      </div>
+      
       <div class="nav-section" style="margin-top: auto; padding-top: var(--spacing-6); border-top: 1px solid var(--color-separator);">
         <a href="#" onclick="handleLogout()" class="nav-item">
           <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -1213,6 +1222,12 @@
         if (response.ok) {
           const data = await response.json();
           if (data.user) {
+            // Check if impersonating
+            const originalAdminToken = getCookie('originalAdminToken');
+            if (originalAdminToken && data.user.role === 'CLIENT') {
+              document.getElementById('impersonationSection').style.display = 'block';
+            }
+            
             // Show admin section if employee/admin
             if (data.user.role !== 'CLIENT') {
               document.getElementById('adminNavSection').style.display = 'block';
@@ -1232,6 +1247,26 @@
       }
       
       loadDashboard();
+    }
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    async function stopImpersonation() {
+      const res = await fetch('/api/auth/stop-impersonate', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (res.ok) {
+        window.location.href = '/employee.html';
+      } else {
+        alert('Failed to stop impersonation');
+      }
     }
     
     async function handleLogout() {

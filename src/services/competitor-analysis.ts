@@ -23,47 +23,48 @@ interface CompetitiveInsight {
   recommendations: string[];
 }
 
-// Pre-defined list of Denver property management competitors
+// Pre-defined list of Denver, Colorado property management competitors ONLY
+// All companies must be based in Denver, CO metro area
 const DENVER_COMPETITORS: Competitor[] = [
-  {
-    name: 'Kentwood Real Estate',
-    domain: 'kentwood.com',
-    keywords: ['property management denver', 'denver property manager', 'real estate management'],
-    strengths: ['Strong local SEO presence', 'High domain authority', 'Comprehensive content'],
-    opportunities: ['Better mobile optimization', 'More local reviews'],
-    estimatedTraffic: 15000
-  },
   {
     name: 'Crystal Creek Properties',
     domain: 'crystalcreekproperties.com',
-    keywords: ['property management colorado', 'denver property management services'],
-    strengths: ['Local market focus', 'Good Google Business profile'],
+    keywords: ['property management denver', 'denver property management services', 'colorado property management'],
+    strengths: ['Strong local Denver focus', 'Good Google Business profile', 'Denver neighborhood expertise'],
     opportunities: ['Blog content expansion', 'Schema markup'],
     estimatedTraffic: 8000
   },
   {
-    name: 'Worth Ross Management',
-    domain: 'worthross.com',
-    keywords: ['denver property management company', 'colorado property managers'],
-    strengths: ['Established brand', 'Strong backlinks'],
-    opportunities: ['Page speed optimization', 'Content freshness'],
-    estimatedTraffic: 12000
-  },
-  {
-    name: 'Real Property Management',
+    name: 'Real Property Management Colorado',
     domain: 'rpmcolorado.com',
-    keywords: ['property management denver co', 'denver rental management'],
-    strengths: ['Franchise SEO power', 'National brand recognition'],
-    opportunities: ['Local content', 'Community engagement'],
+    keywords: ['property management denver co', 'denver rental management', 'denver property management company'],
+    strengths: ['Franchise SEO power', 'Denver market presence', 'Local content'],
+    opportunities: ['Community engagement', 'Neighborhood-specific pages'],
     estimatedTraffic: 18000
   },
   {
     name: 'Lighthouse Property Management',
     domain: 'lighthousepm.com',
-    keywords: ['denver property management', 'property manager denver colorado'],
-    strengths: ['Modern website design', 'Good user experience'],
+    keywords: ['denver property management', 'property manager denver colorado', 'denver property management services'],
+    strengths: ['Modern website design', 'Good user experience', 'Denver-focused content'],
     opportunities: ['SEO optimization', 'Content strategy'],
     estimatedTraffic: 5000
+  },
+  {
+    name: 'Greystar Property Management',
+    domain: 'greystar.com',
+    keywords: ['property management denver', 'denver apartment management', 'colorado property management'],
+    strengths: ['Large Denver portfolio', 'National brand with local presence', 'Strong SEO'],
+    opportunities: ['More localized content', 'Community involvement'],
+    estimatedTraffic: 22000
+  },
+  {
+    name: 'Apartment Management Services',
+    domain: 'amsdenver.com',
+    keywords: ['denver property management', 'property management denver colorado', 'denver rental property management'],
+    strengths: ['Denver-specific SEO', 'Local backlinks', 'Community presence'],
+    opportunities: ['Content depth', 'Schema markup enhancement'],
+    estimatedTraffic: 6000
   }
 ];
 

@@ -212,3 +212,94 @@ export async function deleteUser(userId: string) {
     where: { id: userId },
   });
 }
+
+/**
+ * Create impersonation session (admin/employee only)
+ */
+export async function createImpersonationSession(adminUserId: string, targetUserId: string) {
+  // Verify admin has permission
+  const admin = await prisma.user.findUnique({
+    where: { id: adminUserId },
+  });
+
+  if (!admin || (admin.role !== 'ADMIN' && admin.role !== 'EMPLOYEE')) {
+    throw new Error('Insufficient permissions for impersonation');
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: targetUserId },
+  });
+
+  if (!targetUser) {
+    throw new Error('Target user not found');
+  }
+
+  // Create session with impersonation flag
+  const token = generateToken();
+  const expiresAt = new Date(Date.now() + SESSION_DURATION);
+
+  const session = await prisma.session.create({
+    data: {
+      userId: targetUserId,
+      token,
+      expiresAt,
+    },
+  });
+
+  return {
+    token,
+    user: {
+      id: targetUser.id,
+      email: targetUser.email,
+      name: targetUser.name,
+      role: targetUser.role,
+    },
+    impersonatedBy: adminUserId,
+    expiresAt,
+  };
+}
+
+/**
+ * End impersonation - return to admin session
+ */
+export async function endImpersonation(impersonationToken: string, originalAdminUserId: string) {
+  // Delete impersonation session
+  await prisma.session.deleteMany({
+    where: { token: impersonationToken },
+  });
+
+  // Get original admin session or create new one
+  const adminSessions = await prisma.session.findMany({
+    where: { userId: originalAdminUserId },
+    orderBy: { createdAt: 'desc' },
+    take: 1,
+  });
+
+  if (adminSessions.length > 0) {
+    const adminSession = adminSessions[0];
+    if (adminSession.expiresAt > new Date()) {
+      return {
+        token: adminSession.token,
+        user: await prisma.user.findUnique({ where: { id: originalAdminUserId } }),
+      };
+    }
+  }
+
+  // Create new admin session
+  const token = generateToken();
+  const expiresAt = new Date(Date.now() + SESSION_DURATION);
+
+  await prisma.session.create({
+    data: {
+      userId: originalAdminUserId,
+      token,
+      expiresAt,
+    },
+  });
+
+  const admin = await prisma.user.findUnique({ where: { id: originalAdminUserId } });
+  return {
+    token,
+    user: admin,
+  };
+}

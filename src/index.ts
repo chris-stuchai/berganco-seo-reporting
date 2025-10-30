@@ -119,6 +119,62 @@ app.delete('/api/users/:id', requireAuth, requireRole('ADMIN'), async (req, res)
   }
 });
 
+// Impersonation endpoints (admin/employee only)
+app.post('/api/auth/impersonate', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { userId } = req.body;
+    const result = await authService.createImpersonationSession(req.user!.userId, userId);
+    
+    res.cookie('sessionToken', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    
+    res.cookie('originalAdminToken', req.user!.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json(result);
+  } catch (error: any) {
+    res.status(403).json({ error: error.message });
+  }
+});
+
+app.post('/api/auth/stop-impersonate', async (req, res) => {
+  try {
+    const impersonationToken = req.cookies?.sessionToken || req.headers.authorization?.replace('Bearer ', '');
+    const originalAdminToken = req.cookies?.originalAdminToken;
+    
+    if (!originalAdminToken) {
+      return res.status(400).json({ error: 'No original session found' });
+    }
+
+    const originalAdmin = await authService.verifySession(originalAdminToken);
+    if (!originalAdmin) {
+      return res.status(401).json({ error: 'Original session expired' });
+    }
+
+    const result = await authService.endImpersonation(impersonationToken, originalAdmin.userId);
+    
+    res.cookie('sessionToken', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    
+    res.clearCookie('originalAdminToken');
+    res.json(result);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });

@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - BerganCo SEO</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Sign In - BerganCo SEO</title>
   <style>
-    /* Apple Design System - Dark Mode */
+    /* StuchAI Brand Guidelines - Apple Design System */
     :root {
       --color-bg-primary: #1C1C1E;
       --color-bg-secondary: #2C2C2E;
@@ -19,69 +18,110 @@
       --color-red: #FF453A;
       
       --spacing-2: 8px;
+      --spacing-3: 12px;
       --spacing-4: 16px;
       --spacing-6: 24px;
       --font-body: 17px;
       --font-footnote: 13px;
     }
     
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
       background: var(--color-bg-primary);
       color: var(--color-label-primary);
-      margin: 0;
-      padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
+      padding: var(--spacing-4);
     }
     
     .login-container {
       width: 100%;
       max-width: 400px;
-      padding: var(--spacing-6);
     }
     
-    .login-card {
-      background: var(--color-bg-secondary);
-      border: 1px solid var(--color-separator);
-      border-radius: 16px;
-      padding: var(--spacing-6);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    }
-    
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-4);
+    /* Logo Section */
+    .login-logo {
+      text-align: center;
       margin-bottom: var(--spacing-6);
     }
     
     .logo-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: var(--color-blue);
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: 700;
-      font-size: 24px;
+      font-size: 28px;
+      margin: 0 auto var(--spacing-3);
     }
     
-    .logo-text {
-      font-size: 24px;
+    .login-logo h1 {
+      font-size: 32px;
       font-weight: 700;
       color: var(--color-label-primary);
+      margin-bottom: var(--spacing-1);
+    }
+    
+    .login-logo p {
+      font-size: var(--font-footnote);
+      color: var(--color-label-tertiary);
+    }
+    
+    /* Title */
+    .login-title {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--color-label-primary);
+      margin-bottom: var(--spacing-4);
+      text-align: center;
+    }
+    
+    /* Error Message - Branded Styling */
+    .login-error {
+      display: none;
+      padding: var(--spacing-3) var(--spacing-4);
+      background: rgba(255, 69, 58, 0.15);
+      border: 0.5px solid rgba(255, 69, 58, 0.3);
+      border-radius: 12px;
+      color: var(--color-red);
+      font-size: var(--font-footnote);
+      margin-bottom: var(--spacing-4);
+      align-items: center;
+      gap: var(--spacing-2);
+    }
+    
+    .login-error.show {
+      display: flex;
+    }
+    
+    .login-error svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+    
+    /* Form */
+    form {
+      margin-top: var(--spacing-6);
     }
     
     .form-group {
       margin-bottom: var(--spacing-4);
     }
     
-    .form-label {
+    .form-group label {
       display: block;
       font-size: var(--font-footnote);
       font-weight: 500;
@@ -91,10 +131,10 @@
     
     .form-input {
       width: 100%;
-      padding: var(--spacing-3);
+      padding: var(--spacing-3) var(--spacing-4);
       background: var(--color-bg-tertiary);
-      border: 1px solid var(--color-separator);
-      border-radius: 8px;
+      border: 0.5px solid var(--color-separator);
+      border-radius: 12px;
       color: var(--color-label-primary);
       font-size: var(--font-body);
       outline: none;
@@ -106,17 +146,40 @@
       box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
     }
     
+    .form-input::placeholder {
+      color: var(--color-label-tertiary);
+    }
+    
+    /* Forgot Password Link */
+    .login-forgot {
+      text-align: right;
+      margin-bottom: var(--spacing-4);
+    }
+    
+    .login-forgot a {
+      color: var(--color-blue);
+      font-size: var(--font-footnote);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    
+    .login-forgot a:hover {
+      opacity: 0.7;
+    }
+    
+    /* Button - Solid Blue, No Gradient */
     .btn-primary {
       width: 100%;
-      padding: var(--spacing-3);
+      padding: var(--spacing-3) var(--spacing-4);
       background: var(--color-blue);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: var(--font-body);
       font-weight: 500;
       cursor: pointer;
       transition: opacity 0.2s;
+      position: relative;
     }
     
     .btn-primary:hover:not(:disabled) {
@@ -128,66 +191,113 @@
       cursor: not-allowed;
     }
     
-    .error-message {
-      padding: var(--spacing-3);
-      background: rgba(255, 69, 58, 0.1);
-      border: 1px solid rgba(255, 69, 58, 0.3);
-      border-radius: 8px;
-      color: var(--color-red);
-      font-size: var(--font-footnote);
-      margin-bottom: var(--spacing-4);
+    .btn-primary .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin: 0 auto;
+    }
+    
+    .btn-primary.loading .spinner {
+      display: block;
+    }
+    
+    .btn-primary.loading .btn-text {
       display: none;
     }
     
-    .error-message.show {
-      display: block;
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Sign Up Link */
+    .login-signup {
+      text-align: center;
+      margin-top: var(--spacing-4);
+      padding-top: var(--spacing-4);
+      border-top: 0.5px solid var(--color-separator);
+    }
+    
+    .login-signup p {
+      font-size: var(--font-footnote);
+      color: var(--color-label-tertiary);
+    }
+    
+    .login-signup a {
+      color: var(--color-blue);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .login-signup a:hover {
+      opacity: 0.7;
     }
   </style>
 </head>
 <body>
   <div class="login-container">
-    <div class="login-card">
-      <div class="logo">
-        <div class="logo-icon">B</div>
-        <div class="logo-text">BerganCo</div>
+    <!-- Logo -->
+    <div class="login-logo">
+      <div class="logo-icon">S</div>
+      <h1>StuchAI</h1>
+      <p>Simplifying tech for all</p>
+    </div>
+    
+    <!-- Title -->
+    <h2 class="login-title">Sign In</h2>
+    
+    <!-- Error Message -->
+    <div class="login-error" id="loginError">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>Invalid credentials. Please try again.</span>
+    </div>
+    
+    <!-- Form -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="emailInput">Email or Username</label>
+        <input 
+          type="text" 
+          id="emailInput" 
+          class="form-input" 
+          required 
+          autocomplete="username"
+          placeholder="Enter your email or username"
+        />
       </div>
       
-      <h1 style="font-size: 28px; font-weight: 700; margin-bottom: var(--spacing-2);">Welcome Back</h1>
-      <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-6);">
-        Sign in to access your SEO dashboard
-      </p>
+      <div class="form-group">
+        <label for="passwordInput">Password</label>
+        <input 
+          type="password" 
+          id="passwordInput" 
+          class="form-input" 
+          required 
+          autocomplete="current-password"
+          placeholder="Enter your password"
+        />
+      </div>
       
-      <div class="error-message" id="errorMessage"></div>
+      <div class="login-forgot">
+        <a href="#" onclick="alert('Password reset coming soon'); return false;">Forgot password?</a>
+      </div>
       
-      <form id="loginForm" onsubmit="handleLogin(event)">
-        <div class="form-group">
-          <label class="form-label" for="email">Email</label>
-          <input 
-            type="email" 
-            id="email" 
-            class="form-input" 
-            required 
-            autocomplete="email"
-            placeholder="your@email.com"
-          />
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <input 
-            type="password" 
-            id="password" 
-            class="form-input" 
-            required 
-            autocomplete="current-password"
-            placeholder="Enter your password"
-          />
-        </div>
-        
-        <button type="submit" class="btn-primary" id="loginBtn">
-          Sign In
-        </button>
-      </form>
+      <button type="submit" class="btn-primary" id="loginBtn">
+        <span class="btn-text">Sign In</span>
+        <div class="spinner"></div>
+      </button>
+    </form>
+    
+    <div class="login-signup">
+      <p>Don't have an account? <a href="#" onclick="alert('Contact your administrator to create an account'); return false;">Sign up</a></p>
     </div>
   </div>
 
@@ -195,13 +305,14 @@
     async function handleLogin(event) {
       event.preventDefault();
       
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
       const loginBtn = document.getElementById('loginBtn');
-      const errorDiv = document.getElementById('errorMessage');
+      const errorDiv = document.getElementById('loginError');
       
+      // Show loading state
       loginBtn.disabled = true;
-      loginBtn.textContent = 'Signing in...';
+      loginBtn.classList.add('loading');
       errorDiv.classList.remove('show');
       
       try {
@@ -215,7 +326,7 @@
         const data = await response.json();
         
         if (!response.ok) {
-          throw new Error(data.error || 'Login failed');
+          throw new Error(data.error || 'Invalid credentials');
         }
         
         // Redirect based on role
@@ -225,10 +336,9 @@
           window.location.href = '/employee.html';
         }
       } catch (error) {
-        errorDiv.textContent = error.message || 'Invalid email or password';
         errorDiv.classList.add('show');
         loginBtn.disabled = false;
-        loginBtn.textContent = 'Sign In';
+        loginBtn.classList.remove('loading');
       }
     }
     

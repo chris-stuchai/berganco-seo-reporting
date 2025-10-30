@@ -139,6 +139,7 @@
           <td>${new Date(u.createdAt).toLocaleDateString()}</td>
           <td>
             <button class="btn" onclick="editUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote); margin-right: 4px;">Edit</button>
+            ${u.role === 'CLIENT' ? `<button class="btn" onclick="impersonateUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote); background: var(--color-blue); color: white; margin-right: 4px;">View As</button>` : ''}
             ${u.role !== 'ADMIN' ? `<button class="btn btn-danger" onclick="deleteUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote);">Delete</button>` : ''}
           </td>
         </tr>
@@ -187,6 +188,23 @@
     async function generateReport() {
       await fetch('/api/generate-report', { method: 'POST', credentials: 'include' });
       alert('Report generation started');
+    }
+
+    async function impersonateUser(userId) {
+      if (!confirm('View dashboard as this client? You can exit by clicking "Stop Viewing As" in the navigation.')) return;
+      
+      const res = await fetch('/api/auth/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId })
+      });
+      
+      if (res.ok) {
+        window.location.href = '/';
+      } else {
+        alert('Failed to impersonate user');
+      }
     }
   </script>
 </body>
