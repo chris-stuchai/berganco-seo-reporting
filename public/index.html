@@ -745,7 +745,10 @@
         const data = await response.json();
         
         if (data.metrics) {
-          updateMetricCards(data.metrics);
+          updateMetricCards(data.metrics, {
+            dataCoverage: data.metrics.dataCoverage,
+            missingDays: data.diagnostics?.missingDays || 0
+          });
         }
         
         if (data.latestReport) {
@@ -774,20 +777,35 @@
       if (diagnostics && diagnostics.dataCoverage < 100) {
         const missingDays = diagnostics.missingDays || 0;
         if (missingDays > 0) {
-          const warningMsg = `⚠️ Missing data for ${missingDays} day${missingDays > 1 ? 's' : ''}. Numbers may be lower than Google Search Console. Click "Collect Now" in Employee Portal to sync.`;
-          // Add a subtle notification at top of metrics
-          if (!document.getElementById('dataCoverageWarning')) {
-            const warning = document.createElement('div');
-            warning.id = 'dataCoverageWarning';
-            warning.style.cssText = 'padding: var(--spacing-3) var(--spacing-4); background: rgba(255, 159, 10, 0.15); border: 1px solid var(--color-orange); border-radius: 8px; margin-bottom: var(--spacing-4); color: var(--color-orange); font-size: var(--font-footnote);';
-            warning.textContent = warningMsg;
-            const dashboardContent = document.querySelector('.content-area') || document.querySelector('main');
-            if (dashboardContent && dashboardContent.firstChild) {
-              dashboardContent.insertBefore(warning, dashboardContent.firstChild);
-            }
-          } else {
-            document.getElementById('dataCoverageWarning').textContent = warningMsg;
+          const warningMsg = `⚠️ Missing data for ${missingDays} day${missingDays > 1 ? 's' : ''}. Numbers may be lower than Google Search Console. Click "Collect Now" in Employee Portal to sync missing days.`;
+          // Remove existing warning if any
+          const existingWarning = document.getElementById('dataCoverageWarning');
+          if (existingWarning) {
+            existingWarning.remove();
           }
+        
+        // Show data coverage warning
+        const warning = document.createElement('div');
+        warning.id = 'dataCoverageWarning';
+        warning.style.cssText = 'padding: var(--spacing-3) var(--spacing-4); background: rgba(255, 159, 10, 0.15); border: 1px solid var(--color-orange); border-radius: 8px; margin-bottom: var(--spacing-4); color: var(--color-orange); font-size: var(--font-footnote); display: flex; align-items: center; gap: var(--spacing-2);';
+        warning.innerHTML = `
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>${warningMsg}</span>
+        `;
+        const dashboardContent = document.querySelector('.content-area') || document.querySelector('main');
+        const metricsGrid = document.querySelector('.grid.grid-cols-4') || document.querySelector('.grid');
+        if (dashboardContent && metricsGrid) {
+          dashboardContent.insertBefore(warning, metricsGrid);
+        } else if (dashboardContent && dashboardContent.firstChild) {
+          dashboardContent.insertBefore(warning, dashboardContent.firstChild);
+        }
+      } else {
+        // Remove warning if data coverage is 100%
+        const existingWarning = document.getElementById('dataCoverageWarning');
+        if (existingWarning) {
+          existingWarning.remove();
         }
       }
       document.getElementById('totalClicks').textContent = formatNumber(metrics.totalClicks);
