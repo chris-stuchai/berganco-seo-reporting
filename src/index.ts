@@ -49,22 +49,107 @@ app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Dashboard endpoint - returns latest metrics
+// Dashboard endpoint - returns latest metrics with calculated 7-day stats
 app.get('/api/dashboard', async (req, res) => {
   try {
-    const latestMetrics = await prisma.dailyMetric.findMany({
+    const days = parseInt(req.query.days as string) || 7;
+    const endDate = new Date();
+    const startDate = subDays(endDate, days);
+
+    // Get daily metrics for the date range
+    const dailyMetrics = await prisma.dailyMetric.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
       orderBy: { date: 'desc' },
-      take: 30,
     });
+
+    // Calculate aggregated metrics for the period
+    let totalClicks = 0;
+    let totalImpressions = 0;
+    let totalCtr = 0;
+    let totalPosition = 0;
+    let metricCount = 0;
+
+    dailyMetrics.forEach((metric) => {
+      totalClicks += metric.clicks;
+      totalImpressions += metric.impressions;
+      totalCtr += metric.ctr;
+      totalPosition += metric.position;
+      metricCount++;
+    });
+
+    const avgCtr = metricCount > 0 ? totalCtr / metricCount : 0;
+    const avgPosition = metricCount > 0 ? totalPosition / metricCount : 0;
+
+    // Get previous period for comparison
+    const prevStartDate = subDays(startDate, days);
+    const prevDailyMetrics = await prisma.dailyMetric.findMany({
+      where: {
+        date: {
+          gte: prevStartDate,
+          lt: startDate,
+        },
+      },
+    });
+
+    let prevTotalClicks = 0;
+    let prevTotalImpressions = 0;
+    let prevMetricCount = 0;
+
+    prevDailyMetrics.forEach((metric) => {
+      prevTotalClicks += metric.clicks;
+      prevTotalImpressions += metric.impressions;
+      prevMetricCount++;
+    });
+
+    const prevAvgCtr = prevMetricCount > 0 
+      ? prevDailyMetrics.reduce((sum, m) => sum + m.ctr, 0) / prevMetricCount 
+      : 0;
+    const prevAvgPosition = prevMetricCount > 0
+      ? prevDailyMetrics.reduce((sum, m) => sum + m.position, 0) / prevMetricCount
+      : 0;
+
+    // Calculate changes
+    const clicksChange = prevTotalClicks > 0
+      ? ((totalClicks - prevTotalClicks) / prevTotalClicks) * 100
+      : 0;
+    const impressionsChange = prevTotalImpressions > 0
+      ? ((totalImpressions - prevTotalImpressions) / prevTotalImpressions) * 100
+      : 0;
+    const ctrChange = prevAvgCtr > 0
+      ? ((avgCtr - prevAvgCtr) / prevAvgCtr) * 100
+      : 0;
+    const positionChange = avgPosition - prevAvgPosition;
 
     const latestReport = await prisma.weeklyReport.findFirst({
       orderBy: { weekStartDate: 'desc' },
     });
 
+    // Return calculated metrics
     res.json({
-      latestMetrics,
+      period: {
+        days,
+        startDate: startDate,
+        endDate: endDate,
+      },
+      metrics: {
+        totalClicks,
+        totalImpressions,
+        averageCtr: avgCtr,
+        averagePosition: avgPosition,
+        clicksChange,
+        impressionsChange,
+        ctrChange,
+        positionChange,
+        dataPoints: metricCount,
+      },
+      latestMetrics: dailyMetrics,
       latestReport,
-      lastUpdate: latestMetrics[0]?.date || null,
+      lastUpdate: dailyMetrics[0]?.date || null,
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);

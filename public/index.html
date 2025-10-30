@@ -6,25 +6,64 @@
   <title>BerganCo SEO Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    .metric-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+    
+    .date-filter-btn {
+      transition: all 0.2s ease;
+    }
+    
+    .date-filter-btn.active {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+  </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gradient-to-br from-slate-50 via-white to-slate-50 min-h-screen">
   
   <!-- Header -->
-  <header class="bg-white shadow-sm">
+  <header class="bg-white/80 backdrop-blur-lg border-b border-slate-200/60 sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">BerganCo SEO Dashboard</h1>
-          <p class="text-sm text-gray-500 mt-1">www.berganco.com</p>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            BerganCo SEO Dashboard
+          </h1>
+          <p class="text-sm text-slate-500 mt-1 font-medium">www.berganco.com</p>
         </div>
-        <div class="flex gap-2">
-          <a href="/admin.html" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+        <div class="flex gap-3">
+          <a href="/admin.html" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg shadow-purple-500/20 font-medium text-sm">
             ⚙️ Admin Portal
           </a>
-          <button onclick="collectData()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+          <button onclick="collectData()" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 font-medium text-sm">
             Collect Data
           </button>
-          <button onclick="generateReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+          <button onclick="generateReport()" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/20 font-medium text-sm">
             Generate Report
           </button>
         </div>
@@ -36,61 +75,117 @@
   <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
     
     <!-- Loading State -->
-    <div id="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div id="loading" class="flex items-center justify-center py-24">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-600 mx-auto mb-4"></div>
+        <p class="text-slate-500 font-medium">Loading dashboard data...</p>
+      </div>
     </div>
 
     <!-- Dashboard Content -->
     <div id="dashboard" class="hidden">
       
+      <!-- Date Filter -->
+      <div class="mb-8 bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/60 shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900 mb-1">Select Time Period</h2>
+            <p class="text-sm text-slate-500">Choose the date range for your analysis</p>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="setDateFilter(7)" class="date-filter-btn px-4 py-2 rounded-xl font-medium text-sm border-2 border-slate-200 text-slate-700 hover:border-slate-300 active" id="filter-7">
+              7 Days
+            </button>
+            <button onclick="setDateFilter(14)" class="date-filter-btn px-4 py-2 rounded-xl font-medium text-sm border-2 border-slate-200 text-slate-700 hover:border-slate-300" id="filter-14">
+              14 Days
+            </button>
+            <button onclick="setDateFilter(30)" class="date-filter-btn px-4 py-2 rounded-xl font-medium text-sm border-2 border-slate-200 text-slate-700 hover:border-slate-300" id="filter-30">
+              30 Days
+            </button>
+            <button onclick="setDateFilter(90)" class="date-filter-btn px-4 py-2 rounded-xl font-medium text-sm border-2 border-slate-200 text-slate-700 hover:border-slate-300" id="filter-90">
+              90 Days
+            </button>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-200">
+          <p class="text-xs text-slate-500" id="dateRange">
+            Loading date range...
+          </p>
+        </div>
+      </div>
+
       <!-- Key Metrics Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         
         <!-- Clicks Card -->
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">Total Clicks (7d)</p>
-              <p class="text-3xl font-bold text-gray-900" id="totalClicks">-</p>
-              <p class="text-sm mt-2" id="clicksChange">-</p>
+        <div class="metric-card rounded-2xl shadow-lg border border-slate-200/60 p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div class="metric-icon bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
+              👆
             </div>
-            <div class="text-4xl">👆</div>
+            <div class="text-right">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Clicks</span>
+            </div>
+          </div>
+          <div>
+            <p class="text-4xl font-bold text-slate-900 mb-2" id="totalClicks">-</p>
+            <p class="text-sm font-medium" id="clicksChange">
+              <span class="text-slate-400">No comparison data</span>
+            </p>
           </div>
         </div>
 
         <!-- Impressions Card -->
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">Total Impressions (7d)</p>
-              <p class="text-3xl font-bold text-gray-900" id="totalImpressions">-</p>
-              <p class="text-sm mt-2" id="impressionsChange">-</p>
+        <div class="metric-card rounded-2xl shadow-lg border border-slate-200/60 p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div class="metric-icon bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30">
+              👁️
             </div>
-            <div class="text-4xl">👁️</div>
+            <div class="text-right">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Impressions</span>
+            </div>
+          </div>
+          <div>
+            <p class="text-4xl font-bold text-slate-900 mb-2" id="totalImpressions">-</p>
+            <p class="text-sm font-medium" id="impressionsChange">
+              <span class="text-slate-400">No comparison data</span>
+            </p>
           </div>
         </div>
 
         <!-- CTR Card -->
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">Average CTR (7d)</p>
-              <p class="text-3xl font-bold text-gray-900" id="avgCtr">-</p>
-              <p class="text-sm mt-2" id="ctrChange">-</p>
+        <div class="metric-card rounded-2xl shadow-lg border border-slate-200/60 p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div class="metric-icon bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30">
+              📊
             </div>
-            <div class="text-4xl">📊</div>
+            <div class="text-right">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Avg CTR</span>
+            </div>
+          </div>
+          <div>
+            <p class="text-4xl font-bold text-slate-900 mb-2" id="avgCtr">-</p>
+            <p class="text-sm font-medium" id="ctrChange">
+              <span class="text-slate-400">No comparison data</span>
+            </p>
           </div>
         </div>
 
         <!-- Position Card -->
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">Avg Position (7d)</p>
-              <p class="text-3xl font-bold text-gray-900" id="avgPosition">-</p>
-              <p class="text-sm mt-2" id="positionChange">-</p>
+        <div class="metric-card rounded-2xl shadow-lg border border-slate-200/60 p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div class="metric-icon bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30">
+              🎯
             </div>
-            <div class="text-4xl">🎯</div>
+            <div class="text-right">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Avg Position</span>
+            </div>
+          </div>
+          <div>
+            <p class="text-4xl font-bold text-slate-900 mb-2" id="avgPosition">-</p>
+            <p class="text-sm font-medium" id="positionChange">
+              <span class="text-slate-400">No comparison data</span>
+            </p>
           </div>
         </div>
 
@@ -100,45 +195,58 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         
         <!-- Clicks Trend Chart -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Clicks & Impressions Trend (30 days)</h2>
+        <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
+          <h2 class="text-xl font-semibold text-slate-900 mb-1">Clicks & Impressions Trend</h2>
+          <p class="text-sm text-slate-500 mb-6">Performance over time</p>
           <canvas id="clicksChart"></canvas>
         </div>
 
         <!-- CTR & Position Chart -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">CTR & Position Trend (30 days)</h2>
+        <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
+          <h2 class="text-xl font-semibold text-slate-900 mb-1">CTR & Position Trend</h2>
+          <p class="text-sm text-slate-500 mb-6">Engagement metrics</p>
           <canvas id="ctrChart"></canvas>
         </div>
 
       </div>
 
       <!-- Top Pages & Queries -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         
         <!-- Top Pages -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">🏆 Top Pages (7 days)</h2>
-          <div id="topPages" class="space-y-3">
-            <div class="text-gray-500 text-center py-4">Loading...</div>
+        <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
+          <h2 class="text-xl font-semibold text-slate-900 mb-1">🏆 Top Pages</h2>
+          <p class="text-sm text-slate-500 mb-6">Highest performing pages</p>
+          <div id="topPages" class="space-y-2 max-h-96 overflow-y-auto">
+            <div class="text-slate-500 text-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-blue-600 mx-auto mb-2"></div>
+              Loading...
+            </div>
           </div>
         </div>
 
         <!-- Top Queries -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">🔎 Top Search Queries (7 days)</h2>
-          <div id="topQueries" class="space-y-3">
-            <div class="text-gray-500 text-center py-4">Loading...</div>
+        <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
+          <h2 class="text-xl font-semibold text-slate-900 mb-1">🔎 Top Search Queries</h2>
+          <p class="text-sm text-slate-500 mb-6">Most searched keywords</p>
+          <div id="topQueries" class="space-y-2 max-h-96 overflow-y-auto">
+            <div class="text-slate-500 text-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-emerald-600 mx-auto mb-2"></div>
+              Loading...
+            </div>
           </div>
         </div>
 
       </div>
 
       <!-- Latest Report Insights -->
-      <div class="mt-8 bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">📋 Latest Report Insights</h2>
+      <div class="mt-8 bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
+        <h2 class="text-xl font-semibold text-slate-900 mb-1">📋 Latest Report Insights</h2>
+        <p class="text-sm text-slate-500 mb-6">AI-generated recommendations and analysis</p>
         <div id="reportInsights" class="prose max-w-none">
-          <p class="text-gray-500">No reports available yet.</p>
+          <div class="bg-slate-50 rounded-xl p-6 border border-slate-200">
+            <p class="text-slate-500 text-center">No reports available yet. Generate your first report to see insights.</p>
+          </div>
         </div>
       </div>
 
@@ -148,65 +256,115 @@
 
   <script>
     let clicksChart, ctrChart;
+    let currentDays = 7;
 
     // Format numbers with commas
     function formatNumber(num) {
+      if (num === null || num === undefined || isNaN(num)) return '-';
       return num.toLocaleString('en-US');
     }
 
     // Format change percentage
     function formatChange(change, inverted = false) {
+      if (change === null || change === undefined || isNaN(change)) {
+        return '<span class="text-slate-400">No comparison data</span>';
+      }
+      
       const isPositive = inverted ? change < 0 : change > 0;
-      const color = isPositive ? 'text-green-600' : 'text-red-600';
+      const color = isPositive ? 'text-emerald-600' : 'text-red-600';
       const arrow = change > 0 ? '↑' : '↓';
-      return `<span class="${color} font-semibold">${arrow} ${Math.abs(change).toFixed(1)}%</span> vs last week`;
+      const prefix = inverted ? '' : (isPositive ? '+' : '');
+      const sign = inverted && change < 0 ? '+' : '';
+      
+      if (inverted) {
+        // For position, lower is better, so we invert the logic
+        return `<span class="${color} font-semibold">${sign}${Math.abs(change).toFixed(1)}</span> <span class="text-slate-500 text-xs">vs previous period</span>`;
+      } else {
+        return `<span class="${color} font-semibold">${arrow} ${Math.abs(change).toFixed(1)}%</span> <span class="text-slate-500 text-xs">vs previous period</span>`;
+      }
+    }
+
+    // Set date filter
+    function setDateFilter(days) {
+      currentDays = days;
+      
+      // Update active button
+      document.querySelectorAll('.date-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById(`filter-${days}`).classList.add('active');
+      
+      // Reload dashboard
+      loadDashboard();
     }
 
     // Load dashboard data
     async function loadDashboard() {
       try {
-        const response = await fetch('/api/dashboard');
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('dashboard').classList.add('hidden');
+        
+        const response = await fetch(`/api/dashboard?days=${currentDays}`);
         const data = await response.json();
         
+        // Update date range display
+        if (data.period) {
+          const start = new Date(data.period.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const end = new Date(data.period.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          document.getElementById('dateRange').textContent = `${start} - ${end} (${data.period.days} days)`;
+        }
+        
+        // Update metric cards with calculated metrics
+        if (data.metrics) {
+          updateMetricCards(data.metrics);
+        }
+
+        // Update report insights if available
         if (data.latestReport) {
-          updateMetricCards(data.latestReport);
           updateReportInsights(data.latestReport);
         }
 
         await Promise.all([
-          loadTrends(),
-          loadTopPages(),
-          loadTopQueries()
+          loadTrends(currentDays),
+          loadTopPages(currentDays),
+          loadTopQueries(currentDays)
         ]);
 
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('dashboard').classList.remove('hidden');
       } catch (error) {
         console.error('Error loading dashboard:', error);
-        document.getElementById('loading').innerHTML = '<p class="text-red-600">Error loading dashboard data</p>';
+        document.getElementById('loading').innerHTML = '<p class="text-red-600 font-medium">Error loading dashboard data. Please try again.</p>';
       }
     }
 
     // Update metric cards
-    function updateMetricCards(report) {
-      document.getElementById('totalClicks').textContent = formatNumber(report.totalClicks);
-      document.getElementById('clicksChange').innerHTML = formatChange(report.clicksChange);
+    function updateMetricCards(metrics) {
+      document.getElementById('totalClicks').textContent = formatNumber(metrics.totalClicks);
+      document.getElementById('clicksChange').innerHTML = formatChange(metrics.clicksChange);
 
-      document.getElementById('totalImpressions').textContent = formatNumber(report.totalImpressions);
-      document.getElementById('impressionsChange').innerHTML = formatChange(report.impressionsChange);
+      document.getElementById('totalImpressions').textContent = formatNumber(metrics.totalImpressions);
+      document.getElementById('impressionsChange').innerHTML = formatChange(metrics.impressionsChange);
 
-      document.getElementById('avgCtr').textContent = (report.averageCtr * 100).toFixed(2) + '%';
-      document.getElementById('ctrChange').innerHTML = formatChange(report.ctrChange);
+      const ctrPercent = metrics.averageCtr ? (metrics.averageCtr * 100).toFixed(2) : '-';
+      document.getElementById('avgCtr').textContent = ctrPercent !== '-' ? ctrPercent + '%' : '-';
+      document.getElementById('ctrChange').innerHTML = formatChange(metrics.ctrChange);
 
-      document.getElementById('avgPosition').textContent = report.averagePosition.toFixed(1);
-      document.getElementById('positionChange').innerHTML = formatChange(report.positionChange, true);
+      const position = metrics.averagePosition ? metrics.averagePosition.toFixed(1) : '-';
+      document.getElementById('avgPosition').textContent = position;
+      document.getElementById('positionChange').innerHTML = formatChange(metrics.positionChange, true);
     }
 
     // Load trends and create charts
-    async function loadTrends() {
+    async function loadTrends(days) {
       try {
-        const response = await fetch('/api/trends?days=30');
+        const response = await fetch(`/api/trends?days=${days}`);
         const data = await response.json();
+
+        if (!data || data.length === 0) {
+          console.warn('No trend data available');
+          return;
+        }
 
         const dates = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
         const clicks = data.map(d => d.clicks);
@@ -227,7 +385,8 @@
                 data: clicks,
                 borderColor: 'rgb(59, 130, 246)',
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.3,
+                tension: 0.4,
+                fill: true,
                 yAxisID: 'y'
               },
               {
@@ -235,17 +394,41 @@
                 data: impressions,
                 borderColor: 'rgb(168, 85, 247)',
                 backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                tension: 0.3,
+                tension: 0.4,
+                fill: true,
                 yAxisID: 'y1'
               }
             ]
           },
           options: {
             responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  font: { family: 'Inter', size: 12 },
+                  padding: 15,
+                  usePointStyle: true
+                }
+              }
+            },
             interaction: { mode: 'index', intersect: false },
             scales: {
-              y: { type: 'linear', display: true, position: 'left' },
-              y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+              y: { 
+                type: 'linear', 
+                display: true, 
+                position: 'left',
+                beginAtZero: true,
+                grid: { color: 'rgba(0, 0, 0, 0.05)' }
+              },
+              y1: { 
+                type: 'linear', 
+                display: true, 
+                position: 'right',
+                beginAtZero: true,
+                grid: { drawOnChartArea: false }
+              }
             }
           }
         });
@@ -263,7 +446,8 @@
                 data: ctrs,
                 borderColor: 'rgb(16, 185, 129)',
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                tension: 0.3,
+                tension: 0.4,
+                fill: true,
                 yAxisID: 'y'
               },
               {
@@ -271,17 +455,42 @@
                 data: positions,
                 borderColor: 'rgb(245, 158, 11)',
                 backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                tension: 0.3,
+                tension: 0.4,
+                fill: true,
                 yAxisID: 'y1'
               }
             ]
           },
           options: {
             responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  font: { family: 'Inter', size: 12 },
+                  padding: 15,
+                  usePointStyle: true
+                }
+              }
+            },
             interaction: { mode: 'index', intersect: false },
             scales: {
-              y: { type: 'linear', display: true, position: 'left' },
-              y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, reverse: true }
+              y: { 
+                type: 'linear', 
+                display: true, 
+                position: 'left',
+                beginAtZero: true,
+                grid: { color: 'rgba(0, 0, 0, 0.05)' }
+              },
+              y1: { 
+                type: 'linear', 
+                display: true, 
+                position: 'right',
+                reverse: true,
+                beginAtZero: true,
+                grid: { drawOnChartArea: false }
+              }
             }
           }
         });
@@ -291,57 +500,69 @@
     }
 
     // Load top pages
-    async function loadTopPages() {
+    async function loadTopPages(days) {
       try {
-        const response = await fetch('/api/top-pages?days=7&limit=10');
+        const response = await fetch(`/api/top-pages?days=${days}&limit=10`);
         const data = await response.json();
 
+        if (!data || data.length === 0) {
+          document.getElementById('topPages').innerHTML = '<p class="text-slate-500 text-center py-8">No page data available</p>';
+          return;
+        }
+
         const html = data.map((page, idx) => {
-          const url = page.page.replace('https://www.berganco.com', '');
+          const url = page.page.replace('https://www.berganco.com', '') || '/';
           return `
-            <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-slate-50 to-white rounded-xl hover:from-slate-100 hover:to-slate-50 transition-all border border-slate-200/50">
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900 truncate">${url || '/'}</p>
-                <p class="text-xs text-gray-500">${formatNumber(page._sum.clicks)} clicks · ${(page._avg.ctr * 100).toFixed(2)}% CTR</p>
+                <p class="text-sm font-semibold text-slate-900 truncate">${url}</p>
+                <p class="text-xs text-slate-500 mt-1">${formatNumber(page._sum.clicks)} clicks · ${((page._avg.ctr || 0) * 100).toFixed(2)}% CTR</p>
               </div>
               <div class="text-right ml-4">
-                <p class="text-sm font-semibold text-blue-600">${formatNumber(page._sum.impressions)}</p>
-                <p class="text-xs text-gray-500">impressions</p>
+                <p class="text-sm font-bold text-purple-600">${formatNumber(page._sum.impressions)}</p>
+                <p class="text-xs text-slate-400">impressions</p>
               </div>
             </div>
           `;
         }).join('');
 
-        document.getElementById('topPages').innerHTML = html || '<p class="text-gray-500 text-center py-4">No data available</p>';
+        document.getElementById('topPages').innerHTML = html;
       } catch (error) {
         console.error('Error loading top pages:', error);
+        document.getElementById('topPages').innerHTML = '<p class="text-red-500 text-center py-8">Error loading pages</p>';
       }
     }
 
     // Load top queries
-    async function loadTopQueries() {
+    async function loadTopQueries(days) {
       try {
-        const response = await fetch('/api/top-queries?days=7&limit=10');
+        const response = await fetch(`/api/top-queries?days=${days}&limit=10`);
         const data = await response.json();
+
+        if (!data || data.length === 0) {
+          document.getElementById('topQueries').innerHTML = '<p class="text-slate-500 text-center py-8">No query data available</p>';
+          return;
+        }
 
         const html = data.map((query, idx) => {
           return `
-            <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-slate-50 to-white rounded-xl hover:from-slate-100 hover:to-slate-50 transition-all border border-slate-200/50">
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900">"${query.query}"</p>
-                <p class="text-xs text-gray-500">Position ${query._avg.position.toFixed(1)} · ${(query._avg.ctr * 100).toFixed(2)}% CTR</p>
+                <p class="text-sm font-semibold text-slate-900">"${query.query}"</p>
+                <p class="text-xs text-slate-500 mt-1">Position ${(query._avg.position || 0).toFixed(1)} · ${((query._avg.ctr || 0) * 100).toFixed(2)}% CTR</p>
               </div>
               <div class="text-right ml-4">
-                <p class="text-sm font-semibold text-green-600">${formatNumber(query._sum.clicks)}</p>
-                <p class="text-xs text-gray-500">clicks</p>
+                <p class="text-sm font-bold text-emerald-600">${formatNumber(query._sum.clicks)}</p>
+                <p class="text-xs text-slate-400">clicks</p>
               </div>
             </div>
           `;
         }).join('');
 
-        document.getElementById('topQueries').innerHTML = html || '<p class="text-gray-500 text-center py-4">No data available</p>';
+        document.getElementById('topQueries').innerHTML = html;
       } catch (error) {
         console.error('Error loading top queries:', error);
+        document.getElementById('topQueries').innerHTML = '<p class="text-red-500 text-center py-8">Error loading queries</p>';
       }
     }
 
@@ -352,13 +573,13 @@
 
       document.getElementById('reportInsights').innerHTML = `
         <div class="mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">Insights</h3>
-          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm">${insights}</div>
+          <h3 class="text-lg font-semibold text-slate-900 mb-3">Insights</h3>
+          <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400 rounded-xl p-5 text-sm text-slate-700 shadow-sm">${insights}</div>
         </div>
         ${recommendations ? `
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">Recommendations</h3>
-          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 text-sm">${recommendations}</div>
+          <h3 class="text-lg font-semibold text-slate-900 mb-3">Recommendations</h3>
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-xl p-5 text-sm text-slate-700 shadow-sm">${recommendations}</div>
         </div>
         ` : ''}
       `;
@@ -380,7 +601,7 @@
           alert('Data collected successfully!');
           location.reload();
         } else {
-          alert('Error collecting data');
+          alert('Error collecting data: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
         console.error('Error:', error);
@@ -407,7 +628,7 @@
           alert('Report generated and sent successfully!');
           location.reload();
         } else {
-          alert('Error generating report');
+          alert('Error generating report: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
         console.error('Error:', error);
@@ -424,4 +645,3 @@
 
 </body>
 </html>
-
