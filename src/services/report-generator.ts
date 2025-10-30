@@ -144,41 +144,41 @@ function generateInsights(comparison: ComparisonMetrics): string {
 
   // Traffic analysis
   if (comparison.clicksChange < -20) {
-    insights.push(`🔴 CRITICAL: Clicks dropped ${Math.abs(comparison.clicksChange).toFixed(1)}% - immediate attention needed`);
+    insights.push(`CRITICAL: Clicks dropped ${Math.abs(comparison.clicksChange).toFixed(1)}% - immediate attention needed`);
   } else if (comparison.clicksChange < -10) {
-    insights.push(`⚠️  WARNING: Clicks decreased ${Math.abs(comparison.clicksChange).toFixed(1)}%`);
+    insights.push(`WARNING: Clicks decreased ${Math.abs(comparison.clicksChange).toFixed(1)}%`);
   } else if (comparison.clicksChange > 10) {
-    insights.push(`✅ POSITIVE: Clicks increased ${comparison.clicksChange.toFixed(1)}%`);
+    insights.push(`POSITIVE: Clicks increased ${comparison.clicksChange.toFixed(1)}%`);
   }
 
   // Impressions analysis
   if (comparison.impressionsChange < -20) {
-    insights.push(`🔴 Visibility dropped significantly: ${Math.abs(comparison.impressionsChange).toFixed(1)}% fewer impressions`);
+    insights.push(`Visibility dropped significantly: ${Math.abs(comparison.impressionsChange).toFixed(1)}% fewer impressions`);
   } else if (comparison.impressionsChange < -10) {
-    insights.push(`⚠️  Impressions decreased ${Math.abs(comparison.impressionsChange).toFixed(1)}%`);
+    insights.push(`Impressions decreased ${Math.abs(comparison.impressionsChange).toFixed(1)}%`);
   } else if (comparison.impressionsChange > 10) {
-    insights.push(`✅ Visibility improved: ${comparison.impressionsChange.toFixed(1)}% more impressions`);
+    insights.push(`Visibility improved: ${comparison.impressionsChange.toFixed(1)}% more impressions`);
   }
 
   // CTR analysis
   if (comparison.ctrChange < -10) {
-    insights.push(`⚠️  CTR declined ${Math.abs(comparison.ctrChange).toFixed(1)}% - titles/descriptions may need optimization`);
+    insights.push(`CTR declined ${Math.abs(comparison.ctrChange).toFixed(1)}% - titles/descriptions may need optimization`);
   } else if (comparison.ctrChange > 10) {
-    insights.push(`✅ CTR improved ${comparison.ctrChange.toFixed(1)}% - better engagement`);
+    insights.push(`CTR improved ${comparison.ctrChange.toFixed(1)}% - better engagement`);
   }
 
   // Position analysis
   if (comparison.positionChange > 2) {
-    insights.push(`🔴 Average ranking dropped ${comparison.positionChange.toFixed(1)} positions`);
+    insights.push(`Average ranking dropped ${comparison.positionChange.toFixed(1)} positions`);
   } else if (comparison.positionChange < -2) {
-    insights.push(`✅ Average ranking improved ${Math.abs(comparison.positionChange).toFixed(1)} positions`);
+    insights.push(`Average ranking improved ${Math.abs(comparison.positionChange).toFixed(1)} positions`);
   }
 
   // Overall assessment
   if (comparison.clicksChange < -10 && comparison.impressionsChange < -10) {
-    insights.push(`📊 DIAGNOSIS: Both visibility AND engagement are down - likely a ranking/algorithm issue`);
+    insights.push(`DIAGNOSIS: Both visibility AND engagement are down - likely a ranking/algorithm issue`);
   } else if (comparison.clicksChange < -10 && comparison.impressionsChange >= 0) {
-    insights.push(`📊 DIAGNOSIS: Visibility is stable but clicks are down - CTR optimization needed`);
+    insights.push(`DIAGNOSIS: Visibility is stable but clicks are down - CTR optimization needed`);
   }
 
   return insights.join('\n');
@@ -313,11 +313,11 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
 
   // Combine baseline and AI insights
   const enhancedInsights = aiInsights 
-    ? `${insights}\n\n🤖 AI ANALYSIS:\n\n${aiInsights.executiveSummary}\n\nMarket Context: ${aiInsights.marketContext}\n\nKey Insights:\n${aiInsights.keyInsights.map((i, idx) => `• ${i}`).join('\n')}\n\nIndustry Trends: ${aiInsights.industryTrends}`
+    ? `${insights}\n\nAI ANALYSIS:\n\n${aiInsights.executiveSummary}\n\nMarket Context: ${aiInsights.marketContext}\n\nKey Insights:\n${aiInsights.keyInsights.map((i, idx) => `• ${i}`).join('\n')}\n\nIndustry Trends: ${aiInsights.industryTrends}`
     : insights;
 
   const enhancedRecommendations = aiInsights
-    ? `${recommendations}\n\n🤖 AI STRATEGIC RECOMMENDATIONS:\n\n${aiInsights.urgentActions.length > 0 ? 'URGENT ACTIONS:\n' + aiInsights.urgentActions.map((a, idx) => `${idx + 1}. ${a}`).join('\n') + '\n\n' : ''}STRATEGIC RECOMMENDATIONS:\n${aiInsights.strategicRecommendations.map((r, idx) => `${idx + 1}. ${r}`).join('\n')}`
+    ? `${recommendations}\n\nAI STRATEGIC RECOMMENDATIONS:\n\n${aiInsights.urgentActions.length > 0 ? 'URGENT ACTIONS:\n' + aiInsights.urgentActions.map((a, idx) => `${idx + 1}. ${a}`).join('\n') + '\n\n' : ''}STRATEGIC RECOMMENDATIONS:\n${aiInsights.strategicRecommendations.map((r, idx) => `${idx + 1}. ${r}`).join('\n')}`
     : recommendations;
 
   // Store report in database (use upsert to handle duplicates)

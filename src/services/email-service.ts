@@ -99,7 +99,9 @@ function generateEmailHTML(data: ReportData): string {
             <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
               <div style="display: flex; align-items: center; margin-bottom: 16px;">
                 <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(10, 132, 255, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                  <div style="width: 20px; height: 20px; background: #0A84FF; border-radius: 4px;"></div>
+                  <svg width="20" height="20" fill="none" stroke="#0A84FF" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
+                    <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                  </svg>
                 </div>
                 <div style="flex: 1;">
                   <div style="color: #98989D; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Clicks</div>
@@ -120,7 +122,10 @@ function generateEmailHTML(data: ReportData): string {
             <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
               <div style="display: flex; align-items: center; margin-bottom: 16px;">
                 <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(175, 82, 222, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                  <div style="width: 20px; height: 20px; background: #AF52DE; border-radius: 4px;"></div>
+                  <svg width="20" height="20" fill="none" stroke="#AF52DE" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
                 </div>
                 <div style="flex: 1;">
                   <div style="color: #98989D; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Impressions</div>
@@ -143,7 +148,9 @@ function generateEmailHTML(data: ReportData): string {
             <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
               <div style="display: flex; align-items: center; margin-bottom: 16px;">
                 <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(48, 209, 88, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                  <div style="width: 20px; height: 20px; background: #30D158; border-radius: 4px;"></div>
+                  <svg width="20" height="20" fill="none" stroke="#30D158" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
                 </div>
                 <div style="flex: 1;">
                   <div style="color: #98989D; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Average CTR</div>
@@ -164,7 +171,10 @@ function generateEmailHTML(data: ReportData): string {
             <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
               <div style="display: flex; align-items: center; margin-bottom: 16px;">
                 <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(255, 159, 10, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                  <div style="width: 20px; height: 20px; background: #FF9F0A; border-radius: 4px;"></div>
+                  <svg width="20" height="20" fill="none" stroke="#FF9F0A" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
                 </div>
                 <div style="flex: 1;">
                   <div style="color: #98989D; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Average Position</div>
