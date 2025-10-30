@@ -320,9 +320,29 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
     ? `${recommendations}\n\n🤖 AI STRATEGIC RECOMMENDATIONS:\n\n${aiInsights.urgentActions.length > 0 ? 'URGENT ACTIONS:\n' + aiInsights.urgentActions.map((a, idx) => `${idx + 1}. ${a}`).join('\n') + '\n\n' : ''}STRATEGIC RECOMMENDATIONS:\n${aiInsights.strategicRecommendations.map((r, idx) => `${idx + 1}. ${r}`).join('\n')}`
     : recommendations;
 
-  // Store report in database
-  const report = await prisma.weeklyReport.create({
-    data: {
+  // Store report in database (use upsert to handle duplicates)
+  const report = await prisma.weeklyReport.upsert({
+    where: {
+      weekStartDate_weekEndDate: {
+        weekStartDate: startDate,
+        weekEndDate: endDate,
+      },
+    },
+    update: {
+      totalClicks: currentMetrics.totalClicks,
+      totalImpressions: currentMetrics.totalImpressions,
+      averageCtr: currentMetrics.averageCtr,
+      averagePosition: currentMetrics.averagePosition,
+      clicksChange,
+      impressionsChange,
+      ctrChange,
+      positionChange,
+      insights: enhancedInsights,
+      topPages: JSON.stringify(topPages),
+      topQueries: JSON.stringify(topQueries),
+      recommendations: enhancedRecommendations,
+    },
+    create: {
       weekStartDate: startDate,
       weekEndDate: endDate,
       totalClicks: currentMetrics.totalClicks,

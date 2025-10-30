@@ -385,6 +385,45 @@ app.post('/api/collect', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (r
   }
 });
 
+// Preview email endpoint (generates report but doesn't send)
+app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const result = await generateWeeklyReport();
+    
+    const reportData = {
+      weekStartDate: result.report.weekStartDate,
+      weekEndDate: result.report.weekEndDate,
+      currentMetrics: result.currentMetrics,
+      previousMetrics: result.previousMetrics,
+      clicksChange: result.report.clicksChange,
+      impressionsChange: result.report.impressionsChange,
+      ctrChange: result.report.ctrChange,
+      positionChange: result.report.positionChange,
+      topPages: result.topPages,
+      topQueries: result.topQueries,
+      insights: result.insights,
+      recommendations: result.recommendations,
+    };
+
+    const { getEmailPreview } = await import('./services/email-service');
+    const emailHTML = getEmailPreview(reportData);
+
+    res.json({ 
+      success: true,
+      reportId: result.report.id,
+      emailHTML,
+      reportData
+    });
+  } catch (error: any) {
+    console.error('Error generating preview:', error);
+    const errorMessage = error.message || 'Failed to generate preview';
+    res.status(500).json({ 
+      error: errorMessage,
+      details: error.stack
+    });
+  }
+});
+
 // Manual report generation endpoint
 app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
   try {

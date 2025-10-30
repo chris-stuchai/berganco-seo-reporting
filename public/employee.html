@@ -170,7 +170,10 @@
         <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
           <h3 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">Generate Report</h3>
           <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Generate weekly report</p>
-          <button class="btn btn-primary" onclick="generateReport()" style="width: 100%;">Generate Now</button>
+          <div style="display: flex; gap: var(--spacing-2);">
+            <button class="btn btn-secondary" onclick="previewReport()" style="flex: 1;">Preview Email</button>
+            <button class="btn btn-primary" onclick="generateReport()" style="flex: 1;">Generate Now</button>
+          </div>
         </div>
       </div>
     </div>
@@ -194,6 +197,23 @@
         <div class="loading">
           <div class="spinner"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Preview Modal -->
+  <div id="emailPreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: var(--spacing-4);">
+    <div style="background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); border-radius: 16px; padding: var(--spacing-4); width: 100%; max-width: 900px; max-height: 90vh; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-4);">
+        <h2 style="font-size: 28px; font-weight: 700; color: var(--color-label-primary);">Email Preview</h2>
+        <button onclick="closePreviewModal()" style="background: none; border: none; color: var(--color-label-secondary); cursor: pointer; font-size: 24px; padding: var(--spacing-2);">&times;</button>
+      </div>
+      <div style="flex: 1; overflow: auto; border: 1px solid var(--color-separator); border-radius: 8px; background: white;">
+        <iframe id="emailPreviewFrame" style="width: 100%; height: 70vh; border: none;"></iframe>
+      </div>
+      <div style="margin-top: var(--spacing-4); display: flex; justify-content: flex-end; gap: var(--spacing-2);">
+        <button class="btn btn-secondary" onclick="closePreviewModal()">Close</button>
+        <button class="btn btn-primary" onclick="closePreviewModal(); generateReport();">Send Email</button>
       </div>
     </div>
   </div>
@@ -380,6 +400,43 @@
       }
     }
 
+    async function previewReport() {
+      try {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Loading...';
+        
+        const res = await fetch('/api/preview-report', { method: 'POST', credentials: 'include' });
+        const data = await res.json();
+        
+        if (res.ok) {
+          // Show preview modal
+          const modal = document.getElementById('emailPreviewModal');
+          const previewFrame = document.getElementById('emailPreviewFrame');
+          if (previewFrame && modal) {
+            previewFrame.srcdoc = data.emailHTML;
+            modal.style.display = 'flex';
+          }
+        } else {
+          alert(`❌ Error: ${data.error || 'Failed to generate preview'}`);
+        }
+      } catch (error) {
+        alert('❌ Error: Failed to generate preview');
+        console.error(error);
+      } finally {
+        const btn = event.target;
+        btn.disabled = false;
+        btn.textContent = 'Preview Email';
+      }
+    }
+
+    function closePreviewModal() {
+      const modal = document.getElementById('emailPreviewModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
     async function generateReport() {
       try {
         const btn = event.target;
@@ -390,7 +447,7 @@
         const data = await res.json();
         
         if (res.ok) {
-          alert('✅ Report generation started successfully');
+          alert('✅ Report generated and email sent successfully');
           loadUsageStats(); // Refresh stats
         } else {
           alert(`❌ Error: ${data.error || 'Failed to generate report'}`);

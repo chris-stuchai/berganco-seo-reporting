@@ -241,6 +241,13 @@ function generateEmailHTML(data: ReportData): string {
 }
 
 /**
+ * Generates email HTML for preview purposes
+ */
+export function getEmailPreview(reportData: ReportData): string {
+  return generateEmailHTML(reportData);
+}
+
+/**
  * Sends the weekly report via email using Gmail/Google Workspace SMTP
  */
 export async function sendWeeklyReport(reportData: ReportData) {
