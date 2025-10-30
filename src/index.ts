@@ -794,10 +794,43 @@ cron.schedule('0 8 * * 1', async () => {
   }
 });
 
+// Auto-create admin user if environment variables are set
+async function createAdminIfNeeded() {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminName = process.env.ADMIN_NAME || 'Admin User';
+
+  if (!adminEmail || !adminPassword) {
+    console.log('⏭️  Skipping admin user creation (ADMIN_EMAIL or ADMIN_PASSWORD not set)');
+    return;
+  }
+
+  try {
+    // Check if admin user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: adminEmail.toLowerCase() },
+    });
+
+    if (existingUser) {
+      console.log(`✅ Admin user already exists: ${adminEmail}`);
+      return;
+    }
+
+    // Create admin user
+    await authService.createUser(adminEmail, adminPassword, adminName, Role.ADMIN);
+    console.log(`✅ Admin user created: ${adminEmail}`);
+  } catch (error: any) {
+    console.error(`⚠️  Failed to create admin user: ${error.message}`);
+  }
+}
+
 // Start server with migrations
 async function startServer() {
   // Run migrations first
   await runMigrations();
+
+  // Create admin user if environment variables are set
+  await createAdminIfNeeded();
 
   // Start the server
   app.listen(PORT, () => {

@@ -2,61 +2,53 @@
 
 This guide explains how to create users for the BerganCo SEO Reporting System.
 
-## Initial Setup
+## Initial Setup - Automatic (No Local Commands!)
 
-After deployment, you need to create your first admin user. The database migration will run automatically on Railway.
+Your first admin user is created **automatically** when the service starts on Railway if you set these environment variables:
 
-### Option 1: Using Environment Variables (Recommended)
+### Set Environment Variables in Railway
 
-1. **Set environment variables in Railway:**
+1. Go to your Railway project dashboard
+2. Select your service
+3. Go to the **Variables** tab
+4. Add these variables:
    - `ADMIN_EMAIL` = your email (e.g., `chris@stuchai.com`)
    - `ADMIN_PASSWORD` = a secure password
    - `ADMIN_NAME` = Your Name (e.g., `Chris`)
 
-2. **Run the setup script:**
-   ```bash
-   railway run npx tsx src/scripts/create-admin.ts
-   ```
+5. **That's it!** The admin user will be created automatically when the service restarts.
 
-### Option 2: Manual Database Entry
+**Note:** The admin user is only created if it doesn't already exist, so it's safe to set these variables. Once created, you can remove these variables or change the password through the Employee Portal.
 
-Use Railway's database console or Prisma Studio:
+## Creating Additional Users (All Through Web UI)
 
-```bash
-railway run npx prisma studio
-```
-
-Then manually insert a user with:
-- Email: your email
-- Password Hash: (use the auth service to hash a password)
-- Name: Your Name
-- Role: `ADMIN`
-
-## Creating Users
+After your first admin is created automatically, you can create all other users through the web interface - **no local commands needed!**
 
 ### For Your Setup (2 Admins + 1 Client)
 
-#### Admin Users (You + Employee)
+#### Step 1: Create Additional Admin (Your Employee)
 
-1. **Login to Employee Portal** (`/employee.html`)
-2. **Click "Create User"**
+1. **Login to Employee Portal** (`/employee.html`) using your auto-created admin account
+2. **Click "Create User"** button
 3. **Fill in details:**
-   - Name: Full name
-   - Email: Work email
-   - Password: Secure password (share securely)
-   - Role: **ADMIN** (for you and your employee)
+   - Name: Employee's full name
+   - Email: Employee's work email
+   - Password: Secure password (share securely via password manager)
+   - Role: **ADMIN** or **EMPLOYEE**
 4. **Click "Create"**
 
-#### Client User
+#### Step 2: Create Client User
 
-1. **Login to Employee Portal** (`/employee.html`)
-2. **Click "Create User"**
+1. **Still in Employee Portal** (`/employee.html`)
+2. **Click "Create User"** button again
 3. **Fill in details:**
-   - Name: Client's name
+   - Name: Client's name (e.g., "BerganCo Client")
    - Email: Client's email
    - Password: Generate a secure password (share securely)
    - Role: **CLIENT**
 4. **Click "Create"**
+
+**That's it!** All done through the web interface - no local commands or Railway CLI needed.
 
 ## User Roles
 
@@ -124,18 +116,30 @@ After creating these users, you can:
 
 ## Troubleshooting
 
-**"Can't create admin user"**
-- Ensure database migrations have run
-- Check Railway logs for errors
-- Verify environment variables are set correctly
+**"Can't login after setting ADMIN_EMAIL"**
+- Wait for Railway to restart the service (takes ~30 seconds)
+- Check Railway logs - you should see: `✅ Admin user created: your@email.com`
+- If you see `⚠️ Failed to create admin user`, check that ADMIN_PASSWORD is set
+- Try logging in with the email/password you set
+
+**"Admin user already exists" message in logs**
+- This is normal! The system won't create duplicate users
+- Just use your existing admin account to log in
+- You can create additional admins through the Employee Portal
 
 **"Can't login"**
-- Verify user was created successfully
-- Check email/password spelling
-- Ensure user is active (isActive = true in database)
+- Double-check your email and password in Railway variables
+- Ensure user is active (users are active by default)
+- Check browser cookies are enabled
+- Try clearing cookies and logging in again
 
 **"Can't impersonate"**
 - Ensure you're logged in as ADMIN or EMPLOYEE
 - Verify target user has CLIENT role
 - Check browser cookies are enabled
+
+**"Service won't start"**
+- Check Railway logs for database connection errors
+- Verify DATABASE_URL is set correctly in Railway
+- Ensure migrations completed successfully (check logs)
 
