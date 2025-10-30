@@ -213,7 +213,7 @@
       </div>
       <div style="margin-top: var(--spacing-4); display: flex; justify-content: flex-end; gap: var(--spacing-2);">
         <button class="btn btn-secondary" onclick="closePreviewModal()">Close</button>
-        <button class="btn btn-primary" onclick="closePreviewModal(); generateReport();">Send Email</button>
+        <button class="btn btn-primary" onclick="sendReportFromPreview()">Send Email</button>
       </div>
     </div>
   </div>
@@ -434,6 +434,18 @@
       const modal = document.getElementById('emailPreviewModal');
       if (modal) {
         modal.style.display = 'none';
+      }
+    }
+
+    async function sendReportFromPreview() {
+      closePreviewModal();
+      // Find the generate button and trigger it
+      const generateBtn = document.querySelector('[onclick="generateReport()"]');
+      if (generateBtn) {
+        generateBtn.click();
+      } else {
+        // Fallback: call generateReport directly
+        await generateReport();
       }
     }
 
