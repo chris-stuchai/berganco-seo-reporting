@@ -234,20 +234,86 @@ function generateRecommendations(
 }
 
 /**
- * Generates a complete weekly report
+ * Gets daily trends data for a date range (for charts)
  */
-export async function generateWeeklyReport(weekStartDate?: Date) {
-  const startDate = weekStartDate || startOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 });
-  const endDate = endOfWeek(startDate, { weekStartsOn: 1 });
+async function getTrendsData(startDate: Date, endDate: Date): Promise<Array<{
+  date: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+}>> {
+  const metrics = await prisma.dailyMetric.findMany({
+    where: {
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    orderBy: {
+      date: 'asc',
+    },
+  });
 
-  const prevStartDate = subWeeks(startDate, 1);
-  const prevEndDate = endOfWeek(prevStartDate, { weekStartsOn: 1 });
+  return metrics.map(m => ({
+    date: format(m.date, 'MMM d'),
+    clicks: m.clicks,
+    impressions: m.impressions,
+    ctr: m.ctr,
+    position: m.position,
+  }));
+}
 
-  console.log(`Generating report for ${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}...`);
+/**
+ * Generates a complete report for any date range
+ */
+export async function generateReport(
+  startDate?: Date,
+  endDate?: Date,
+  periodType: 'week' | 'month' | 'custom' = 'week'
+) {
+  let calculatedStartDate: Date;
+  let calculatedEndDate: Date;
+  let calculatedPrevStartDate: Date;
+  let calculatedPrevEndDate: Date;
 
-  // Calculate current and previous week metrics
-  const currentMetrics = await calculateWeekMetrics(startDate, endDate);
-  const previousMetrics = await calculateWeekMetrics(prevStartDate, prevEndDate);
+  if (startDate && endDate) {
+    // Custom date range provided
+    calculatedStartDate = startDate;
+    calculatedEndDate = endDate;
+    
+    // Calculate previous period (same duration, ending just before start)
+    const periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    calculatedPrevEndDate = new Date(startDate);
+    calculatedPrevEndDate.setDate(calculatedPrevEndDate.getDate() - 1);
+    calculatedPrevStartDate = new Date(calculatedPrevEndDate);
+    calculatedPrevStartDate.setDate(calculatedPrevStartDate.getDate() - periodDays + 1);
+  } else if (periodType === 'month') {
+    // Monthly report (last 30 days vs previous 30 days)
+    calculatedEndDate = new Date();
+    calculatedStartDate = new Date();
+    calculatedStartDate.setDate(calculatedStartDate.getDate() - 30);
+    
+    calculatedPrevEndDate = new Date(calculatedStartDate);
+    calculatedPrevEndDate.setDate(calculatedPrevEndDate.getDate() - 1);
+    calculatedPrevStartDate = new Date(calculatedPrevEndDate);
+    calculatedPrevStartDate.setDate(calculatedPrevStartDate.getDate() - 30);
+  } else {
+    // Weekly report (default)
+    calculatedStartDate = startDate || startOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 });
+    calculatedEndDate = endDate || endOfWeek(calculatedStartDate, { weekStartsOn: 1 });
+    calculatedPrevStartDate = subWeeks(calculatedStartDate, 1);
+    calculatedPrevEndDate = endOfWeek(calculatedPrevStartDate, { weekStartsOn: 1 });
+  }
+
+  console.log(`Generating ${periodType} report for ${format(calculatedStartDate, 'MMM d')} - ${format(calculatedEndDate, 'MMM d, yyyy')}...`);
+
+  // Calculate current and previous period metrics
+  const currentMetrics = await calculateWeekMetrics(calculatedStartDate, calculatedEndDate);
+  const previousMetrics = await calculateWeekMetrics(calculatedPrevStartDate, calculatedPrevEndDate);
+  
+  // Get trends data for chart
+  const trendsData = await getTrendsData(calculatedStartDate, calculatedEndDate);
 
   // Calculate percentage changes
   const clicksChange = previousMetrics.totalClicks > 0
@@ -273,8 +339,8 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
   };
 
   // Get top pages and queries
-  const topPages = await getTopPages(startDate, endDate);
-  const topQueries = await getTopQueries(startDate, endDate);
+  const topPages = await getTopPages(calculatedStartDate, calculatedEndDate);
+  const topQueries = await getTopQueries(calculatedStartDate, calculatedEndDate);
 
   // Generate baseline insights and recommendations
   const insights = generateInsights(comparison);
@@ -297,10 +363,10 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
       topQueries,
       websiteDomain: 'www.berganco.com',
       period: {
-        startDate: format(startDate, 'yyyy-MM-dd'),
-        endDate: format(endDate, 'yyyy-MM-dd'),
-        previousStartDate: format(prevStartDate, 'yyyy-MM-dd'),
-        previousEndDate: format(prevEndDate, 'yyyy-MM-dd'),
+        startDate: format(calculatedStartDate, 'yyyy-MM-dd'),
+        endDate: format(calculatedEndDate, 'yyyy-MM-dd'),
+        previousStartDate: format(calculatedPrevStartDate, 'yyyy-MM-dd'),
+        previousEndDate: format(calculatedPrevEndDate, 'yyyy-MM-dd'),
       },
     };
 
@@ -324,8 +390,8 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
   const report = await prisma.weeklyReport.upsert({
     where: {
       weekStartDate_weekEndDate: {
-        weekStartDate: startDate,
-        weekEndDate: endDate,
+        weekStartDate: calculatedStartDate,
+        weekEndDate: calculatedEndDate,
       },
     },
     update: {
@@ -343,8 +409,8 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
       recommendations: enhancedRecommendations,
     },
     create: {
-      weekStartDate: startDate,
-      weekEndDate: endDate,
+      weekStartDate: calculatedStartDate,
+      weekEndDate: calculatedEndDate,
       totalClicks: currentMetrics.totalClicks,
       totalImpressions: currentMetrics.totalImpressions,
       averageCtr: currentMetrics.averageCtr,
@@ -370,6 +436,18 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
     topQueries,
     insights,
     recommendations,
+    aiInsights,
+    trendsData,
+    periodType,
+    startDate: calculatedStartDate,
+    endDate: calculatedEndDate,
   };
+}
+
+/**
+ * Generates a complete weekly report (backward compatibility)
+ */
+export async function generateWeeklyReport(weekStartDate?: Date) {
+  return generateReport(weekStartDate, undefined, 'week');
 }
 

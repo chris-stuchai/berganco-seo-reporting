@@ -55,6 +55,9 @@ interface AIInsights {
   urgentActions: string[];
   strategicRecommendations: string[];
   industryTrends: string;
+  wins?: string[];
+  awareness?: string[];
+  nextSteps?: string[];
 }
 
 /**
@@ -173,13 +176,21 @@ ${topQueries.slice(0, 5).map((q, i) =>
 
 Please provide analysis in the following JSON format:
 {
-  "executiveSummary": "2-3 sentence overview of the situation",
+  "executiveSummary": "2-3 sentence overview of the situation and what this report covers",
   "marketContext": "How current SEO trends and property management industry dynamics relate to this data",
   "keyInsights": ["Insight 1", "Insight 2", "Insight 3"],
   "urgentActions": ["Action 1", "Action 2"],
   "strategicRecommendations": ["Recommendation 1", "Recommendation 2", "Recommendation 3"],
-  "industryTrends": "Relevant trends affecting property management SEO"
+  "industryTrends": "Relevant trends affecting property management SEO",
+  "wins": ["Positive achievement or improvement 1", "Positive achievement or improvement 2", "Positive achievement or improvement 3"],
+  "awareness": ["Issue or trend we are actively monitoring 1", "Issue or trend we are actively monitoring 2"],
+  "nextSteps": ["Specific action item we will work on 1", "Specific action item we will work on 2", "Specific action item we will work on 3"]
 }
+
+Focus on:
+- Wins: Highlight positive changes, improvements, or successful optimizations
+- Awareness: Note issues, trends, or metrics we're tracking and actively addressing
+- Next Steps: Concrete, actionable items the team will work on based on this data
 
 Focus on actionable insights considering:
 - Recent Google algorithm updates (Helpful Content Update, Core Updates, etc.)
@@ -207,6 +218,9 @@ function parseAIResponse(response: string, context: SEODataContext): AIInsights 
       urgentActions: Array.isArray(parsed.urgentActions) ? parsed.urgentActions : [],
       strategicRecommendations: Array.isArray(parsed.strategicRecommendations) ? parsed.strategicRecommendations : [],
       industryTrends: parsed.industryTrends || 'Industry trends analysis.',
+      wins: Array.isArray(parsed.wins) ? parsed.wins : undefined,
+      awareness: Array.isArray(parsed.awareness) ? parsed.awareness : undefined,
+      nextSteps: Array.isArray(parsed.nextSteps) ? parsed.nextSteps : undefined,
     };
   } catch (error) {
     console.error('Error parsing AI response:', error);

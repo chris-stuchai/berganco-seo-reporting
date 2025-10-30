@@ -169,7 +169,32 @@
         </div>
         <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
           <h3 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">Generate Report</h3>
-          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Generate weekly report</p>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Generate SEO report</p>
+          
+          <!-- Timeframe Selection -->
+          <div style="margin-bottom: var(--spacing-3);">
+            <label style="font-size: var(--font-footnote); color: var(--color-label-secondary); display: block; margin-bottom: var(--spacing-1);">Report Period</label>
+            <select id="reportPeriodType" style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote); margin-bottom: var(--spacing-2);">
+              <option value="week">Last Week</option>
+              <option value="month">Last 30 Days</option>
+              <option value="custom">Custom Range</option>
+            </select>
+            
+            <!-- Custom Date Range (hidden by default) -->
+            <div id="customDateRange" style="display: none; margin-top: var(--spacing-2);">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2);">
+                <div>
+                  <label style="font-size: var(--font-caption); color: var(--color-label-tertiary); display: block; margin-bottom: var(--spacing-1);">Start Date</label>
+                  <input type="date" id="reportStartDate" style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote);">
+                </div>
+                <div>
+                  <label style="font-size: var(--font-caption); color: var(--color-label-tertiary); display: block; margin-bottom: var(--spacing-1);">End Date</label>
+                  <input type="date" id="reportEndDate" style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote);">
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <div style="display: flex; gap: var(--spacing-2);">
             <button class="btn btn-secondary" onclick="previewReport()" style="flex: 1;">Preview Email</button>
             <button class="btn btn-primary" onclick="generateReport()" style="flex: 1;">Generate Now</button>
@@ -400,13 +425,42 @@
       }
     }
 
+    // Handle timeframe selection
+    document.getElementById('reportPeriodType')?.addEventListener('change', (e) => {
+      const customRange = document.getElementById('customDateRange');
+      if (e.target.value === 'custom') {
+        if (customRange) customRange.style.display = 'block';
+      } else {
+        if (customRange) customRange.style.display = 'none';
+      }
+    });
+
+    function getReportParams() {
+      const periodType = document.getElementById('reportPeriodType')?.value || 'week';
+      const startDate = document.getElementById('reportStartDate')?.value;
+      const endDate = document.getElementById('reportEndDate')?.value;
+      
+      const params = { periodType };
+      if (periodType === 'custom' && startDate && endDate) {
+        params.startDate = startDate;
+        params.endDate = endDate;
+      }
+      return params;
+    }
+
     async function previewReport() {
       try {
         const btn = event.target;
         btn.disabled = true;
         btn.textContent = 'Loading...';
         
-        const res = await fetch('/api/preview-report', { method: 'POST', credentials: 'include' });
+        const params = getReportParams();
+        const res = await fetch('/api/preview-report', { 
+          method: 'POST', 
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params)
+        });
         const data = await res.json();
         
         if (res.ok) {
@@ -461,7 +515,13 @@
           button.textContent = 'Generating...';
         }
         
-        const res = await fetch('/api/generate-report', { method: 'POST', credentials: 'include' });
+        const params = getReportParams();
+        const res = await fetch('/api/generate-report', { 
+          method: 'POST', 
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params)
+        });
         const data = await res.json();
         
         if (res.ok) {

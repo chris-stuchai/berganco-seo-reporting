@@ -388,11 +388,24 @@ app.post('/api/collect', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (r
 // Preview email endpoint (generates report but doesn't send)
 app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
   try {
-    const result = await generateWeeklyReport();
+    const { startDate, endDate, periodType } = req.body;
+    
+    let parsedStartDate: Date | undefined;
+    let parsedEndDate: Date | undefined;
+    const reportPeriodType = periodType || 'week';
+    
+    if (startDate && endDate) {
+      parsedStartDate = new Date(startDate);
+      parsedEndDate = new Date(endDate);
+    }
+    
+    const { generateReport } = await import('./services/report-generator');
+    const result = await generateReport(parsedStartDate, parsedEndDate, reportPeriodType);
     
     const reportData = {
       weekStartDate: result.report.weekStartDate,
       weekEndDate: result.report.weekEndDate,
+      periodType: result.periodType,
       currentMetrics: result.currentMetrics,
       previousMetrics: result.previousMetrics,
       clicksChange: result.report.clicksChange,
@@ -403,6 +416,14 @@ app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), a
       topQueries: result.topQueries,
       insights: result.insights,
       recommendations: result.recommendations,
+      aiSummary: result.aiInsights ? {
+        executiveSummary: result.aiInsights.executiveSummary,
+        wins: result.aiInsights.wins,
+        awareness: result.aiInsights.awareness,
+        nextSteps: result.aiInsights.nextSteps,
+      } : undefined,
+      trendsData: result.trendsData,
+      websiteDomain: 'www.berganco.com',
     };
 
     const { getEmailPreview } = await import('./services/email-service');
@@ -427,11 +448,24 @@ app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), a
 // Manual report generation endpoint
 app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
   try {
-    const result = await generateWeeklyReport();
+    const { startDate, endDate, periodType } = req.body;
+    
+    let parsedStartDate: Date | undefined;
+    let parsedEndDate: Date | undefined;
+    const reportPeriodType = periodType || 'week';
+    
+    if (startDate && endDate) {
+      parsedStartDate = new Date(startDate);
+      parsedEndDate = new Date(endDate);
+    }
+    
+    const { generateReport } = await import('./services/report-generator');
+    const result = await generateReport(parsedStartDate, parsedEndDate, reportPeriodType);
     
     const reportData = {
       weekStartDate: result.report.weekStartDate,
       weekEndDate: result.report.weekEndDate,
+      periodType: result.periodType,
       currentMetrics: result.currentMetrics,
       previousMetrics: result.previousMetrics,
       clicksChange: result.report.clicksChange,
@@ -442,6 +476,14 @@ app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), 
       topQueries: result.topQueries,
       insights: result.insights,
       recommendations: result.recommendations,
+      aiSummary: result.aiInsights ? {
+        executiveSummary: result.aiInsights.executiveSummary,
+        wins: result.aiInsights.wins,
+        awareness: result.aiInsights.awareness,
+        nextSteps: result.aiInsights.nextSteps,
+      } : undefined,
+      trendsData: result.trendsData,
+      websiteDomain: 'www.berganco.com',
     };
 
     // Try to send email, but don't fail if it doesn't work

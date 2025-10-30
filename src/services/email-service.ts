@@ -21,6 +21,7 @@ const transporter = nodemailer.createTransport({
 interface ReportData {
   weekStartDate: Date;
   weekEndDate: Date;
+  periodType?: 'week' | 'month' | 'custom';
   currentMetrics: {
     totalClicks: number;
     totalImpressions: number;
@@ -41,6 +42,20 @@ interface ReportData {
   topQueries: any[];
   insights: string;
   recommendations: string;
+  aiSummary?: {
+    executiveSummary: string;
+    wins?: string[];
+    awareness?: string[];
+    nextSteps?: string[];
+  };
+  trendsData?: Array<{
+    date: string;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+  }>;
+  websiteDomain?: string;
 }
 
 /**
@@ -61,10 +76,56 @@ function formatChange(change: number, invertColors: boolean = false): string {
 }
 
 /**
+ * Generates a simple SVG trend chart for email
+ */
+function generateTrendChart(trendsData: ReportData['trendsData'], metric: 'clicks' | 'impressions'): string {
+  if (!trendsData || trendsData.length === 0) return '';
+  
+  const width = 600;
+  const height = 200;
+  const padding = 40;
+  const chartWidth = width - (padding * 2);
+  const chartHeight = height - (padding * 2);
+  
+  const values = trendsData.map(d => metric === 'clicks' ? d.clicks : d.impressions);
+  const maxValue = Math.max(...values, 1);
+  const minValue = Math.min(...values, 0);
+  const range = maxValue - minValue || 1;
+  
+  const points = trendsData.map((d, i) => {
+    const x = padding + (i / (trendsData.length - 1 || 1)) * chartWidth;
+    const y = padding + chartHeight - ((values[i] - minValue) / range) * chartHeight;
+    return `${x},${y}`;
+  }).join(' ');
+  
+  const color = metric === 'clicks' ? '#0A84FF' : '#AF52DE';
+  
+  return `
+    <svg width="${width}" height="${height}" style="display: block; margin: 0 auto;">
+      <polyline
+        fill="none"
+        stroke="${color}"
+        stroke-width="3"
+        points="${points}"
+      />
+      ${trendsData.map((d, i) => {
+        const x = padding + (i / (trendsData.length - 1 || 1)) * chartWidth;
+        const y = padding + chartHeight - ((values[i] - minValue) / range) * chartHeight;
+        return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"/>`;
+      }).join('')}
+      <text x="${width / 2}" y="${height - 10}" text-anchor="middle" fill="#98989D" font-size="12" fill="#98989D">${metric === 'clicks' ? 'Clicks' : 'Impressions'} Over Time</text>
+    </svg>
+  `;
+}
+
+/**
  * Generates HTML email content for the weekly report (professional UX design)
  */
 function generateEmailHTML(data: ReportData): string {
-  const { weekStartDate, weekEndDate, currentMetrics, topPages, topQueries, insights, recommendations } = data;
+  const { weekStartDate, weekEndDate, periodType = 'week', currentMetrics, topPages, topQueries, insights, recommendations, aiSummary, trendsData, websiteDomain = 'www.berganco.com' } = data;
+  
+  const periodLabel = periodType === 'week' ? 'Weekly' : periodType === 'month' ? 'Monthly' : 'Custom';
+  const reportTitle = `${periodLabel} SEO Report`;
 
   return `
 <!DOCTYPE html>
@@ -72,21 +133,59 @@ function generateEmailHTML(data: ReportData): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="dark">
-  <title>Weekly SEO Report - BerganCo</title>
+  <meta name="color-scheme" content="dark light">
+  <title>${reportTitle} - BerganCo</title>
+  <style>
+    @media (prefers-color-scheme: light) {
+      .dark-mode-bg { background-color: #1C1C1E !important; }
+      .dark-mode-card { background-color: #2C2C2E !important; }
+      .dark-mode-text { color: #FFFFFF !important; }
+      .dark-mode-text-secondary { color: #E5E5EA !important; }
+      .dark-mode-text-tertiary { color: #98989D !important; }
+      .dark-mode-border { border-color: #48484A !important; }
+    }
+    @media (prefers-color-scheme: dark) {
+      .dark-mode-bg { background-color: #1C1C1E !important; }
+      .dark-mode-card { background-color: #2C2C2E !important; }
+      .dark-mode-text { color: #FFFFFF !important; }
+      .dark-mode-text-secondary { color: #E5E5EA !important; }
+      .dark-mode-text-tertiary { color: #98989D !important; }
+      .dark-mode-border { border-color: #48484A !important; }
+    }
+  </style>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; line-height: 1.47; color: #FFFFFF; max-width: 800px; margin: 0 auto; padding: 32px 24px; background-color: #1C1C1E;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; line-height: 1.47; color: #FFFFFF; max-width: 800px; margin: 0 auto; padding: 32px 24px; background-color: #1C1C1E;" class="dark-mode-bg">
   
   <!-- Main Container -->
-  <div style="background-color: #2C2C2E; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); border: 1px solid #48484A;">
+  <div style="background-color: #2C2C2E; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); border: 1px solid #48484A;" class="dark-mode-card dark-mode-border">
     
     <!-- Header -->
     <div style="margin-bottom: 40px;">
-      <h1 style="margin: 0 0 8px 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;">Weekly SEO Report</h1>
-      <p style="margin: 0; color: #98989D; font-size: 17px; font-weight: 400;">
+      <h1 style="margin: 0 0 8px 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;" class="dark-mode-text">${reportTitle}</h1>
+      <p style="margin: 0; color: #98989D; font-size: 17px; font-weight: 400;" class="dark-mode-text-tertiary">
         ${format(weekStartDate, 'MMMM d')} - ${format(weekEndDate, 'MMMM d, yyyy')}
       </p>
+      <p style="margin: 8px 0 0 0; color: #98989D; font-size: 15px; font-weight: 400;" class="dark-mode-text-tertiary">
+        ${websiteDomain}
+      </p>
     </div>
+    
+    <!-- Executive Summary / Introduction -->
+    ${aiSummary?.executiveSummary ? `
+    <div style="margin-bottom: 40px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #0A84FF;" class="dark-mode-card dark-mode-border">
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;" class="dark-mode-text">Executive Summary</h2>
+      <p style="color: #E5E5EA; font-size: 17px; line-height: 1.6; margin: 0;" class="dark-mode-text-secondary">
+        ${aiSummary.executiveSummary}
+      </p>
+    </div>
+    ` : `
+    <div style="margin-bottom: 40px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #0A84FF;" class="dark-mode-card dark-mode-border">
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;" class="dark-mode-text">About This Report</h2>
+      <p style="color: #E5E5EA; font-size: 17px; line-height: 1.6; margin: 0;" class="dark-mode-text-secondary">
+        This ${periodLabel.toLowerCase()} SEO report provides comprehensive insights into the search engine performance of <strong>${websiteDomain}</strong>. The report includes key metrics, trending data, top-performing pages and queries, and actionable recommendations to improve search visibility and drive more qualified traffic.
+      </p>
+    </div>
+    `}
 
     <!-- Key Metrics -->
     <div style="margin-bottom: 40px;">
@@ -192,12 +291,56 @@ function generateEmailHTML(data: ReportData): string {
         </tr>
       </table>
     </div>
+    
+    <!-- Trend Chart -->
+    ${trendsData && trendsData.length > 0 ? `
+    <div style="margin-bottom: 40px;">
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;" class="dark-mode-text">Performance Trends</h2>
+      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);" class="dark-mode-card dark-mode-border">
+        ${generateTrendChart(trendsData, 'clicks')}
+        <div style="margin-top: 24px;">
+          ${generateTrendChart(trendsData, 'impressions')}
+        </div>
+      </div>
+    </div>
+    ` : ''}
+    
+    <!-- AI Summary: Wins, Awareness, Next Steps -->
+    ${aiSummary && (aiSummary.wins?.length || aiSummary.awareness?.length || aiSummary.nextSteps?.length) ? `
+    <div style="margin-bottom: 40px;">
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;" class="dark-mode-text">Market-Aware Analysis</h2>
+      ${aiSummary.wins && aiSummary.wins.length > 0 ? `
+      <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #30D158;" class="dark-mode-card dark-mode-border">
+        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">Key Wins</h3>
+        <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
+          ${aiSummary.wins.map(win => `<li style="margin-bottom: 8px;">${win}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+      ${aiSummary.awareness && aiSummary.awareness.length > 0 ? `
+      <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #FF9F0A;" class="dark-mode-card dark-mode-border">
+        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">What We're Tracking</h3>
+        <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
+          ${aiSummary.awareness.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+      ${aiSummary.nextSteps && aiSummary.nextSteps.length > 0 ? `
+      <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #0A84FF;" class="dark-mode-card dark-mode-border">
+        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">Next Steps</h3>
+        <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
+          ${aiSummary.nextSteps.map(step => `<li style="margin-bottom: 8px;">${step}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+    </div>
+    ` : ''}
 
     <!-- Insights -->
     <div style="margin-bottom: 40px;">
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Key Insights</h2>
-      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
-        <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.6; color: #E5E5EA;">${insights}</pre>
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;" class="dark-mode-text">Key Insights</h2>
+      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);" class="dark-mode-card dark-mode-border">
+        <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.6; color: #E5E5EA;" class="dark-mode-text-secondary">${insights}</pre>
       </div>
     </div>
 
