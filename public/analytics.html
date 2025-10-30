@@ -3,134 +3,222 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Analytics - BerganCo SEO</title>
+  <title>Analytics - SEO Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="/shared-layout.js"></script>
+  <style>
+    /* Same styles as index.html - import from there */
+    @import url('index.html');
+  </style>
   <link rel="stylesheet" href="/shared-styles.css">
 </head>
-<body>
-  <script>
-    // Redirect to login if not authenticated
-    (async function() {
-      const response = await fetch('/api/auth/me', { credentials: 'include' });
-      if (!response.ok) window.location.href = '/login';
-    })();
-  </script>
+<body onload="initPage('analytics')">
+  <!-- Sidebar (shared) -->
+  <script src="/shared-sidebar.js"></script>
 
-  <div style="display: flex; height: 100vh; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: #1C1C1E; color: #FFFFFF;">
-    <!-- Sidebar -->
-    <aside style="width: 240px; background: #2C2C2E; border-right: 1px solid #48484A; display: flex; flex-direction: column; flex-shrink: 0;">
-      <div style="padding: 24px 16px; border-bottom: 1px solid #48484A;">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-          <div style="width: 32px; height: 32px; border-radius: 8px; background: #0A84FF; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">B</div>
-          <div style="font-weight: 600;">BerganCo</div>
-        </div>
-        <div style="font-size: 11px; color: #98989D; margin-left: 44px;">SEO Analytics</div>
+  <!-- Main Content -->
+  <div class="main-content">
+    <header class="top-bar">
+      <div>
+        <h1 class="page-title">Analytics</h1>
+        <p class="page-subtitle">Historical trends and insights</p>
       </div>
-      <nav style="flex: 1; padding: 16px 0; overflow-y: auto;">
-        <div style="margin-bottom: 24px;">
-          <div style="font-size: 11px; font-weight: 600; color: #98989D; text-transform: uppercase; padding: 0 16px; margin-bottom: 8px;">Main</div>
-          <a href="/" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; color: #E5E5EA; text-decoration: none;">📊 Dashboard</a>
-          <a href="/analytics" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: #0A84FF; color: white; border-radius: 8px; margin: 0 8px;">📈 Analytics</a>
-        </div>
-        <div style="margin-bottom: 24px;">
-          <div style="font-size: 11px; font-weight: 600; color: #98989D; text-transform: uppercase; padding: 0 16px; margin-bottom: 8px;">SEO</div>
-          <a href="/pages" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; color: #E5E5EA; text-decoration: none;">📄 Pages</a>
-          <a href="/queries" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; color: #E5E5EA; text-decoration: none;">🔍 Queries</a>
-        </div>
-      </nav>
-    </aside>
+      <div class="date-filters">
+        <button class="date-filter-btn active" onclick="setDays(7)" id="btn-7">7 Days</button>
+        <button class="date-filter-btn" onclick="setDays(30)" id="btn-30">30 Days</button>
+        <button class="date-filter-btn" onclick="setDays(90)" id="btn-90">90 Days</button>
+      </div>
+    </header>
 
-    <!-- Main Content -->
-    <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-      <header style="background: #2C2C2E; border-bottom: 1px solid #48484A; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h1 style="font-size: 22px; font-weight: 700; margin-bottom: 4px;">Analytics</h1>
-          <p style="font-size: 13px; color: #98989D;">Historical trends and insights</p>
+    <main class="content-area">
+      <!-- Performance Trends -->
+      <div class="card mb-6">
+        <h2 class="section-title mb-4">Performance Trends</h2>
+        <canvas id="trendsChart"></canvas>
+      </div>
+
+      <!-- Enhanced Analytics Insights -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 mb-6">
+        <div class="card">
+          <h2 class="section-title mb-4">Growth Metrics</h2>
+          <div id="growthMetrics">Loading...</div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button onclick="setDays(7)" class="date-btn active" id="btn-7">7 Days</button>
-          <button onclick="setDays(30)" class="date-btn" id="btn-30">30 Days</button>
-          <button onclick="setDays(90)" class="date-btn" id="btn-90">90 Days</button>
-        </div>
-      </header>
-      <div style="flex: 1; overflow-y: auto; padding: 24px;">
-        <div style="background: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-          <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">Performance Trends</h2>
-          <canvas id="trendsChart" style="max-height: 400px;"></canvas>
+        <div class="card">
+          <h2 class="section-title mb-4">Engagement Analysis</h2>
+          <div id="engagementMetrics">Loading...</div>
         </div>
       </div>
-    </div>
+
+      <!-- Weekly Patterns -->
+      <div class="card">
+        <h2 class="section-title mb-4">Weekly Performance Patterns</h2>
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </main>
   </div>
 
   <script>
-    let trendsChart;
+    let trendsChart, weeklyChart;
     let currentDays = 30;
 
     function setDays(days) {
       currentDays = days;
-      document.querySelectorAll('.date-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.date-filter-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById(`btn-${days}`).classList.add('active');
       loadAnalytics();
     }
 
     async function loadAnalytics() {
-      const response = await fetch(`/api/trends?days=${currentDays}`);
-      const data = await response.json();
-      
-      const dates = data.map(d => new Date(d.date).toLocaleDateString());
-      const ctx = document.getElementById('trendsChart').getContext('2d');
-      
-      if (trendsChart) trendsChart.destroy();
-      
-      trendsChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: 'Clicks',
-            data: data.map(d => d.clicks),
-            borderColor: '#0A84FF',
-            backgroundColor: 'rgba(10, 132, 255, 0.1)',
-            tension: 0.4
-          }, {
-            label: 'Impressions',
-            data: data.map(d => d.impressions),
-            borderColor: '#AF52DE',
-            backgroundColor: 'rgba(175, 82, 222, 0.1)',
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { labels: { color: '#E5E5EA' } }
-          },
-          scales: {
-            x: { grid: { color: '#48484A' }, ticks: { color: '#98989D' } },
-            y: { grid: { color: '#48484A' }, ticks: { color: '#98989D' }, beginAtZero: true }
-          }
+      try {
+        const response = await fetch(`/api/trends?days=${currentDays}`);
+        const data = await response.json();
+        
+        if (!data || data.length === 0) {
+          document.getElementById('trendsChart').parentElement.innerHTML = '<p style="color: var(--color-label-tertiary); padding: var(--spacing-6);">No data available for this period.</p>';
+          return;
         }
-      });
+
+        const dates = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const ctx = document.getElementById('trendsChart').getContext('2d');
+        
+        if (trendsChart) trendsChart.destroy();
+        
+        trendsChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: dates,
+            datasets: [{
+              label: 'Clicks',
+              data: data.map(d => d.clicks),
+              borderColor: '#0A84FF',
+              backgroundColor: 'rgba(10, 132, 255, 0.1)',
+              tension: 0.4,
+              fill: true
+            }, {
+              label: 'Impressions',
+              data: data.map(d => d.impressions),
+              borderColor: '#AF52DE',
+              backgroundColor: 'rgba(175, 82, 222, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#E5E5EA' } }
+            },
+            scales: {
+              x: { grid: { color: '#48484A' }, ticks: { color: '#98989D' } },
+              y: { grid: { color: '#48484A' }, ticks: { color: '#98989D' }, beginAtZero: true }
+            }
+          }
+        });
+
+        // Calculate growth metrics
+        const totalClicks = data.reduce((sum, d) => sum + d.clicks, 0);
+        const totalImpressions = data.reduce((sum, d) => sum + d.impressions, 0);
+        const avgCTR = data.reduce((sum, d) => sum + d.ctr, 0) / data.length;
+        const firstHalf = data.slice(0, Math.floor(data.length / 2));
+        const secondHalf = data.slice(Math.floor(data.length / 2));
+        const firstHalfClicks = firstHalf.reduce((sum, d) => sum + d.clicks, 0);
+        const secondHalfClicks = secondHalf.reduce((sum, d) => sum + d.clicks, 0);
+        const growthRate = firstHalfClicks > 0 ? ((secondHalfClicks - firstHalfClicks) / firstHalfClicks * 100).toFixed(1) : 0;
+
+        document.getElementById('growthMetrics').innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: var(--spacing-4);">
+            <div>
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Total Clicks</div>
+              <div style="font-size: 32px; font-weight: 700; color: var(--color-label-primary);">${totalClicks.toLocaleString()}</div>
+            </div>
+            <div>
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Growth Rate</div>
+              <div style="font-size: 24px; font-weight: 600; color: ${growthRate >= 0 ? 'var(--color-green)' : 'var(--color-red)'};">
+                ${growthRate >= 0 ? '+' : ''}${growthRate}%
+              </div>
+            </div>
+            <div>
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Average Daily Clicks</div>
+              <div style="font-size: 20px; font-weight: 600; color: var(--color-label-primary);">
+                ${(totalClicks / data.length).toFixed(1)}
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('engagementMetrics').innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: var(--spacing-4);">
+            <div>
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Average CTR</div>
+              <div style="font-size: 32px; font-weight: 700; color: var(--color-label-primary);">${(avgCTR * 100).toFixed(2)}%</div>
+            </div>
+            <div>
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Click-to-Impression Ratio</div>
+              <div style="font-size: 20px; font-weight: 600; color: var(--color-label-primary);">
+                1:${(totalImpressions / totalClicks).toFixed(0)}
+              </div>
+            </div>
+            <div>
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Total Impressions</div>
+              <div style="font-size: 20px; font-weight: 600; color: var(--color-label-primary);">
+                ${totalImpressions.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Weekly pattern analysis
+        const weeklyData = {};
+        data.forEach(d => {
+          const day = new Date(d.date).getDay();
+          if (!weeklyData[day]) weeklyData[day] = { clicks: 0, impressions: 0, count: 0 };
+          weeklyData[day].clicks += d.clicks;
+          weeklyData[day].impressions += d.impressions;
+          weeklyData[day].count++;
+        });
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weeklyClicks = [0,1,2,3,4,5,6].map(d => weeklyData[d] ? weeklyData[d].clicks / weeklyData[d].count : 0);
+        const weeklyImpressions = [0,1,2,3,4,5,6].map(d => weeklyData[d] ? weeklyData[d].impressions / weeklyData[d].count : 0);
+
+        const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+        if (weeklyChart) weeklyChart.destroy();
+        weeklyChart = new Chart(weeklyCtx, {
+          type: 'bar',
+          data: {
+            labels: dayNames,
+            datasets: [{
+              label: 'Avg Clicks',
+              data: weeklyClicks,
+              backgroundColor: 'rgba(10, 132, 255, 0.6)'
+            }, {
+              label: 'Avg Impressions',
+              data: weeklyImpressions,
+              backgroundColor: 'rgba(175, 82, 222, 0.6)',
+              yAxisID: 'y1'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#E5E5EA' } }
+            },
+            scales: {
+              x: { grid: { color: '#48484A' }, ticks: { color: '#98989D' } },
+              y: { grid: { color: '#48484A' }, ticks: { color: '#98989D' }, beginAtZero: true },
+              y1: { grid: { drawOnChartArea: false }, ticks: { color: '#98989D' }, position: 'right', beginAtZero: true }
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      }
     }
 
     loadAnalytics();
   </script>
-  <style>
-    .date-btn {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid #48484A;
-      background: transparent;
-      color: #E5E5EA;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .date-btn.active {
-      background: #0A84FF;
-      color: white;
-      border-color: #0A84FF;
-    }
-  </style>
 </body>
 </html>

@@ -86,6 +86,10 @@ app.get('/admin', (req, res) => {
   res.sendFile('admin.html', { root: 'public' });
 });
 
+app.get('/settings', (req, res) => {
+  res.sendFile('settings.html', { root: 'public' });
+});
+
 // Auth routes (public)
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -116,7 +120,39 @@ app.post('/api/auth/logout', async (req, res) => {
 });
 
 app.get('/api/auth/me', requireAuth, async (req: AuthenticatedRequest, res) => {
-  res.json({ user: req.user });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        businessName: true,
+        logoUrl: true,
+      },
+    });
+    res.json({ user });
+  } catch (error) {
+    res.json({ user: req.user });
+  }
+});
+
+// Client profile update (clients can update their own profile)
+app.put('/api/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { businessName, logoUrl, email } = req.body;
+    const updateData: any = {};
+    
+    if (businessName !== undefined) updateData.businessName = businessName;
+    if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
+    if (email !== undefined && req.user!.role === 'CLIENT') updateData.email = email.toLowerCase();
+    
+    const user = await authService.updateUser(req.user!.userId, updateData);
+    res.json(user);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 // User management (admin/employee only)

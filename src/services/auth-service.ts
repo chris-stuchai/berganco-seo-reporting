@@ -181,6 +181,8 @@ export async function updateUser(
     role?: Role;
     isActive?: boolean;
     password?: string;
+    businessName?: string | null;
+    logoUrl?: string | null;
   }
 ) {
   const updateData: any = {};
@@ -190,6 +192,8 @@ export async function updateUser(
   if (data.role) updateData.role = data.role;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
   if (data.password) updateData.passwordHash = hashPassword(data.password);
+  if (data.businessName !== undefined) updateData.businessName = data.businessName;
+  if (data.logoUrl !== undefined) updateData.logoUrl = data.logoUrl;
 
   return prisma.user.update({
     where: { id: userId },
@@ -200,6 +204,8 @@ export async function updateUser(
       name: true,
       role: true,
       isActive: true,
+      businessName: true,
+      logoUrl: true,
     },
   });
 }
