@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal - BerganCo SEO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b-2 border-blue-600">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">⚙️ Admin Portal</h1>
+          <p class="text-sm text-gray-500 mt-1">BerganCo SEO Reporting System</p>
+        </div>
+        <div class="flex gap-2">
+          <a href="/" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+            View Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    
+    <!-- System Status -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">📊 System Status</h2>
+      <div id="systemStatus" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="text-center py-4">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p class="text-sm text-gray-500 mt-2">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Controls -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">🎛️ Manual Controls</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- Collect Today's Data -->
+        <div class="border-2 border-dashed border-gray-200 rounded-lg p-4">
+          <h3 class="font-semibold text-gray-900 mb-2">📥 Collect Today's Data</h3>
+          <p class="text-sm text-gray-600 mb-4">Collect metrics from Google Search Console for today (with 3-day delay)</p>
+          <button onclick="collectToday()" id="btnCollect" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            Collect Data Now
+          </button>
+          <p id="collectStatus" class="text-xs text-gray-500 mt-2"></p>
+        </div>
+
+        <!-- Backfill Historical Data -->
+        <div class="border-2 border-dashed border-gray-200 rounded-lg p-4">
+          <h3 class="font-semibold text-gray-900 mb-2">📚 Backfill Historical Data</h3>
+          <p class="text-sm text-gray-600 mb-2">Collect data for the last N days</p>
+          <div class="flex gap-2 mb-4">
+            <input type="number" id="backfillDays" value="30" min="1" max="90" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+            <span class="text-sm text-gray-500 self-center">days</span>
+          </div>
+          <button onclick="backfillData()" id="btnBackfill" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+            Backfill Data
+          </button>
+          <p id="backfillStatus" class="text-xs text-gray-500 mt-2"></p>
+        </div>
+
+        <!-- Generate Report -->
+        <div class="border-2 border-dashed border-gray-200 rounded-lg p-4">
+          <h3 class="font-semibold text-gray-900 mb-2">📧 Generate Weekly Report</h3>
+          <p class="text-sm text-gray-600 mb-4">Generate and email the weekly SEO report immediately</p>
+          <button onclick="generateReportNow()" id="btnReport" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+            Generate & Send Report
+          </button>
+          <p id="reportStatus" class="text-xs text-gray-500 mt-2"></p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Automation Status -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">⏰ Automated Jobs</h2>
+      <div id="automationStatus" class="space-y-4">
+        <div class="text-center py-4">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p class="text-sm text-gray-500 mt-2">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report History -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">📋 Report History</h2>
+      <div id="reportHistory" class="space-y-2">
+        <div class="text-center py-4">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p class="text-sm text-gray-500 mt-2">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // Format date
+    function formatDate(dateString) {
+      if (!dateString) return 'Never';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Format number
+    function formatNumber(num) {
+      return num.toLocaleString('en-US');
+    }
+
+    // Load system status
+    async function loadSystemStatus() {
+      try {
+        const response = await fetch('/api/admin/status');
+        const status = await response.json();
+
+        document.getElementById('systemStatus').innerHTML = `
+          <div class="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+            <div class="text-2xl mb-2">✅</div>
+            <div class="font-semibold text-green-900">System Online</div>
+            <div class="text-sm text-green-700 mt-1">All services running</div>
+          </div>
+          <div class="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div class="text-2xl mb-2">📊</div>
+            <div class="font-semibold text-blue-900">${formatNumber(status.database.totalMetrics)}</div>
+            <div class="text-sm text-blue-700 mt-1">Daily Metrics Stored</div>
+          </div>
+          <div class="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <div class="text-2xl mb-2">📧</div>
+            <div class="font-semibold text-purple-900">${status.database.totalReports}</div>
+            <div class="text-sm text-purple-700 mt-1">Reports Generated</div>
+          </div>
+        `;
+
+        // Update automation status
+        const lastCollection = status.lastDataCollection 
+          ? formatDate(status.lastDataCollection) 
+          : 'Not yet collected';
+        
+        const lastReport = status.lastReportSent 
+          ? formatDate(status.lastReportSent) 
+          : 'Not yet sent';
+
+        document.getElementById('automationStatus').innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="border-l-4 border-blue-500 pl-4">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="font-semibold text-gray-900">Daily Data Collection</h3>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
+              </div>
+              <p class="text-sm text-gray-600">Schedule: ${status.automation.dailyCollection.schedule}</p>
+              <p class="text-sm text-gray-500 mt-1">Last run: ${lastCollection}</p>
+            </div>
+            <div class="border-l-4 border-green-500 pl-4">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="font-semibold text-gray-900">Weekly Reports</h3>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
+              </div>
+              <p class="text-sm text-gray-600">Schedule: ${status.automation.weeklyReports.schedule}</p>
+              <p class="text-sm text-gray-500 mt-1">Last sent: ${lastReport}</p>
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error loading status:', error);
+      }
+    }
+
+    // Collect today's data
+    async function collectToday() {
+      const btn = document.getElementById('btnCollect');
+      const status = document.getElementById('collectStatus');
+      
+      btn.disabled = true;
+      btn.textContent = 'Collecting...';
+      status.textContent = 'Starting data collection...';
+      status.className = 'text-xs text-blue-600 mt-2';
+
+      try {
+        const response = await fetch('/api/collect', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+          status.textContent = '✅ Data collected successfully!';
+          status.className = 'text-xs text-green-600 mt-2';
+          setTimeout(() => {
+            loadSystemStatus();
+            status.textContent = '';
+          }, 2000);
+        } else {
+          status.textContent = '❌ Error: ' + (data.error || 'Failed to collect');
+          status.className = 'text-xs text-red-600 mt-2';
+        }
+      } catch (error) {
+        status.textContent = '❌ Error: ' + error.message;
+        status.className = 'text-xs text-red-600 mt-2';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Collect Data Now';
+      }
+    }
+
+    // Backfill data
+    async function backfillData() {
+      const days = parseInt(document.getElementById('backfillDays').value) || 30;
+      const btn = document.getElementById('btnBackfill');
+      const status = document.getElementById('backfillStatus');
+      
+      if (!confirm(`Backfill ${days} days of historical data? This may take several minutes.`)) {
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Backfilling...';
+      status.textContent = `Backfilling ${days} days of data... This may take a few minutes.`;
+      status.className = 'text-xs text-blue-600 mt-2';
+
+      try {
+        const response = await fetch('/api/admin/backfill', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ days }),
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          status.textContent = `✅ Backfill started! Collecting ${days} days of data...`;
+          status.className = 'text-xs text-green-600 mt-2';
+          
+          // Check status periodically
+          setTimeout(() => {
+            loadSystemStatus();
+            status.textContent = 'Check system status above for completion.';
+          }, 5000);
+        } else {
+          status.textContent = '❌ Error: ' + (data.error || 'Failed to start backfill');
+          status.className = 'text-xs text-red-600 mt-2';
+        }
+      } catch (error) {
+        status.textContent = '❌ Error: ' + error.message;
+        status.className = 'text-xs text-red-600 mt-2';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Backfill Data';
+      }
+    }
+
+    // Generate report now
+    async function generateReportNow() {
+      const btn = document.getElementById('btnReport');
+      const status = document.getElementById('reportStatus');
+      
+      if (!confirm('Generate and send weekly report now? This will email the report.')) {
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      status.textContent = 'Generating report and sending email...';
+      status.className = 'text-xs text-blue-600 mt-2';
+
+      try {
+        const response = await fetch('/api/generate-report', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+          status.textContent = '✅ Report generated and sent successfully!';
+          status.className = 'text-xs text-green-600 mt-2';
+          setTimeout(() => {
+            loadSystemStatus();
+            loadReportHistory();
+            status.textContent = '';
+          }, 2000);
+        } else {
+          status.textContent = '❌ Error: ' + (data.error || 'Failed to generate report');
+          status.className = 'text-xs text-red-600 mt-2';
+        }
+      } catch (error) {
+        status.textContent = '❌ Error: ' + error.message;
+        status.className = 'text-xs text-red-600 mt-2';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate & Send Report';
+      }
+    }
+
+    // Load report history
+    async function loadReportHistory() {
+      try {
+        const response = await fetch('/api/admin/reports');
+        const reports = await response.json();
+
+        if (reports.length === 0) {
+          document.getElementById('reportHistory').innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+              <p>No reports generated yet.</p>
+              <p class="text-sm mt-2">Click "Generate & Send Report" above to create your first report.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const html = `
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Week</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Clicks</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Change</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sent</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                ${reports.map(r => `
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-900">
+                      ${formatDate(r.weekStartDate)} - ${formatDate(r.weekEndDate)}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right text-gray-900 font-semibold">
+                      ${formatNumber(r.totalClicks)}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right">
+                      <span class="${r.clicksChange >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                        ${r.clicksChange >= 0 ? '+' : ''}${r.clicksChange.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-500">
+                      ${r.sentAt ? formatDate(r.sentAt) : 'Not sent'}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        document.getElementById('reportHistory').innerHTML = html;
+      } catch (error) {
+        console.error('Error loading reports:', error);
+        document.getElementById('reportHistory').innerHTML = `
+          <div class="text-center py-4 text-red-600">
+            Error loading report history
+          </div>
+        `;
+      }
+    }
+
+    // Load everything on page load
+    loadSystemStatus();
+    loadReportHistory();
+
+    // Auto-refresh status every 30 seconds
+    setInterval(() => {
+      loadSystemStatus();
+    }, 30000);
+  </script>
+
+</body>
+</html>
+

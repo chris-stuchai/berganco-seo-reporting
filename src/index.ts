@@ -211,6 +211,108 @@ app.get('/api/top-queries', async (req, res) => {
   }
 });
 
+// Admin: Get system status
+app.get('/api/admin/status', async (req, res) => {
+  try {
+    const latestMetric = await prisma.dailyMetric.findFirst({
+      orderBy: { date: 'desc' },
+    });
+
+    const latestReport = await prisma.weeklyReport.findFirst({
+      orderBy: { weekStartDate: 'desc' },
+    });
+
+    const totalMetrics = await prisma.dailyMetric.count();
+    const totalPages = await prisma.pageMetric.count();
+    const totalQueries = await prisma.queryMetric.count();
+    const totalReports = await prisma.weeklyReport.count();
+
+    res.json({
+      database: {
+        connected: true,
+        totalMetrics,
+        totalPages,
+        totalQueries,
+        totalReports,
+      },
+      lastDataCollection: latestMetric?.date || null,
+      lastReport: latestReport?.weekStartDate || null,
+      lastReportSent: latestReport?.sentAt || null,
+      automation: {
+        dailyCollection: {
+          enabled: true,
+          schedule: 'Daily at 3:00 AM',
+          nextRun: 'Calculated based on current time',
+        },
+        weeklyReports: {
+          enabled: true,
+          schedule: 'Monday at 8:00 AM',
+          nextRun: 'Calculated based on current time',
+        },
+      },
+      system: {
+        version: '1.0.0',
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development',
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching admin status:', error);
+    res.status(500).json({ error: 'Failed to fetch system status' });
+  }
+});
+
+// Admin: Get all reports history
+app.get('/api/admin/reports', async (req, res) => {
+  try {
+    const reports = await prisma.weeklyReport.findMany({
+      orderBy: { weekStartDate: 'desc' },
+      take: 50,
+    });
+
+    res.json(reports.map(r => ({
+      id: r.id,
+      weekStartDate: r.weekStartDate,
+      weekEndDate: r.weekEndDate,
+      totalClicks: r.totalClicks,
+      clicksChange: r.clicksChange,
+      sentAt: r.sentAt,
+      createdAt: r.createdAt,
+    })));
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+// Admin: Backfill data with date range
+app.post('/api/admin/backfill', async (req, res) => {
+  try {
+    const { days } = req.body;
+    const daysToBackfill = parseInt(days) || 30;
+
+    // Start backfill in background
+    (async () => {
+      try {
+        const { backfillMetrics } = await import('./services/data-collector');
+        await backfillMetrics(daysToBackfill);
+        console.log(`✅ Admin backfill complete: ${daysToBackfill} days`);
+      } catch (error) {
+        console.error('❌ Admin backfill failed:', error);
+      }
+    })();
+
+    res.json({ 
+      success: true, 
+      message: `Backfilling ${daysToBackfill} days of data...`,
+      status: 'running',
+    });
+  } catch (error) {
+    console.error('Error starting backfill:', error);
+    res.status(500).json({ error: 'Failed to start backfill' });
+  }
+});
+
 // Schedule daily data collection (runs at 3 AM every day)
 cron.schedule('0 3 * * *', async () => {
   console.log('🕐 Running scheduled data collection...');
