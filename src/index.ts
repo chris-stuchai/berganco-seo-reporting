@@ -7,13 +7,16 @@
 import express from 'express';
 import * as cron from 'node-cron';
 import * as dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import cookieParser from 'cookie-parser';
+import { PrismaClient, Role } from '@prisma/client';
 import { subDays, format, startOfWeek, subWeeks } from 'date-fns';
 import { collectAllMetrics } from './services/data-collector';
 import { generateWeeklyReport } from './services/report-generator';
 import { sendWeeklyReport } from './services/email-service';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { requireAuth, requireRole, optionalAuth, AuthenticatedRequest } from './middleware/auth';
+import * as authService from './services/auth-service';
 
 dotenv.config();
 
@@ -42,7 +45,79 @@ async function runMigrations() {
 }
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static('public'));
+
+// Auth routes (public)
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const result = await authService.login(email, password);
+    
+    // Set cookie
+    res.cookie('sessionToken', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.json(result);
+  } catch (error: any) {
+    res.status(401).json({ error: error.message || 'Invalid credentials' });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  const token = req.cookies?.sessionToken || req.headers.authorization?.replace('Bearer ', '');
+  if (token) {
+    await authService.logout(token);
+  }
+  res.clearCookie('sessionToken');
+  res.json({ success: true });
+});
+
+app.get('/api/auth/me', requireAuth, async (req: AuthenticatedRequest, res) => {
+  res.json({ user: req.user });
+});
+
+// User management (admin/employee only)
+app.get('/api/users', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const users = await authService.getAllUsers();
+    res.json(users);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/users', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const { email, password, name, role } = req.body;
+    const user = await authService.createUser(email, password, name, role || Role.CLIENT);
+    res.json(user);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.put('/api/users/:id', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const user = await authService.updateUser(req.params.id, req.body);
+    res.json(user);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:id', requireAuth, requireRole('ADMIN'), async (req, res) => {
+  try {
+    await authService.deleteUser(req.params.id);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -50,7 +125,8 @@ app.get('/health', (req, res) => {
 });
 
 // Dashboard endpoint - returns latest metrics with calculated 7-day stats
-app.get('/api/dashboard', async (req, res) => {
+// Protected: requires auth, but different views for client vs employee
+app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const days = parseInt(req.query.days as string) || 7;
     const endDate = new Date();
@@ -157,8 +233,8 @@ app.get('/api/dashboard', async (req, res) => {
   }
 });
 
-// Manual data collection endpoint
-app.post('/api/collect', async (req, res) => {
+// Manual data collection endpoint (protected)
+app.post('/api/collect', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
   try {
     const date = subDays(new Date(), 3);
     await collectAllMetrics(date);
@@ -170,7 +246,7 @@ app.post('/api/collect', async (req, res) => {
 });
 
 // Manual report generation endpoint
-app.post('/api/generate-report', async (req, res) => {
+app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
   try {
     const result = await generateWeeklyReport();
     

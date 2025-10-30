@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Portal - BerganCo SEO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Apple Design System - Dark Mode */
+    :root {
+      --color-bg-primary: #1C1C1E;
+      --color-bg-secondary: #2C2C2E;
+      --color-bg-tertiary: #3A3A3C;
+      --color-label-primary: #FFFFFF;
+      --color-label-secondary: #E5E5EA;
+      --color-label-tertiary: #98989D;
+      --color-separator: #48484A;
+      --color-blue: #0A84FF;
+      --color-green: #30D158;
+      --color-red: #FF453A;
+      --spacing-2: 8px;
+      --spacing-4: 16px;
+      --spacing-6: 24px;
+      --font-body: 17px;
+      --font-footnote: 13px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: var(--color-bg-primary); color: var(--color-label-primary); margin: 0; }
+    .container { max-width: 1400px; margin: 0 auto; padding: var(--spacing-6); }
+    .card { background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 12px; padding: var(--spacing-6); margin-bottom: var(--spacing-6); }
+    .btn { padding: var(--spacing-2) var(--spacing-4); border-radius: 8px; border: none; cursor: pointer; font-size: var(--font-body); transition: opacity 0.2s; }
+    .btn-primary { background: var(--color-blue); color: white; }
+    .btn-danger { background: var(--color-red); color: white; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: var(--spacing-3); text-align: left; border-bottom: 1px solid var(--color-separator); }
+    .table th { color: var(--color-label-tertiary); font-size: var(--font-footnote); font-weight: 600; text-transform: uppercase; }
+    input, select { padding: var(--spacing-3); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-body); width: 100%; }
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge-admin { background: rgba(255, 69, 58, 0.2); color: var(--color-red); }
+    .badge-employee { background: rgba(10, 132, 255, 0.2); color: var(--color-blue); }
+    .badge-client { background: rgba(48, 209, 88, 0.2); color: var(--color-green); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 style="font-size: 34px; font-weight: 700; margin-bottom: var(--spacing-6);">Employee Portal</h1>
+
+    <!-- User Management -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-4);">
+        <h2 style="font-size: 22px; font-weight: 600;">User Management</h2>
+        <button class="btn btn-primary" onclick="showCreateUserModal()">+ Create User</button>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTable">
+          <tr><td colspan="6" style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- System Controls -->
+    <div class="card">
+      <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-4);">System Controls</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-4);">
+        <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
+          <h3 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">Collect Data</h3>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Collect today's metrics</p>
+          <button class="btn btn-primary" onclick="collectData()" style="width: 100%;">Collect Now</button>
+        </div>
+        <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
+          <h3 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">Generate Report</h3>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Generate weekly report</p>
+          <button class="btn btn-primary" onclick="generateReport()" style="width: 100%;">Generate Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create User Modal -->
+  <div id="createUserModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 16px; padding: var(--spacing-6); width: 90%; max-width: 500px;">
+      <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-4);">Create User</h2>
+      <div style="margin-bottom: var(--spacing-4);">
+        <label style="display: block; font-size: var(--font-footnote); color: var(--color-label-secondary); margin-bottom: var(--spacing-2);">Name</label>
+        <input type="text" id="createName" placeholder="Full Name">
+      </div>
+      <div style="margin-bottom: var(--spacing-4);">
+        <label style="display: block; font-size: var(--font-footnote); color: var(--color-label-secondary); margin-bottom: var(--spacing-2);">Email</label>
+        <input type="email" id="createEmail" placeholder="user@example.com">
+      </div>
+      <div style="margin-bottom: var(--spacing-4);">
+        <label style="display: block; font-size: var(--font-footnote); color: var(--color-label-secondary); margin-bottom: var(--spacing-2);">Password</label>
+        <input type="password" id="createPassword" placeholder="Password">
+      </div>
+      <div style="margin-bottom: var(--spacing-6);">
+        <label style="display: block; font-size: var(--font-footnote); color: var(--color-label-secondary); margin-bottom: var(--spacing-2);">Role</label>
+        <select id="createRole">
+          <option value="CLIENT">Client</option>
+          <option value="EMPLOYEE">Employee</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: var(--spacing-2);">
+        <button class="btn btn-primary" onclick="createUser()" style="flex: 1;">Create</button>
+        <button class="btn" onclick="closeCreateUserModal()" style="flex: 1; background: var(--color-bg-tertiary);">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check auth
+    (async function() {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      if (!res.ok || !(await res.json()).user?.role || ['ADMIN', 'EMPLOYEE'].indexOf((await res.json()).user.role) === -1) {
+        window.location.href = '/login.html';
+      }
+      loadUsers();
+    })();
+
+    async function loadUsers() {
+      const res = await fetch('/api/users', { credentials: 'include' });
+      const users = await res.json();
+      const tbody = document.getElementById('usersTable');
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td><span class="badge badge-${u.role.toLowerCase()}">${u.role}</span></td>
+          <td>${u.isActive ? 'Active' : 'Inactive'}</td>
+          <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+          <td>
+            <button class="btn" onclick="editUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote); margin-right: 4px;">Edit</button>
+            ${u.role !== 'ADMIN' ? `<button class="btn btn-danger" onclick="deleteUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote);">Delete</button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function showCreateUserModal() {
+      document.getElementById('createUserModal').style.display = 'flex';
+    }
+
+    function closeCreateUserModal() {
+      document.getElementById('createUserModal').style.display = 'none';
+    }
+
+    async function createUser() {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: document.getElementById('createName').value,
+          email: document.getElementById('createEmail').value,
+          password: document.getElementById('createPassword').value,
+          role: document.getElementById('createRole').value
+        })
+      });
+      if (res.ok) {
+        closeCreateUserModal();
+        loadUsers();
+      } else {
+        alert('Error creating user');
+      }
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Are you sure?')) return;
+      await fetch(`/api/users/${id}`, { method: 'DELETE', credentials: 'include' });
+      loadUsers();
+    }
+
+    async function collectData() {
+      await fetch('/api/collect', { method: 'POST', credentials: 'include' });
+      alert('Data collection started');
+    }
+
+    async function generateReport() {
+      await fetch('/api/generate-report', { method: 'POST', credentials: 'include' });
+      alert('Report generation started');
+    }
+  </script>
+</body>
+</html>
