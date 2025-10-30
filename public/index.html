@@ -7,63 +7,156 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    /* Apple Design System */
+    :root {
+      /* Typography Scale (Apple HIG) */
+      --font-large-title: 34px;
+      --font-title-1: 28px;
+      --font-title-2: 22px;
+      --font-title-3: 20px;
+      --font-body: 17px;
+      --font-footnote: 13px;
+      --font-caption: 12px;
+      --font-caption-2: 11px;
+      
+      /* 8pt Grid Spacing */
+      --spacing-2: 8px;
+      --spacing-3: 12px;
+      --spacing-4: 16px;
+      --spacing-6: 24px;
+      --spacing-8: 32px;
+      
+      /* Colors - Apple Blue */
+      --color-blue: #007AFF;
+      --color-blue-hover: rgba(0, 122, 255, 0.85);
+      
+      /* Subtle Shadows (Apple) */
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+      
+      /* Semantic Colors (Light Mode) */
+      --color-bg-primary: #ffffff;
+      --color-bg-secondary: #f5f5f7;
+      --color-label-primary: rgba(0, 0, 0, 0.85);
+      --color-label-secondary: rgba(60, 60, 67, 0.6);
+      --color-separator: rgba(60, 60, 67, 0.29);
+    }
     
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background: var(--color-bg-secondary);
+      color: var(--color-label-primary);
+      font-size: var(--font-body);
+      line-height: 1.47;
     }
     
-    .metric-card {
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      transition: all 0.3s ease;
-    }
-    
-    .metric-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    }
-    
-    .date-filter-btn {
-      transition: all 0.2s ease;
-    }
-    
-    .date-filter-btn.active {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    /* Apple-style Buttons */
+    .btn-primary {
+      background: var(--color-blue);
       color: white;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      border: none;
+      border-radius: 8px;
+      padding: var(--spacing-2) var(--spacing-4);
+      font-size: var(--font-body);
+      font-weight: 400;
+      box-shadow: var(--shadow-sm);
+      transition: opacity 0.2s;
     }
     
-    .metric-icon {
-      width: 48px;
-      height: 48px;
+    .btn-primary:hover {
+      opacity: 0.85;
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-blue);
+      border: 1px solid var(--color-separator);
+      border-radius: 8px;
+      padding: var(--spacing-2) var(--spacing-4);
+      font-size: var(--font-body);
+      font-weight: 400;
+    }
+    
+    /* Apple-style Cards */
+    .card {
+      background: var(--color-bg-primary);
+      border: 1px solid var(--color-separator);
       border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    /* Metric Icon Circles */
+    .metric-icon-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+    }
+    
+    .icon-blue { background: #E3F2FD; }
+    .icon-purple { background: #F3E5F5; }
+    .icon-green { background: #E8F5E9; }
+    .icon-orange { background: #FFF3E0; }
+    
+    /* Date Filter Buttons */
+    .date-filter-btn {
+      background: transparent;
+      border: 1px solid var(--color-separator);
+      border-radius: 8px;
+      padding: var(--spacing-2) var(--spacing-3);
+      font-size: var(--font-footnote);
+      color: var(--color-label-primary);
+      transition: all 0.2s;
+    }
+    
+    .date-filter-btn.active {
+      background: var(--color-blue);
+      color: white;
+      border-color: var(--color-blue);
+    }
+    
+    /* Typography */
+    .text-large-title { font-size: var(--font-large-title); font-weight: 700; }
+    .text-title-1 { font-size: var(--font-title-1); font-weight: 700; }
+    .text-title-2 { font-size: var(--font-title-2); font-weight: 600; }
+    .text-title-3 { font-size: var(--font-title-3); font-weight: 600; }
+    .text-body { font-size: var(--font-body); }
+    .text-footnote { font-size: var(--font-footnote); }
+    .text-caption { font-size: var(--font-caption); }
+    
+    /* Metric Number */
+    .metric-number {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--color-label-primary);
+      line-height: 1.2;
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-slate-50 via-white to-slate-50 min-h-screen">
+<body>
   
   <!-- Header -->
-  <header class="bg-white/80 backdrop-blur-lg border-b border-slate-200/60 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+  <header class="bg-white border-b border-separator sticky top-0 z-50" style="border-color: var(--color-separator);">
+    <div class="max-w-7xl mx-auto px-4 py-6" style="padding: var(--spacing-6) var(--spacing-4);">
       <div class="flex justify-between items-center">
         <div>
-          <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+          <h1 class="text-large-title" style="font-size: var(--font-title-1); font-weight: 700; color: var(--color-label-primary); margin: 0;">
             BerganCo SEO Dashboard
           </h1>
-          <p class="text-sm text-slate-500 mt-1 font-medium">www.berganco.com</p>
+          <p class="text-footnote" style="margin-top: var(--spacing-2); color: var(--color-label-secondary);">
+            www.berganco.com
+          </p>
         </div>
-        <div class="flex gap-3">
-          <a href="/admin.html" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg shadow-purple-500/20 font-medium text-sm">
-            ⚙️ Admin Portal
+        <div class="flex gap-3" style="gap: var(--spacing-3);">
+          <a href="/admin.html" class="btn-secondary">
+            Admin Portal
           </a>
-          <button onclick="collectData()" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 font-medium text-sm">
+          <button onclick="collectData()" class="btn-primary">
             Collect Data
           </button>
-          <button onclick="generateReport()" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/20 font-medium text-sm">
+          <button onclick="generateReport()" class="btn-primary">
             Generate Report
           </button>
         </div>
@@ -72,13 +165,13 @@
   </header>
 
   <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+  <main class="max-w-7xl mx-auto px-4 py-8" style="padding: var(--spacing-8) var(--spacing-4);">
     
     <!-- Loading State -->
-    <div id="loading" class="flex items-center justify-center py-24">
+    <div id="loading" class="flex items-center justify-center" style="padding: var(--spacing-8) 0;">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-600 mx-auto mb-4"></div>
-        <p class="text-slate-500 font-medium">Loading dashboard data...</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-600 mx-auto mb-4" style="border-top-color: var(--color-blue);"></div>
+        <p class="text-footnote" style="color: var(--color-label-secondary);">Loading dashboard data...</p>
       </div>
     </div>
 
@@ -86,105 +179,111 @@
     <div id="dashboard" class="hidden">
       
       <!-- Date Filter -->
-      <div class="mb-8 bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/60 shadow-lg">
-        <div class="flex items-center justify-between">
+      <div class="card mb-8 p-6" style="margin-bottom: var(--spacing-8); padding: var(--spacing-6);">
+        <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-lg font-semibold text-slate-900 mb-1">Select Time Period</h2>
-            <p class="text-sm text-slate-500">Choose the date range for your analysis</p>
+            <h2 class="text-title-3" style="margin: 0 0 var(--spacing-2) 0; color: var(--color-label-primary);">
+              Select Time Period
+            </h2>
+            <p class="text-footnote" style="color: var(--color-label-secondary); margin: 0;">
+              Choose the date range for your analysis
+            </p>
           </div>
-          <div class="flex gap-3">
-            <button onclick="setDateFilter(7)" class="date-filter-btn px-4 py-2 rounded-xl font-medium text-sm border-2 border-slate-200 text-slate-700 hover:border-slate-300 active" id="filter-7">
-              7 Days
-            </button>
-            <button onclick="setDateFilter(14)" class="date-filter-btn px-4 py-2 rounded-xl font-medium text-sm border-2 border-slate-200 text-slate-700 hover:border-slate-300" id="filter-14">
-              14 Days
-            </button>
-            <button onclick="setDateFilter(30)" class="date-filter-btn px-4 py-2 rounded-xl font-medium text-sm border-2 border-slate-200 text-slate-700 hover:border-slate-300" id="filter-30">
-              30 Days
-            </button>
-            <button onclick="setDateFilter(90)" class="date-filter-btn px-4 py-2 rounded-xl font-medium text-sm border-2 border-slate-200 text-slate-700 hover:border-slate-300" id="filter-90">
-              90 Days
-            </button>
+          <div class="flex gap-2" style="gap: var(--spacing-2);">
+            <button onclick="setDateFilter(7)" class="date-filter-btn active" id="filter-7">7 Days</button>
+            <button onclick="setDateFilter(14)" class="date-filter-btn" id="filter-14">14 Days</button>
+            <button onclick="setDateFilter(30)" class="date-filter-btn" id="filter-30">30 Days</button>
+            <button onclick="setDateFilter(90)" class="date-filter-btn" id="filter-90">90 Days</button>
           </div>
         </div>
-        <div class="mt-4 pt-4 border-t border-slate-200">
-          <p class="text-xs text-slate-500" id="dateRange">
+        <div style="padding-top: var(--spacing-4); border-top: 1px solid var(--color-separator);">
+          <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;" id="dateRange">
             Loading date range...
           </p>
         </div>
       </div>
 
       <!-- Key Metrics Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" style="margin-bottom: var(--spacing-8); gap: var(--spacing-6);">
         
         <!-- Clicks Card -->
-        <div class="metric-card rounded-2xl shadow-lg border border-slate-200/60 p-6">
+        <div class="card p-6">
           <div class="flex items-start justify-between mb-4">
-            <div class="metric-icon bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
-              👆
-            </div>
-            <div class="text-right">
-              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Clicks</span>
+            <div class="metric-icon-circle icon-blue">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1976D2" stroke-width="2">
+                <path d="M10 3L3 10h4v7h6v-7h4L10 3z"/>
+              </svg>
             </div>
           </div>
           <div>
-            <p class="text-4xl font-bold text-slate-900 mb-2" id="totalClicks">-</p>
-            <p class="text-sm font-medium" id="clicksChange">
-              <span class="text-slate-400">No comparison data</span>
+            <p class="text-caption mb-2" style="color: var(--color-label-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">
+              Total Clicks
+            </p>
+            <p class="metric-number mb-2" id="totalClicks">-</p>
+            <p class="text-footnote" id="clicksChange" style="color: var(--color-label-secondary);">
+              No comparison data
             </p>
           </div>
         </div>
 
         <!-- Impressions Card -->
-        <div class="metric-card rounded-2xl shadow-lg border border-slate-200/60 p-6">
+        <div class="card p-6">
           <div class="flex items-start justify-between mb-4">
-            <div class="metric-icon bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30">
-              👁️
-            </div>
-            <div class="text-right">
-              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Impressions</span>
+            <div class="metric-icon-circle icon-purple">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#7B1FA2" stroke-width="2">
+                <path d="M1 10s4-8 9-8 9 8 9 8-4 8-9 8-9-8-9-8z"/>
+                <circle cx="10" cy="10" r="3"/>
+              </svg>
             </div>
           </div>
           <div>
-            <p class="text-4xl font-bold text-slate-900 mb-2" id="totalImpressions">-</p>
-            <p class="text-sm font-medium" id="impressionsChange">
-              <span class="text-slate-400">No comparison data</span>
+            <p class="text-caption mb-2" style="color: var(--color-label-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">
+              Impressions
+            </p>
+            <p class="metric-number mb-2" id="totalImpressions">-</p>
+            <p class="text-footnote" id="impressionsChange" style="color: var(--color-label-secondary);">
+              No comparison data
             </p>
           </div>
         </div>
 
         <!-- CTR Card -->
-        <div class="metric-card rounded-2xl shadow-lg border border-slate-200/60 p-6">
+        <div class="card p-6">
           <div class="flex items-start justify-between mb-4">
-            <div class="metric-icon bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30">
-              📊
-            </div>
-            <div class="text-right">
-              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Avg CTR</span>
+            <div class="metric-icon-circle icon-green">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#388E3C" stroke-width="2">
+                <path d="M3 17h14M5 10l5 5 7-7"/>
+              </svg>
             </div>
           </div>
           <div>
-            <p class="text-4xl font-bold text-slate-900 mb-2" id="avgCtr">-</p>
-            <p class="text-sm font-medium" id="ctrChange">
-              <span class="text-slate-400">No comparison data</span>
+            <p class="text-caption mb-2" style="color: var(--color-label-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">
+              Avg CTR
+            </p>
+            <p class="metric-number mb-2" id="avgCtr">-</p>
+            <p class="text-footnote" id="ctrChange" style="color: var(--color-label-secondary);">
+              No comparison data
             </p>
           </div>
         </div>
 
         <!-- Position Card -->
-        <div class="metric-card rounded-2xl shadow-lg border border-slate-200/60 p-6">
+        <div class="card p-6">
           <div class="flex items-start justify-between mb-4">
-            <div class="metric-icon bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30">
-              🎯
-            </div>
-            <div class="text-right">
-              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Avg Position</span>
+            <div class="metric-icon-circle icon-orange">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#F57C00" stroke-width="2">
+                <circle cx="10" cy="10" r="8"/>
+                <circle cx="10" cy="10" r="3"/>
+              </svg>
             </div>
           </div>
           <div>
-            <p class="text-4xl font-bold text-slate-900 mb-2" id="avgPosition">-</p>
-            <p class="text-sm font-medium" id="positionChange">
-              <span class="text-slate-400">No comparison data</span>
+            <p class="text-caption mb-2" style="color: var(--color-label-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">
+              Avg Position
+            </p>
+            <p class="metric-number mb-2" id="avgPosition">-</p>
+            <p class="text-footnote" id="positionChange" style="color: var(--color-label-secondary);">
+              No comparison data
             </p>
           </div>
         </div>
@@ -192,47 +291,55 @@
       </div>
 
       <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" style="margin-bottom: var(--spacing-8); gap: var(--spacing-6);">
         
         <!-- Clicks Trend Chart -->
-        <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
-          <h2 class="text-xl font-semibold text-slate-900 mb-1">Clicks & Impressions Trend</h2>
-          <p class="text-sm text-slate-500 mb-6">Performance over time</p>
+        <div class="card p-6">
+          <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">Clicks & Impressions Trend</h2>
+          <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
+            Performance over time
+          </p>
           <canvas id="clicksChart"></canvas>
         </div>
 
         <!-- CTR & Position Chart -->
-        <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
-          <h2 class="text-xl font-semibold text-slate-900 mb-1">CTR & Position Trend</h2>
-          <p class="text-sm text-slate-500 mb-6">Engagement metrics</p>
+        <div class="card p-6">
+          <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">CTR & Position Trend</h2>
+          <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
+            Engagement metrics
+          </p>
           <canvas id="ctrChart"></canvas>
         </div>
 
       </div>
 
       <!-- Top Pages & Queries -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" style="margin-bottom: var(--spacing-8); gap: var(--spacing-6);">
         
         <!-- Top Pages -->
-        <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
-          <h2 class="text-xl font-semibold text-slate-900 mb-1">🏆 Top Pages</h2>
-          <p class="text-sm text-slate-500 mb-6">Highest performing pages</p>
+        <div class="card p-6">
+          <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">Top Pages</h2>
+          <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
+            Highest performing pages
+          </p>
           <div id="topPages" class="space-y-2 max-h-96 overflow-y-auto">
-            <div class="text-slate-500 text-center py-8">
-              <div class="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-blue-600 mx-auto mb-2"></div>
-              Loading...
+            <div class="text-center py-8" style="padding: var(--spacing-8) 0;">
+              <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-blue-600 mx-auto mb-2" style="border-top-color: var(--color-blue);"></div>
+              <p class="text-footnote" style="color: var(--color-label-secondary);">Loading...</p>
             </div>
           </div>
         </div>
 
         <!-- Top Queries -->
-        <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
-          <h2 class="text-xl font-semibold text-slate-900 mb-1">🔎 Top Search Queries</h2>
-          <p class="text-sm text-slate-500 mb-6">Most searched keywords</p>
+        <div class="card p-6">
+          <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">Top Search Queries</h2>
+          <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
+            Most searched keywords
+          </p>
           <div id="topQueries" class="space-y-2 max-h-96 overflow-y-auto">
-            <div class="text-slate-500 text-center py-8">
-              <div class="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-emerald-600 mx-auto mb-2"></div>
-              Loading...
+            <div class="text-center py-8" style="padding: var(--spacing-8) 0;">
+              <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-blue-600 mx-auto mb-2" style="border-top-color: var(--color-blue);"></div>
+              <p class="text-footnote" style="color: var(--color-label-secondary);">Loading...</p>
             </div>
           </div>
         </div>
@@ -240,12 +347,16 @@
       </div>
 
       <!-- Latest Report Insights -->
-      <div class="mt-8 bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
-        <h2 class="text-xl font-semibold text-slate-900 mb-1">📋 Latest Report Insights</h2>
-        <p class="text-sm text-slate-500 mb-6">AI-generated recommendations and analysis</p>
-        <div id="reportInsights" class="prose max-w-none">
-          <div class="bg-slate-50 rounded-xl p-6 border border-slate-200">
-            <p class="text-slate-500 text-center">No reports available yet. Generate your first report to see insights.</p>
+      <div class="card p-6 mt-8" style="margin-top: var(--spacing-8);">
+        <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">Latest Report Insights</h2>
+        <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
+          AI-generated recommendations and analysis
+        </p>
+        <div id="reportInsights">
+          <div class="p-6 rounded-lg" style="padding: var(--spacing-6); background: var(--color-bg-secondary); border: 1px solid var(--color-separator);">
+            <p class="text-footnote text-center" style="color: var(--color-label-secondary); margin: 0;">
+              No reports available yet. Generate your first report to see insights.
+            </p>
           </div>
         </div>
       </div>
@@ -264,23 +375,21 @@
       return num.toLocaleString('en-US');
     }
 
-    // Format change percentage
+    // Format change percentage (Apple style)
     function formatChange(change, inverted = false) {
       if (change === null || change === undefined || isNaN(change)) {
-        return '<span class="text-slate-400">No comparison data</span>';
+        return '<span style="color: var(--color-label-secondary);">No comparison data</span>';
       }
       
       const isPositive = inverted ? change < 0 : change > 0;
-      const color = isPositive ? 'text-emerald-600' : 'text-red-600';
-      const arrow = change > 0 ? '↑' : '↓';
+      const color = isPositive ? '#34C759' : '#FF3B30'; // Apple green/red
+      const arrow = isPositive ? '↑' : '↓';
       const prefix = inverted ? '' : (isPositive ? '+' : '');
-      const sign = inverted && change < 0 ? '+' : '';
       
       if (inverted) {
-        // For position, lower is better, so we invert the logic
-        return `<span class="${color} font-semibold">${sign}${Math.abs(change).toFixed(1)}</span> <span class="text-slate-500 text-xs">vs previous period</span>`;
+        return `<span style="color: ${color}; font-weight: 500;">${prefix}${Math.abs(change).toFixed(1)}</span> <span style="color: var(--color-label-secondary); font-size: 11px;">vs previous period</span>`;
       } else {
-        return `<span class="${color} font-semibold">${arrow} ${Math.abs(change).toFixed(1)}%</span> <span class="text-slate-500 text-xs">vs previous period</span>`;
+        return `<span style="color: ${color}; font-weight: 500;">${arrow} ${Math.abs(change).toFixed(1)}%</span> <span style="color: var(--color-label-secondary); font-size: 11px;">vs previous period</span>`;
       }
     }
 
@@ -334,7 +443,7 @@
         document.getElementById('dashboard').classList.remove('hidden');
       } catch (error) {
         console.error('Error loading dashboard:', error);
-        document.getElementById('loading').innerHTML = '<p class="text-red-600 font-medium">Error loading dashboard data. Please try again.</p>';
+        document.getElementById('loading').innerHTML = '<p style="color: #FF3B30; font-weight: 500;">Error loading dashboard data. Please try again.</p>';
       }
     }
 
@@ -383,19 +492,21 @@
               {
                 label: 'Clicks',
                 data: clicks,
-                borderColor: 'rgb(59, 130, 246)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderColor: '#007AFF',
+                backgroundColor: 'rgba(0, 122, 255, 0.08)',
                 tension: 0.4,
                 fill: true,
+                borderWidth: 2,
                 yAxisID: 'y'
               },
               {
                 label: 'Impressions',
                 data: impressions,
-                borderColor: 'rgb(168, 85, 247)',
-                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                borderColor: '#AF52DE',
+                backgroundColor: 'rgba(175, 82, 222, 0.08)',
                 tension: 0.4,
                 fill: true,
+                borderWidth: 2,
                 yAxisID: 'y1'
               }
             ]
@@ -407,8 +518,8 @@
               legend: {
                 position: 'top',
                 labels: {
-                  font: { family: 'Inter', size: 12 },
-                  padding: 15,
+                  font: { family: '-apple-system', size: 12 },
+                  padding: 12,
                   usePointStyle: true
                 }
               }
@@ -420,14 +531,20 @@
                 display: true, 
                 position: 'left',
                 beginAtZero: true,
-                grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
+                ticks: { font: { family: '-apple-system', size: 11 } }
               },
               y1: { 
                 type: 'linear', 
                 display: true, 
                 position: 'right',
                 beginAtZero: true,
-                grid: { drawOnChartArea: false }
+                grid: { drawOnChartArea: false, drawBorder: false },
+                ticks: { font: { family: '-apple-system', size: 11 } }
+              },
+              x: {
+                grid: { display: false },
+                ticks: { font: { family: '-apple-system', size: 11 } }
               }
             }
           }
@@ -444,19 +561,21 @@
               {
                 label: 'CTR (%)',
                 data: ctrs,
-                borderColor: 'rgb(16, 185, 129)',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: '#34C759',
+                backgroundColor: 'rgba(52, 199, 89, 0.08)',
                 tension: 0.4,
                 fill: true,
+                borderWidth: 2,
                 yAxisID: 'y'
               },
               {
                 label: 'Position',
                 data: positions,
-                borderColor: 'rgb(245, 158, 11)',
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderColor: '#FF9500',
+                backgroundColor: 'rgba(255, 149, 0, 0.08)',
                 tension: 0.4,
                 fill: true,
+                borderWidth: 2,
                 yAxisID: 'y1'
               }
             ]
@@ -468,8 +587,8 @@
               legend: {
                 position: 'top',
                 labels: {
-                  font: { family: 'Inter', size: 12 },
-                  padding: 15,
+                  font: { family: '-apple-system', size: 12 },
+                  padding: 12,
                   usePointStyle: true
                 }
               }
@@ -481,7 +600,8 @@
                 display: true, 
                 position: 'left',
                 beginAtZero: true,
-                grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
+                ticks: { font: { family: '-apple-system', size: 11 } }
               },
               y1: { 
                 type: 'linear', 
@@ -489,7 +609,12 @@
                 position: 'right',
                 reverse: true,
                 beginAtZero: true,
-                grid: { drawOnChartArea: false }
+                grid: { drawOnChartArea: false, drawBorder: false },
+                ticks: { font: { family: '-apple-system', size: 11 } }
+              },
+              x: {
+                grid: { display: false },
+                ticks: { font: { family: '-apple-system', size: 11 } }
               }
             }
           }
@@ -506,21 +631,21 @@
         const data = await response.json();
 
         if (!data || data.length === 0) {
-          document.getElementById('topPages').innerHTML = '<p class="text-slate-500 text-center py-8">No page data available</p>';
+          document.getElementById('topPages').innerHTML = '<p class="text-footnote text-center py-8" style="color: var(--color-label-secondary); padding: var(--spacing-8) 0;">No page data available</p>';
           return;
         }
 
         const html = data.map((page, idx) => {
           const url = page.page.replace('https://www.berganco.com', '') || '/';
           return `
-            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-slate-50 to-white rounded-xl hover:from-slate-100 hover:to-slate-50 transition-all border border-slate-200/50">
+            <div class="flex items-center justify-between py-3 px-4 rounded-lg" style="padding: var(--spacing-3) var(--spacing-4); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); margin-bottom: var(--spacing-2);">
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-slate-900 truncate">${url}</p>
-                <p class="text-xs text-slate-500 mt-1">${formatNumber(page._sum.clicks)} clicks · ${((page._avg.ctr || 0) * 100).toFixed(2)}% CTR</p>
+                <p class="text-body font-medium truncate" style="font-size: var(--font-body); font-weight: 500; margin: 0 0 var(--spacing-2) 0;">${url}</p>
+                <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;">${formatNumber(page._sum.clicks)} clicks · ${((page._avg.ctr || 0) * 100).toFixed(2)}% CTR</p>
               </div>
               <div class="text-right ml-4">
-                <p class="text-sm font-bold text-purple-600">${formatNumber(page._sum.impressions)}</p>
-                <p class="text-xs text-slate-400">impressions</p>
+                <p class="text-body font-semibold" style="font-size: var(--font-body); font-weight: 600; color: #AF52DE; margin: 0;">${formatNumber(page._sum.impressions)}</p>
+                <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;">impressions</p>
               </div>
             </div>
           `;
@@ -529,7 +654,7 @@
         document.getElementById('topPages').innerHTML = html;
       } catch (error) {
         console.error('Error loading top pages:', error);
-        document.getElementById('topPages').innerHTML = '<p class="text-red-500 text-center py-8">Error loading pages</p>';
+        document.getElementById('topPages').innerHTML = '<p style="color: #FF3B30; text-align: center; padding: var(--spacing-8) 0;">Error loading pages</p>';
       }
     }
 
@@ -540,20 +665,20 @@
         const data = await response.json();
 
         if (!data || data.length === 0) {
-          document.getElementById('topQueries').innerHTML = '<p class="text-slate-500 text-center py-8">No query data available</p>';
+          document.getElementById('topQueries').innerHTML = '<p class="text-footnote text-center py-8" style="color: var(--color-label-secondary); padding: var(--spacing-8) 0;">No query data available</p>';
           return;
         }
 
         const html = data.map((query, idx) => {
           return `
-            <div class="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-slate-50 to-white rounded-xl hover:from-slate-100 hover:to-slate-50 transition-all border border-slate-200/50">
+            <div class="flex items-center justify-between py-3 px-4 rounded-lg" style="padding: var(--spacing-3) var(--spacing-4); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); margin-bottom: var(--spacing-2);">
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-slate-900">"${query.query}"</p>
-                <p class="text-xs text-slate-500 mt-1">Position ${(query._avg.position || 0).toFixed(1)} · ${((query._avg.ctr || 0) * 100).toFixed(2)}% CTR</p>
+                <p class="text-body font-medium" style="font-size: var(--font-body); font-weight: 500; margin: 0 0 var(--spacing-2) 0;">"${query.query}"</p>
+                <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;">Position ${(query._avg.position || 0).toFixed(1)} · ${((query._avg.ctr || 0) * 100).toFixed(2)}% CTR</p>
               </div>
               <div class="text-right ml-4">
-                <p class="text-sm font-bold text-emerald-600">${formatNumber(query._sum.clicks)}</p>
-                <p class="text-xs text-slate-400">clicks</p>
+                <p class="text-body font-semibold" style="font-size: var(--font-body); font-weight: 600; color: #34C759; margin: 0;">${formatNumber(query._sum.clicks)}</p>
+                <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;">clicks</p>
               </div>
             </div>
           `;
@@ -562,7 +687,7 @@
         document.getElementById('topQueries').innerHTML = html;
       } catch (error) {
         console.error('Error loading top queries:', error);
-        document.getElementById('topQueries').innerHTML = '<p class="text-red-500 text-center py-8">Error loading queries</p>';
+        document.getElementById('topQueries').innerHTML = '<p style="color: #FF3B30; text-align: center; padding: var(--spacing-8) 0;">Error loading queries</p>';
       }
     }
 
@@ -572,14 +697,18 @@
       const recommendations = report.recommendations ? report.recommendations.split('\n').join('<br>') : '';
 
       document.getElementById('reportInsights').innerHTML = `
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-900 mb-3">Insights</h3>
-          <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400 rounded-xl p-5 text-sm text-slate-700 shadow-sm">${insights}</div>
+        <div style="margin-bottom: var(--spacing-6);">
+          <h3 class="text-title-3 mb-3" style="font-size: var(--font-title-3); font-weight: 600; margin: 0 0 var(--spacing-3) 0;">Insights</h3>
+          <div class="p-5 rounded-lg" style="padding: var(--spacing-4); background: #FFFBF0; border-left: 3px solid #FF9500; border: 1px solid rgba(255, 149, 0, 0.2);">
+            <p class="text-body" style="font-size: var(--font-body); color: var(--color-label-primary); margin: 0; line-height: 1.6;">${insights}</p>
+          </div>
         </div>
         ${recommendations ? `
         <div>
-          <h3 class="text-lg font-semibold text-slate-900 mb-3">Recommendations</h3>
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-xl p-5 text-sm text-slate-700 shadow-sm">${recommendations}</div>
+          <h3 class="text-title-3 mb-3" style="font-size: var(--font-title-3); font-weight: 600; margin: 0 0 var(--spacing-3) 0;">Recommendations</h3>
+          <div class="p-5 rounded-lg" style="padding: var(--spacing-4); background: #F0F7FF; border-left: 3px solid #007AFF; border: 1px solid rgba(0, 122, 255, 0.2);">
+            <p class="text-body" style="font-size: var(--font-body); color: var(--color-label-primary); margin: 0; line-height: 1.6;">${recommendations}</p>
+          </div>
         </div>
         ` : ''}
       `;
