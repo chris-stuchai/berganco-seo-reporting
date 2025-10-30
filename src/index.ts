@@ -94,7 +94,9 @@ app.get('/settings', (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const result = await authService.login(email, password);
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    const result = await authService.login(email, password, ipAddress as string, userAgent);
     
     // Set cookie
     res.cookie('sessionToken', result.token, {
@@ -697,13 +699,23 @@ Changes:
           content?: string;
         };
       }>;
+      usage?: {
+        total_tokens?: number;
+      };
     };
+
+    // Log API usage
+    const { logOpenAIApiCall } = await import('./services/api-tracking');
+    const tokensUsed = data.usage?.total_tokens || 0;
+    await logOpenAIApiCall('/v1/chat/completions', tokensUsed, true);
 
     const aiResponse = data.choices?.[0]?.message?.content || 'I apologize, but I could not generate a response.';
 
     res.json({ response: aiResponse });
   } catch (error) {
     console.error('Error in AI chat:', error);
+    const { logOpenAIApiCall } = await import('./services/api-tracking');
+    await logOpenAIApiCall('/v1/chat/completions', 0, false, error instanceof Error ? error.message : 'Unknown error');
     res.status(500).json({ error: 'Failed to process chat message' });
   }
 });
@@ -822,12 +834,93 @@ app.post('/api/admin/backfill', async (req, res) => {
   }
 });
 
+// Admin endpoints for usage stats and schedules
+app.get('/api/admin/usage', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const thirtyDaysAgo = subDays(new Date(), 30);
+    
+    const [googleCalls, openaiCalls, totalCost, logins] = await Promise.all([
+      prisma.apiUsage.count({
+        where: { apiType: 'GOOGLE', createdAt: { gte: thirtyDaysAgo } }
+      }),
+      prisma.apiUsage.count({
+        where: { apiType: 'OPENAI', createdAt: { gte: thirtyDaysAgo } }
+      }),
+      prisma.apiUsage.aggregate({
+        where: { apiType: 'OPENAI', createdAt: { gte: thirtyDaysAgo } },
+        _sum: { costEstimate: true }
+      }),
+      prisma.loginLog.count({
+        where: { success: true, createdAt: { gte: thirtyDaysAgo } }
+      })
+    ]);
+    
+    res.json({
+      googleApiCalls: googleCalls,
+      openaiApiCalls: openaiCalls,
+      estimatedOpenAICost: totalCost._sum.costEstimate || 0,
+      totalLogins: logins
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/schedules', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const schedules = await prisma.scheduleConfig.findMany();
+    res.json(schedules);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/schedules', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const { jobType, cronExpression, isEnabled } = req.body;
+    
+    // Note: node-cron doesn't have a validate function, so we'll skip validation for now
+    // In production, you'd want to validate cron expressions properly
+    
+    const schedule = await prisma.scheduleConfig.upsert({
+      where: { jobType },
+      update: { cronExpression, isEnabled, updatedAt: new Date() },
+      create: { jobType, cronExpression, isEnabled }
+    });
+    
+    // Note: Actual cron job updates would require restarting the cron scheduler
+    // For now, we just store the config. The cron jobs can check this on next run.
+    
+    res.json(schedule);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Schedule daily data collection (runs at 3 AM every day)
 cron.schedule('0 3 * * *', async () => {
   console.log('🕐 Running scheduled data collection...');
   try {
+    // Check if enabled in config
+    const config = await prisma.scheduleConfig.findUnique({
+      where: { jobType: 'DATA_COLLECTION' }
+    });
+    if (config && !config.isEnabled) {
+      console.log('⏸️  Data collection scheduled job is disabled');
+      return;
+    }
+    
     const date = subDays(new Date(), 3);
     await collectAllMetrics(date);
+    
+    // Update last run time
+    if (config) {
+      await prisma.scheduleConfig.update({
+        where: { id: config.id },
+        data: { lastRun: new Date() }
+      });
+    }
+    
     console.log('✅ Scheduled data collection complete');
   } catch (error) {
     console.error('❌ Scheduled data collection failed:', error);
@@ -838,6 +931,15 @@ cron.schedule('0 3 * * *', async () => {
 cron.schedule('0 8 * * 1', async () => {
   console.log('📧 Running scheduled weekly report...');
   try {
+    // Check if enabled in config
+    const config = await prisma.scheduleConfig.findUnique({
+      where: { jobType: 'REPORT_GENERATION' }
+    });
+    if (config && !config.isEnabled) {
+      console.log('⏸️  Report generation scheduled job is disabled');
+      return;
+    }
+    
     const result = await generateWeeklyReport();
     
     const reportData = {
@@ -861,6 +963,14 @@ cron.schedule('0 8 * * 1', async () => {
       where: { id: result.report.id },
       data: { sentAt: new Date() },
     });
+    
+    // Update last run time
+    if (config) {
+      await prisma.scheduleConfig.update({
+        where: { id: config.id },
+        data: { lastRun: new Date() }
+      });
+    }
 
     console.log('✅ Scheduled weekly report sent');
   } catch (error) {

@@ -101,6 +101,25 @@
     .badge-admin { background: rgba(255, 69, 58, 0.2); color: var(--color-red); }
     .badge-employee { background: rgba(10, 132, 255, 0.2); color: var(--color-blue); }
     .badge-client { background: rgba(48, 209, 88, 0.2); color: var(--color-green); }
+    
+    /* Loading spinner */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-6);
+    }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--color-separator);
+      border-top-color: var(--color-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -133,7 +152,7 @@
     <!-- System Controls -->
     <div class="card">
       <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-4);">System Controls</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-4);">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-4); margin-bottom: var(--spacing-6);">
         <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
           <h3 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">Collect Data</h3>
           <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Collect today's metrics</p>
@@ -143,6 +162,28 @@
           <h3 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">Generate Report</h3>
           <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Generate weekly report</p>
           <button class="btn btn-primary" onclick="generateReport()" style="width: 100%;">Generate Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Configuration -->
+    <div class="card">
+      <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-4);">Schedule Configuration</h2>
+      <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">Configure automated schedules using cron expressions (e.g., "0 3 * * *" = daily at 3 AM)</p>
+      <div id="scheduleConfig">
+        <div class="loading">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usage Statistics -->
+    <div class="card">
+      <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-4);">Usage Statistics</h2>
+      <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">Track API usage and costs</p>
+      <div id="usageStats">
+        <div class="loading">
+          <div class="spinner"></div>
         </div>
       </div>
     </div>
@@ -189,31 +230,72 @@
   <script>
     // Check auth
     (async function() {
-      const res = await fetch('/api/auth/me', { credentials: 'include' });
-      if (!res.ok || !(await res.json()).user?.role || ['ADMIN', 'EMPLOYEE'].indexOf((await res.json()).user.role) === -1) {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) {
+          window.location.href = '/login';
+          return;
+        }
+        const data = await res.json();
+        if (!data.user?.role || ['ADMIN', 'EMPLOYEE'].indexOf(data.user.role) === -1) {
+          window.location.href = '/login';
+          return;
+        }
+        loadUsers();
+        loadUsageStats();
+        loadSchedules();
+      } catch (error) {
+        console.error('Auth check failed:', error);
         window.location.href = '/login';
       }
-      loadUsers();
     })();
 
     async function loadUsers() {
-      const res = await fetch('/api/users', { credentials: 'include' });
-      const users = await res.json();
-      const tbody = document.getElementById('usersTable');
-      tbody.innerHTML = users.map(u => `
-        <tr>
-          <td>${u.name}</td>
-          <td>${u.email}</td>
-          <td><span class="badge badge-${u.role.toLowerCase()}">${u.role}</span></td>
-          <td>${u.isActive ? 'Active' : 'Inactive'}</td>
-          <td>${new Date(u.createdAt).toLocaleDateString()}</td>
-          <td>
-            <button class="btn" onclick="editUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote); margin-right: 4px;">Edit</button>
-            ${u.role === 'CLIENT' ? `<button class="btn" onclick="impersonateUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote); background: var(--color-blue); color: white; margin-right: 4px;">View As</button>` : ''}
-            ${u.role !== 'ADMIN' ? `<button class="btn btn-danger" onclick="deleteUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote);">Delete</button>` : ''}
-          </td>
-        </tr>
-      `).join('');
+      try {
+        const res = await fetch('/api/users', { credentials: 'include' });
+        if (!res.ok) {
+          const error = await res.json();
+          document.getElementById('usersTable').innerHTML = `
+            <tr><td colspan="6" style="text-align: center; padding: var(--spacing-6); color: var(--color-red);">
+              Error loading users: ${error.error || 'Unknown error'}
+            </td></tr>
+          `;
+          return;
+        }
+        const users = await res.json();
+        const tbody = document.getElementById('usersTable');
+        
+        if (!users || users.length === 0) {
+          tbody.innerHTML = `
+            <tr><td colspan="6" style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">
+              No users found. Create your first user above.
+            </td></tr>
+          `;
+          return;
+        }
+        
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+            <td><span class="badge badge-${u.role.toLowerCase()}">${u.role}</span></td>
+            <td>${u.isActive ? 'Active' : 'Inactive'}</td>
+            <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+            <td>
+              <button class="btn" onclick="editUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote); margin-right: 4px;">Edit</button>
+              ${u.role === 'CLIENT' ? `<button class="btn" onclick="impersonateUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote); background: var(--color-blue); color: white; margin-right: 4px;">View As</button>` : ''}
+              ${u.role !== 'ADMIN' ? `<button class="btn btn-danger" onclick="deleteUser('${u.id}')" style="padding: 4px 8px; font-size: var(--font-footnote);">Delete</button>` : ''}
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading users:', error);
+        document.getElementById('usersTable').innerHTML = `
+          <tr><td colspan="6" style="text-align: center; padding: var(--spacing-6); color: var(--color-red);">
+            Failed to load users. Please refresh the page.
+          </td></tr>
+        `;
+      }
     }
 
     function showCreateUserModal() {
@@ -256,13 +338,176 @@
     }
 
     async function collectData() {
-      await fetch('/api/collect', { method: 'POST', credentials: 'include' });
-      alert('Data collection started');
+      try {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Collecting...';
+        
+        const res = await fetch('/api/collect', { method: 'POST', credentials: 'include' });
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert('✅ Data collection started successfully');
+          loadUsageStats(); // Refresh stats
+        } else {
+          alert(`❌ Error: ${data.error || 'Failed to start collection'}`);
+        }
+      } catch (error) {
+        alert('❌ Error: Failed to start data collection');
+        console.error(error);
+      } finally {
+        const btn = event.target;
+        btn.disabled = false;
+        btn.textContent = 'Collect Now';
+      }
     }
 
     async function generateReport() {
-      await fetch('/api/generate-report', { method: 'POST', credentials: 'include' });
-      alert('Report generation started');
+      try {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+        
+        const res = await fetch('/api/generate-report', { method: 'POST', credentials: 'include' });
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert('✅ Report generation started successfully');
+          loadUsageStats(); // Refresh stats
+        } else {
+          alert(`❌ Error: ${data.error || 'Failed to generate report'}`);
+        }
+      } catch (error) {
+        alert('❌ Error: Failed to generate report');
+        console.error(error);
+      } finally {
+        const btn = event.target;
+        btn.disabled = false;
+        btn.textContent = 'Generate Now';
+      }
+    }
+
+    async function loadUsageStats() {
+      try {
+        const res = await fetch('/api/admin/usage', { credentials: 'include' });
+        if (res.ok) {
+          const stats = await res.json();
+          updateUsageDisplay(stats);
+        }
+      } catch (error) {
+        console.error('Error loading usage stats:', error);
+      }
+    }
+
+    function updateUsageDisplay(stats) {
+      const container = document.getElementById('usageStats');
+      if (!container) return;
+      
+      container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-4);">
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
+            <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Google API Calls</div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--color-label-primary);">${stats.googleApiCalls || 0}</div>
+            <div style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-top: var(--spacing-1);">Last 30 days</div>
+          </div>
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
+            <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">OpenAI API Calls</div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--color-label-primary);">${stats.openaiApiCalls || 0}</div>
+            <div style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-top: var(--spacing-1);">Last 30 days</div>
+          </div>
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
+            <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Estimated OpenAI Cost</div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--color-label-primary);">$${(stats.estimatedOpenAICost || 0).toFixed(3)}</div>
+            <div style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-top: var(--spacing-1);">Last 30 days</div>
+          </div>
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
+            <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">Total Logins</div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--color-label-primary);">${stats.totalLogins || 0}</div>
+            <div style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-top: var(--spacing-1);">Last 30 days</div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadSchedules() {
+      try {
+        const res = await fetch('/api/admin/schedules', { credentials: 'include' });
+        if (res.ok) {
+          const schedules = await res.json();
+          updateScheduleDisplay(schedules);
+        }
+      } catch (error) {
+        console.error('Error loading schedules:', error);
+      }
+    }
+
+    function updateScheduleDisplay(schedules) {
+      const container = document.getElementById('scheduleConfig');
+      if (!container) return;
+      
+      const dataCollection = schedules.find(s => s.jobType === 'DATA_COLLECTION') || { cronExpression: '0 3 * * *', isEnabled: true };
+      const reportGeneration = schedules.find(s => s.jobType === 'REPORT_GENERATION') || { cronExpression: '0 8 * * 1', isEnabled: true };
+      
+      container.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4);">
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
+            <h4 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">Data Collection</h4>
+            <div style="margin-bottom: var(--spacing-3);">
+              <label style="font-size: var(--font-footnote); color: var(--color-label-tertiary); display: block; margin-bottom: var(--spacing-1);">Schedule (Cron)</label>
+              <input type="text" id="dataCollectionCron" value="${dataCollection.cronExpression}" style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary);">
+            </div>
+            <div style="margin-bottom: var(--spacing-3);">
+              <label style="display: flex; align-items: center; gap: var(--spacing-2); cursor: pointer;">
+                <input type="checkbox" id="dataCollectionEnabled" ${dataCollection.isEnabled ? 'checked' : ''}>
+                <span style="font-size: var(--font-footnote); color: var(--color-label-secondary);">Enabled</span>
+              </label>
+            </div>
+            <button class="btn btn-primary" onclick="saveSchedule('DATA_COLLECTION')" style="width: 100%;">Save</button>
+          </div>
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px;">
+            <h4 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">Report Generation</h4>
+            <div style="margin-bottom: var(--spacing-3);">
+              <label style="font-size: var(--font-footnote); color: var(--color-label-tertiary); display: block; margin-bottom: var(--spacing-1);">Schedule (Cron)</label>
+              <input type="text" id="reportGenerationCron" value="${reportGeneration.cronExpression}" style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary);">
+            </div>
+            <div style="margin-bottom: var(--spacing-3);">
+              <label style="display: flex; align-items: center; gap: var(--spacing-2); cursor: pointer;">
+                <input type="checkbox" id="reportGenerationEnabled" ${reportGeneration.isEnabled ? 'checked' : ''}>
+                <span style="font-size: var(--font-footnote); color: var(--color-label-secondary);">Enabled</span>
+              </label>
+            </div>
+            <button class="btn btn-primary" onclick="saveSchedule('REPORT_GENERATION')" style="width: 100%;">Save</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function saveSchedule(jobType) {
+      try {
+        const cronField = jobType === 'DATA_COLLECTION' ? 'dataCollectionCron' : 'reportGenerationCron';
+        const enabledField = jobType === 'DATA_COLLECTION' ? 'dataCollectionEnabled' : 'reportGenerationEnabled';
+        
+        const cronExpression = document.getElementById(cronField).value;
+        const isEnabled = document.getElementById(enabledField).checked;
+        
+        const res = await fetch('/api/admin/schedules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ jobType, cronExpression, isEnabled })
+        });
+        
+        if (res.ok) {
+          alert('✅ Schedule updated successfully');
+          loadSchedules();
+        } else {
+          const error = await res.json();
+          alert(`❌ Error: ${error.error || 'Failed to update schedule'}`);
+        }
+      } catch (error) {
+        alert('❌ Error: Failed to update schedule');
+        console.error(error);
+      }
     }
 
     async function impersonateUser(userId) {

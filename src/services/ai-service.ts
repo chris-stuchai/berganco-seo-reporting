@@ -4,6 +4,8 @@
  * Uses OpenAI to analyze SEO data and provide market-aware insights
  */
 
+import { logOpenAIApiCall } from './api-tracking';
+
 interface SEODataContext {
   currentMetrics: {
     totalClicks: number;
@@ -103,6 +105,7 @@ export async function generateAIInsights(context: SEODataContext): Promise<AIIns
     if (!response.ok) {
       const error = await response.text();
       console.error('OpenAI API error:', error);
+      await logOpenAIApiCall('/v1/chat/completions', 0, false, error);
       return generateFallbackInsights(context);
     }
 
@@ -112,8 +115,15 @@ export async function generateAIInsights(context: SEODataContext): Promise<AIIns
           content?: string;
         };
       }>;
+      usage?: {
+        total_tokens?: number;
+      };
     };
     const aiResponse = data.choices?.[0]?.message?.content;
+    const tokensUsed = data.usage?.total_tokens || 0;
+
+    // Log successful API call
+    await logOpenAIApiCall('/v1/chat/completions', tokensUsed, true);
 
     if (!aiResponse) {
       return generateFallbackInsights(context);
@@ -123,6 +133,7 @@ export async function generateAIInsights(context: SEODataContext): Promise<AIIns
     return parseAIResponse(aiResponse, context);
   } catch (error) {
     console.error('Error calling OpenAI API:', error);
+    await logOpenAIApiCall('/v1/chat/completions', 0, false, error instanceof Error ? error.message : 'Unknown error');
     return generateFallbackInsights(context);
   }
 }
@@ -305,11 +316,19 @@ Provide a 2-3 sentence insight considering current SEO trends and property manag
             content?: string;
           };
         }>;
+        usage?: {
+          total_tokens?: number;
+        };
       };
+      const tokensUsed = data.usage?.total_tokens || 0;
+      await logOpenAIApiCall('/v1/chat/completions', tokensUsed, true);
       return data.choices?.[0]?.message?.content || generateFallbackInsights(context).executiveSummary;
+    } else {
+      await logOpenAIApiCall('/v1/chat/completions', 0, false, `HTTP ${response.status}`);
     }
   } catch (error) {
     console.error('Error generating quick insights:', error);
+    await logOpenAIApiCall('/v1/chat/completions', 0, false, error instanceof Error ? error.message : 'Unknown error');
   }
 
   return generateFallbackInsights(context).executiveSummary;

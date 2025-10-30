@@ -75,9 +75,30 @@ export async function createUser(
 /**
  * Authenticate user and create session
  */
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string, ipAddress?: string, userAgent?: string) {
   const user = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },
+  });
+
+  let loginSuccess = false;
+  let userId: string | undefined;
+
+  if (user) {
+    userId = user.id;
+    if (user.isActive && verifyPassword(password, user.passwordHash)) {
+      loginSuccess = true;
+    }
+  }
+
+  // Log login attempt
+  await prisma.loginLog.create({
+    data: {
+      userId: userId || '',
+      email: email.toLowerCase(),
+      success: loginSuccess,
+      ipAddress,
+      userAgent,
+    },
   });
 
   if (!user || !user.isActive) {
