@@ -106,8 +106,14 @@ export async function generateAIInsights(context: SEODataContext): Promise<AIIns
       return generateFallbackInsights(context);
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0]?.message?.content;
+    const data = await response.json() as {
+      choices?: Array<{
+        message?: {
+          content?: string;
+        };
+      }>;
+    };
+    const aiResponse = data.choices?.[0]?.message?.content;
 
     if (!aiResponse) {
       return generateFallbackInsights(context);
@@ -293,8 +299,14 @@ Provide a 2-3 sentence insight considering current SEO trends and property manag
     });
 
     if (response.ok) {
-      const data = await response.json();
-      return data.choices[0]?.message?.content || generateFallbackInsights(context).executiveSummary;
+      const data = await response.json() as {
+        choices?: Array<{
+          message?: {
+            content?: string;
+          };
+        }>;
+      };
+      return data.choices?.[0]?.message?.content || generateFallbackInsights(context).executiveSummary;
     }
   } catch (error) {
     console.error('Error generating quick insights:', error);
