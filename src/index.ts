@@ -34,13 +34,18 @@ async function runMigrations() {
 
   console.log('\n🗄️  Running database migrations...');
   try {
-    await execAsync('npx prisma migrate deploy');
+    const { stdout, stderr } = await execAsync('npx prisma migrate deploy');
+    if (stdout) console.log(stdout);
+    if (stderr) console.error(stderr);
+    
     await execAsync('npx prisma generate');
     console.log('✅ Migrations complete\n');
   } catch (error: any) {
-    console.error('⚠️  Migration warning:', error.message);
-    // Don't fail startup if migrations fail - might be schema already up to date
-    console.log('⏭️  Continuing startup...\n');
+    console.error('❌ Migration error:', error.message);
+    if (error.stdout) console.error('STDOUT:', error.stdout);
+    if (error.stderr) console.error('STDERR:', error.stderr);
+    // Fail startup if migrations fail - we need the tables
+    throw error;
   }
 }
 
@@ -806,6 +811,9 @@ async function createAdminIfNeeded() {
   }
 
   try {
+    // Wait a moment for Prisma Client to be ready
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Check if admin user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: adminEmail.toLowerCase() },
@@ -821,6 +829,10 @@ async function createAdminIfNeeded() {
     console.log(`✅ Admin user created: ${adminEmail}`);
   } catch (error: any) {
     console.error(`⚠️  Failed to create admin user: ${error.message}`);
+    if (error.stack) {
+      console.error('Stack:', error.stack);
+    }
+    // Don't fail startup - user might already exist or we can create manually
   }
 }
 
