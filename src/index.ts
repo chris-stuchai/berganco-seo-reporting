@@ -12,12 +12,34 @@ import { subDays, format, startOfWeek, subWeeks } from 'date-fns';
 import { collectAllMetrics } from './services/data-collector';
 import { generateWeeklyReport } from './services/report-generator';
 import { sendWeeklyReport } from './services/email-service';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
+const execAsync = promisify(exec);
+
+// Run migrations on startup
+async function runMigrations() {
+  if (process.env.SKIP_MIGRATIONS === 'true') {
+    console.log('⏭️  Skipping migrations (SKIP_MIGRATIONS=true)');
+    return;
+  }
+
+  console.log('\n🗄️  Running database migrations...');
+  try {
+    await execAsync('npx prisma migrate deploy');
+    await execAsync('npx prisma generate');
+    console.log('✅ Migrations complete\n');
+  } catch (error: any) {
+    console.error('⚠️  Migration warning:', error.message);
+    // Don't fail startup if migrations fail - might be schema already up to date
+    console.log('⏭️  Continuing startup...\n');
+  }
+}
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -235,14 +257,25 @@ cron.schedule('0 8 * * 1', async () => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n🚀 BerganCo SEO Reporting System`);
-  console.log(`📊 Server running on port ${PORT}`);
-  console.log(`🌐 Health check: http://localhost:${PORT}/health`);
-  console.log(`📈 Dashboard API: http://localhost:${PORT}/api/dashboard`);
-  console.log(`\n⏰ Scheduled jobs:`);
-  console.log(`   - Data collection: Daily at 3:00 AM`);
-  console.log(`   - Weekly reports: Mondays at 8:00 AM\n`);
+// Start server with migrations
+async function startServer() {
+  // Run migrations first
+  await runMigrations();
+
+  // Start the server
+  app.listen(PORT, () => {
+    console.log(`\n🚀 BerganCo SEO Reporting System`);
+    console.log(`📊 Server running on port ${PORT}`);
+    console.log(`🌐 Health check: http://localhost:${PORT}/health`);
+    console.log(`📈 Dashboard API: http://localhost:${PORT}/api/dashboard`);
+    console.log(`\n⏰ Scheduled jobs:`);
+    console.log(`   - Data collection: Daily at 3:00 AM`);
+    console.log(`   - Weekly reports: Mondays at 8:00 AM\n`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
 });
 

@@ -2,10 +2,19 @@ node_modules
 dist
 .env
 .env.local
+.env.backup
 *.log
 .DS_Store
 credentials.json
 token.json
 reports/
 *.sqlite
+
+# Files that may contain credentials
+*VERIFY*.md
+*CHECK*.md
+*OAUTH*.md
+RAILWAY_VERIFY.md
+FIX_OAUTH_ERROR.md
+CONFIG_CHECK.md
 
