@@ -61,7 +61,7 @@ function formatChange(change: number, invertColors: boolean = false): string {
 }
 
 /**
- * Generates HTML email content for the weekly report (matching website dark theme)
+ * Generates HTML email content for the weekly report (professional UX design)
  */
 function generateEmailHTML(data: ReportData): string {
   const { weekStartDate, weekEndDate, currentMetrics, topPages, topQueries, insights, recommendations } = data;
@@ -75,168 +75,213 @@ function generateEmailHTML(data: ReportData): string {
   <meta name="color-scheme" content="dark">
   <title>Weekly SEO Report - BerganCo</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; line-height: 1.47; color: #FFFFFF; max-width: 800px; margin: 0 auto; padding: 24px; background-color: #1C1C1E;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; line-height: 1.47; color: #FFFFFF; max-width: 800px; margin: 0 auto; padding: 32px 24px; background-color: #1C1C1E;">
   
-  <div style="background-color: #2C2C2E; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); border: 0.5px solid #48484A;">
+  <!-- Main Container -->
+  <div style="background-color: #2C2C2E; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); border: 1px solid #48484A;">
     
     <!-- Header -->
-    <div style="border-bottom: 1px solid #48484A; padding-bottom: 24px; margin-bottom: 32px;">
-      <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.02em;">Weekly SEO Report</h1>
-      <p style="margin: 8px 0 0 0; color: #98989D; font-size: 17px;">
+    <div style="margin-bottom: 40px;">
+      <h1 style="margin: 0 0 8px 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;">Weekly SEO Report</h1>
+      <p style="margin: 0; color: #98989D; font-size: 17px; font-weight: 400;">
         ${format(weekStartDate, 'MMMM d')} - ${format(weekEndDate, 'MMMM d, yyyy')}
       </p>
     </div>
 
     <!-- Key Metrics -->
-    <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.01em;">Key Metrics</h2>
+    <div style="margin-bottom: 40px;">
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Key Metrics</h2>
       
-      <div style="display: table; width: 100%; border-collapse: separate; border-spacing: 16px;">
+      <table style="width: 100%; border-collapse: separate; border-spacing: 0 16px;">
+        <tr>
+          <!-- Clicks Card -->
+          <td style="width: 50%; padding-right: 12px; vertical-align: top;">
+            <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+              <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(10, 132, 255, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                  <div style="width: 20px; height: 20px; background: #0A84FF; border-radius: 4px;"></div>
+                </div>
+                <div style="flex: 1;">
+                  <div style="color: #98989D; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Clicks</div>
+                </div>
+              </div>
+              <div style="font-size: 48px; font-weight: 700; color: #FFFFFF; line-height: 1.2; margin-bottom: 8px; letter-spacing: -0.02em;">
+                ${formatNumber(currentMetrics.totalClicks)}
+              </div>
+              <div style="font-size: 12px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
+                ${formatChange(data.clicksChange)}
+                <span style="color: #98989D;">vs last week</span>
+              </div>
+            </div>
+          </td>
+          
+          <!-- Impressions Card -->
+          <td style="width: 50%; padding-left: 12px; vertical-align: top;">
+            <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+              <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(175, 82, 222, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                  <div style="width: 20px; height: 20px; background: #AF52DE; border-radius: 4px;"></div>
+                </div>
+                <div style="flex: 1;">
+                  <div style="color: #98989D; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Impressions</div>
+                </div>
+              </div>
+              <div style="font-size: 48px; font-weight: 700; color: #FFFFFF; line-height: 1.2; margin-bottom: 8px; letter-spacing: -0.02em;">
+                ${formatNumber(currentMetrics.totalImpressions)}
+              </div>
+              <div style="font-size: 12px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
+                ${formatChange(data.impressionsChange)}
+                <span style="color: #98989D;">vs last week</span>
+              </div>
+            </div>
+          </td>
+        </tr>
         
-        <!-- Clicks Card -->
-        <div style="display: table-cell; width: 50%; background-color: #3A3A3C; border-radius: 12px; padding: 20px; border-left: 4px solid #0A84FF; vertical-align: top;">
-          <div style="color: #98989D; font-size: 13px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.02em;">Clicks</div>
-          <div style="font-size: 32px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; letter-spacing: -0.02em;">
-            ${formatNumber(currentMetrics.totalClicks)}
-          </div>
-          <div style="font-size: 13px; color: #E5E5EA;">
-            ${formatChange(data.clicksChange)}
-            vs last week
-          </div>
-        </div>
-
-        <!-- Impressions Card -->
-        <div style="display: table-cell; width: 50%; background-color: #3A3A3C; border-radius: 12px; padding: 20px; border-left: 4px solid #0A84FF; vertical-align: top;">
-          <div style="color: #98989D; font-size: 13px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.02em;">Impressions</div>
-          <div style="font-size: 32px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; letter-spacing: -0.02em;">
-            ${formatNumber(currentMetrics.totalImpressions)}
-          </div>
-          <div style="font-size: 13px; color: #E5E5EA;">
-            ${formatChange(data.impressionsChange)}
-            vs last week
-          </div>
-        </div>
-
-      </div>
-      
-      <div style="display: table; width: 100%; border-collapse: separate; border-spacing: 16px; margin-top: 16px;">
-        
-        <!-- CTR Card -->
-        <div style="display: table-cell; width: 50%; background-color: #3A3A3C; border-radius: 12px; padding: 20px; border-left: 4px solid #30D158; vertical-align: top;">
-          <div style="color: #98989D; font-size: 13px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.02em;">Average CTR</div>
-          <div style="font-size: 32px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; letter-spacing: -0.02em;">
-            ${(currentMetrics.averageCtr * 100).toFixed(2)}%
-          </div>
-          <div style="font-size: 13px; color: #E5E5EA;">
-            ${formatChange(data.ctrChange)}
-            vs last week
-          </div>
-        </div>
-
-        <!-- Position Card -->
-        <div style="display: table-cell; width: 50%; background-color: #3A3A3C; border-radius: 12px; padding: 20px; border-left: 4px solid #FF9F0A; vertical-align: top;">
-          <div style="color: #98989D; font-size: 13px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.02em;">Average Position</div>
-          <div style="font-size: 32px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; letter-spacing: -0.02em;">
-            ${currentMetrics.averagePosition.toFixed(1)}
-          </div>
-          <div style="font-size: 13px; color: #E5E5EA;">
-            ${formatChange(data.positionChange, true)}
-            vs last week
-          </div>
-        </div>
-
-      </div>
+        <tr>
+          <!-- CTR Card -->
+          <td style="width: 50%; padding-right: 12px; vertical-align: top;">
+            <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+              <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(48, 209, 88, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                  <div style="width: 20px; height: 20px; background: #30D158; border-radius: 4px;"></div>
+                </div>
+                <div style="flex: 1;">
+                  <div style="color: #98989D; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Average CTR</div>
+                </div>
+              </div>
+              <div style="font-size: 48px; font-weight: 700; color: #FFFFFF; line-height: 1.2; margin-bottom: 8px; letter-spacing: -0.02em;">
+                ${(currentMetrics.averageCtr * 100).toFixed(2)}%
+              </div>
+              <div style="font-size: 12px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
+                ${formatChange(data.ctrChange)}
+                <span style="color: #98989D;">vs last week</span>
+              </div>
+            </div>
+          </td>
+          
+          <!-- Position Card -->
+          <td style="width: 50%; padding-left: 12px; vertical-align: top;">
+            <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+              <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(255, 159, 10, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                  <div style="width: 20px; height: 20px; background: #FF9F0A; border-radius: 4px;"></div>
+                </div>
+                <div style="flex: 1;">
+                  <div style="color: #98989D; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Average Position</div>
+                </div>
+              </div>
+              <div style="font-size: 48px; font-weight: 700; color: #FFFFFF; line-height: 1.2; margin-bottom: 8px; letter-spacing: -0.02em;">
+                ${currentMetrics.averagePosition.toFixed(1)}
+              </div>
+              <div style="font-size: 12px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
+                ${formatChange(data.positionChange, true)}
+                <span style="color: #98989D;">vs last week</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <!-- Insights -->
-    <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">Key Insights</h2>
-      <div style="background-color: #3A3A3C; border-left: 4px solid #FF9F0A; padding: 16px; border-radius: 8px;">
-        <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.47; color: #E5E5EA;">${insights}</pre>
+    <div style="margin-bottom: 40px;">
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Key Insights</h2>
+      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+        <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.6; color: #E5E5EA;">${insights}</pre>
       </div>
     </div>
 
     <!-- Top Pages -->
-    <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">Top Performing Pages</h2>
-      <table style="width: 100%; border-collapse: collapse; font-size: 17px; background-color: #3A3A3C; border-radius: 8px; overflow: hidden;">
-        <thead>
-          <tr style="background-color: #3A3A3C; border-bottom: 1px solid #48484A;">
-            <th style="padding: 12px; text-align: left; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em;">Page</th>
-            <th style="padding: 12px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em;">Clicks</th>
-            <th style="padding: 12px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em;">Impressions</th>
-            <th style="padding: 12px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em;">CTR</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${topPages.slice(0, 10).map((page, idx) => `
-            <tr style="border-bottom: 1px solid #48484A;">
-              <td style="padding: 12px; color: #E5E5EA;">
-                <div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  ${page.page.replace('https://www.berganco.com', '')}
-                </div>
-              </td>
-              <td style="padding: 12px; text-align: right; font-weight: 600; color: #0A84FF;">
-                ${formatNumber(page.clicks)}
-              </td>
-              <td style="padding: 12px; text-align: right; color: #E5E5EA;">
-                ${formatNumber(page.impressions)}
-              </td>
-              <td style="padding: 12px; text-align: right; color: #E5E5EA;">
-                ${(page.ctr * 100).toFixed(2)}%
-              </td>
+    <div style="margin-bottom: 40px;">
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Top Performing Pages</h2>
+      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
+          <thead>
+            <tr style="background-color: #2C2C2E; border-bottom: 1px solid #48484A;">
+              <th style="padding: 16px; text-align: left; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Page</th>
+              <th style="padding: 16px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Clicks</th>
+              <th style="padding: 16px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Impressions</th>
+              <th style="padding: 16px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">CTR</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            ${topPages.slice(0, 10).map((page, idx) => `
+              <tr style="${idx % 2 === 0 ? 'background-color: #2C2C2E;' : 'background-color: #1C1C1E;'} border-bottom: 1px solid #48484A;">
+                <td style="padding: 16px; color: #E5E5EA; font-size: 17px;">
+                  <div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${page.page.replace('https://www.berganco.com', '')}
+                  </div>
+                </td>
+                <td style="padding: 16px; text-align: right; font-weight: 600; color: #0A84FF; font-size: 17px;">
+                  ${formatNumber(page.clicks)}
+                </td>
+                <td style="padding: 16px; text-align: right; color: #E5E5EA; font-size: 17px;">
+                  ${formatNumber(page.impressions)}
+                </td>
+                <td style="padding: 16px; text-align: right; color: #E5E5EA; font-size: 17px;">
+                  ${(page.ctr * 100).toFixed(2)}%
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Top Queries -->
-    <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">Top Search Queries</h2>
-      <table style="width: 100%; border-collapse: collapse; font-size: 17px; background-color: #3A3A3C; border-radius: 8px; overflow: hidden;">
-        <thead>
-          <tr style="background-color: #3A3A3C; border-bottom: 1px solid #48484A;">
-            <th style="padding: 12px; text-align: left; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em;">Query</th>
-            <th style="padding: 12px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em;">Clicks</th>
-            <th style="padding: 12px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em;">Position</th>
-            <th style="padding: 12px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em;">CTR</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${topQueries.slice(0, 10).map((query, idx) => `
-            <tr style="border-bottom: 1px solid #48484A;">
-              <td style="padding: 12px; color: #E5E5EA; font-weight: 500;">
-                "${query.query}"
-              </td>
-              <td style="padding: 12px; text-align: right; font-weight: 600; color: #0A84FF;">
-                ${formatNumber(query.clicks)}
-              </td>
-              <td style="padding: 12px; text-align: right; color: #E5E5EA;">
-                ${query.position.toFixed(1)}
-              </td>
-              <td style="padding: 12px; text-align: right; color: #E5E5EA;">
-                ${(query.ctr * 100).toFixed(2)}%
-              </td>
+    <div style="margin-bottom: 40px;">
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Top Search Queries</h2>
+      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
+          <thead>
+            <tr style="background-color: #2C2C2E; border-bottom: 1px solid #48484A;">
+              <th style="padding: 16px; text-align: left; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Query</th>
+              <th style="padding: 16px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Clicks</th>
+              <th style="padding: 16px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Position</th>
+              <th style="padding: 16px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">CTR</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            ${topQueries.slice(0, 10).map((query, idx) => `
+              <tr style="${idx % 2 === 0 ? 'background-color: #2C2C2E;' : 'background-color: #1C1C1E;'} border-bottom: 1px solid #48484A;">
+                <td style="padding: 16px; color: #E5E5EA; font-weight: 400; font-size: 17px;">
+                  ${query.query}
+                </td>
+                <td style="padding: 16px; text-align: right; font-weight: 600; color: #0A84FF; font-size: 17px;">
+                  ${formatNumber(query.clicks)}
+                </td>
+                <td style="padding: 16px; text-align: right; color: #E5E5EA; font-size: 17px;">
+                  ${query.position.toFixed(1)}
+                </td>
+                <td style="padding: 16px; text-align: right; color: #E5E5EA; font-size: 17px;">
+                  ${(query.ctr * 100).toFixed(2)}%
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Recommendations -->
-    <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">Action Items & Recommendations</h2>
-      <div style="background-color: #3A3A3C; border-left: 4px solid #0A84FF; padding: 16px; border-radius: 8px;">
-        <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.47; color: #E5E5EA;">${recommendations}</pre>
+    <div style="margin-bottom: 40px;">
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Action Items & Recommendations</h2>
+      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+        <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.6; color: #E5E5EA;">${recommendations}</pre>
       </div>
     </div>
 
     <!-- Footer -->
-    <div style="border-top: 1px solid #48484A; padding-top: 24px; margin-top: 40px; text-align: center; color: #98989D; font-size: 13px;">
-      <p style="margin: 0; color: #98989D;">This report was automatically generated by the BerganCo SEO Monitoring System.</p>
-      <p style="margin-top: 8px; color: #98989D;">Data source: Google Search Console | www.berganco.com</p>
-      <p style="margin-top: 8px; color: #98989D;">Powered by Stuchai LLC</p>
+    <div style="border-top: 1px solid #48484A; padding-top: 32px; margin-top: 40px;">
+      <table style="width: 100%;">
+        <tr>
+          <td style="text-align: center;">
+            <p style="margin: 0 0 8px 0; color: #98989D; font-size: 13px; font-weight: 400;">This report was automatically generated by the BerganCo SEO Monitoring System.</p>
+            <p style="margin: 0 0 8px 0; color: #98989D; font-size: 13px; font-weight: 400;">Data source: Google Search Console | www.berganco.com</p>
+            <p style="margin: 0; color: #98989D; font-size: 13px; font-weight: 400;">Powered by Stuchai LLC</p>
+          </td>
+        </tr>
+      </table>
     </div>
 
   </div>
