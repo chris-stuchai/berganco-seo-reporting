@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    /* Apple Design System */
+    /* Apple Design System - Dark Mode */
     :root {
       /* Typography Scale (Apple HIG) */
       --font-large-title: 34px;
@@ -20,47 +20,323 @@
       --font-caption-2: 11px;
       
       /* 8pt Grid Spacing */
+      --spacing-1: 4px;
       --spacing-2: 8px;
       --spacing-3: 12px;
       --spacing-4: 16px;
+      --spacing-5: 20px;
       --spacing-6: 24px;
       --spacing-8: 32px;
       
-      /* Colors - Apple Blue */
-      --color-blue: #007AFF;
-      --color-blue-hover: rgba(0, 122, 255, 0.85);
+      /* Dark Mode Colors */
+      --color-bg-primary: #1C1C1E;
+      --color-bg-secondary: #2C2C2E;
+      --color-bg-tertiary: #3A3A3C;
+      --color-label-primary: #FFFFFF;
+      --color-label-secondary: #E5E5EA;
+      --color-label-tertiary: #98989D;
+      --color-separator: #48484A;
+      --color-blue: #0A84FF;
+      --color-green: #30D158;
+      --color-red: #FF453A;
+      --color-orange: #FF9F0A;
       
-      /* Subtle Shadows (Apple) */
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-      --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
-      
-      /* Semantic Colors (Light Mode) */
-      --color-bg-primary: #ffffff;
-      --color-bg-secondary: #f5f5f7;
-      --color-label-primary: rgba(0, 0, 0, 0.85);
-      --color-label-secondary: rgba(60, 60, 67, 0.6);
-      --color-separator: rgba(60, 60, 67, 0.29);
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
-      background: var(--color-bg-secondary);
+      background: var(--color-bg-primary);
       color: var(--color-label-primary);
       font-size: var(--font-body);
       line-height: 1.47;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
     }
     
-    /* Apple-style Buttons */
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--color-bg-secondary);
+      border-right: 1px solid var(--color-separator);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    
+    .sidebar-header {
+      padding: var(--spacing-6) var(--spacing-4);
+      border-bottom: 1px solid var(--color-separator);
+    }
+    
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      margin-bottom: var(--spacing-2);
+    }
+    
+    .sidebar-brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--color-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: var(--font-body);
+    }
+    
+    .sidebar-brand-text {
+      font-size: var(--font-body);
+      font-weight: 600;
+      color: var(--color-label-primary);
+    }
+    
+    .sidebar-tagline {
+      font-size: var(--font-caption);
+      color: var(--color-label-tertiary);
+      margin-left: 44px;
+    }
+    
+    .sidebar-nav {
+      flex: 1;
+      padding: var(--spacing-4) 0;
+      overflow-y: auto;
+    }
+    
+    .nav-section {
+      margin-bottom: var(--spacing-6);
+    }
+    
+    .nav-section-title {
+      font-size: var(--font-caption);
+      font-weight: 600;
+      color: var(--color-label-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 var(--spacing-4);
+      margin-bottom: var(--spacing-2);
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      padding: var(--spacing-2) var(--spacing-4);
+      color: var(--color-label-secondary);
+      text-decoration: none;
+      font-size: var(--font-body);
+      transition: background-color 0.2s;
+      cursor: pointer;
+    }
+    
+    .nav-item:hover {
+      background: var(--color-bg-tertiary);
+    }
+    
+    .nav-item.active {
+      background: var(--color-blue);
+      color: white;
+    }
+    
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .top-bar {
+      background: var(--color-bg-secondary);
+      border-bottom: 1px solid var(--color-separator);
+      padding: var(--spacing-4) var(--spacing-6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    
+    .page-title {
+      font-size: var(--font-title-2);
+      font-weight: 700;
+      color: var(--color-label-primary);
+      margin-bottom: var(--spacing-1);
+    }
+    
+    .page-subtitle {
+      font-size: var(--font-footnote);
+      color: var(--color-label-tertiary);
+    }
+    
+    .date-filters {
+      display: flex;
+      gap: var(--spacing-2);
+    }
+    
+    .date-filter-btn {
+      padding: var(--spacing-2) var(--spacing-3);
+      border-radius: 8px;
+      border: 1px solid var(--color-separator);
+      background: transparent;
+      color: var(--color-label-secondary);
+      font-size: var(--font-footnote);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .date-filter-btn:hover {
+      background: var(--color-bg-tertiary);
+      color: var(--color-label-primary);
+    }
+    
+    .date-filter-btn.active {
+      background: var(--color-blue);
+      color: white;
+      border-color: var(--color-blue);
+    }
+    
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-6);
+    }
+    
+    /* Cards */
+    .card {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-separator);
+      border-radius: 12px;
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    /* Metric Cards */
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-4);
+    }
+    
+    .metric-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .metric-icon.blue {
+      background: rgba(10, 132, 255, 0.15);
+    }
+    
+    .metric-icon.purple {
+      background: rgba(175, 82, 222, 0.15);
+    }
+    
+    .metric-icon.green {
+      background: rgba(48, 209, 88, 0.15);
+    }
+    
+    .metric-icon.orange {
+      background: rgba(255, 159, 10, 0.15);
+    }
+    
+    .metric-label {
+      font-size: var(--font-caption);
+      font-weight: 500;
+      color: var(--color-label-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: var(--spacing-2);
+    }
+    
+    .metric-value {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--color-label-primary);
+      line-height: 1.2;
+      margin-bottom: var(--spacing-2);
+    }
+    
+    .metric-change {
+      font-size: var(--font-caption);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-1);
+    }
+    
+    .metric-change.positive {
+      color: var(--color-green);
+    }
+    
+    .metric-change.negative {
+      color: var(--color-red);
+    }
+    
+    .metric-change.neutral {
+      color: var(--color-label-tertiary);
+    }
+    
+    /* Grid */
+    .grid {
+      display: grid;
+      gap: var(--spacing-6);
+    }
+    
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    
+    @media (min-width: 768px) {
+      .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    
+    @media (min-width: 1024px) {
+      .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: var(--spacing-2) var(--spacing-4);
+      border-radius: 8px;
+      font-size: var(--font-body);
+      font-weight: 400;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    
     .btn-primary {
       background: var(--color-blue);
       color: white;
-      border: none;
-      border-radius: 8px;
-      padding: var(--spacing-2) var(--spacing-4);
-      font-size: var(--font-body);
-      font-weight: 400;
-      box-shadow: var(--shadow-sm);
-      transition: opacity 0.2s;
     }
     
     .btn-primary:hover {
@@ -71,364 +347,305 @@
       background: transparent;
       color: var(--color-blue);
       border: 1px solid var(--color-separator);
-      border-radius: 8px;
-      padding: var(--spacing-2) var(--spacing-4);
-      font-size: var(--font-body);
-      font-weight: 400;
     }
     
-    /* Apple-style Cards */
-    .card {
-      background: var(--color-bg-primary);
-      border: 1px solid var(--color-separator);
-      border-radius: 12px;
-      box-shadow: var(--shadow-sm);
+    .btn-secondary:hover {
+      background: var(--color-bg-tertiary);
     }
     
-    /* Metric Icon Circles */
-    .metric-icon-circle {
-      width: 40px;
-      height: 40px;
-      border-radius: 20px;
+    /* Loading */
+    .loading {
       display: flex;
       align-items: center;
       justify-content: center;
+      height: 100%;
     }
     
-    .icon-blue { background: #E3F2FD; }
-    .icon-purple { background: #F3E5F5; }
-    .icon-green { background: #E8F5E9; }
-    .icon-orange { background: #FFF3E0; }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--color-separator);
+      border-top-color: var(--color-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
     
-    /* Date Filter Buttons */
-    .date-filter-btn {
-      background: transparent;
-      border: 1px solid var(--color-separator);
-      border-radius: 8px;
-      padding: var(--spacing-2) var(--spacing-3);
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-4);
+    }
+    
+    .section-title {
+      font-size: var(--font-title-3);
+      font-weight: 600;
+      color: var(--color-label-primary);
+    }
+    
+    .section-subtitle {
       font-size: var(--font-footnote);
-      color: var(--color-label-primary);
-      transition: all 0.2s;
-    }
-    
-    .date-filter-btn.active {
-      background: var(--color-blue);
-      color: white;
-      border-color: var(--color-blue);
-    }
-    
-    /* Typography */
-    .text-large-title { font-size: var(--font-large-title); font-weight: 700; }
-    .text-title-1 { font-size: var(--font-title-1); font-weight: 700; }
-    .text-title-2 { font-size: var(--font-title-2); font-weight: 600; }
-    .text-title-3 { font-size: var(--font-title-3); font-weight: 600; }
-    .text-body { font-size: var(--font-body); }
-    .text-footnote { font-size: var(--font-footnote); }
-    .text-caption { font-size: var(--font-caption); }
-    
-    /* Metric Number */
-    .metric-number {
-      font-size: 48px;
-      font-weight: 700;
-      color: var(--color-label-primary);
-      line-height: 1.2;
+      color: var(--color-label-tertiary);
+      margin-top: var(--spacing-1);
     }
   </style>
 </head>
 <body>
   
-  <!-- Header -->
-  <header class="bg-white border-b border-separator sticky top-0 z-50" style="border-color: var(--color-separator);">
-    <div class="max-w-7xl mx-auto px-4 py-6" style="padding: var(--spacing-6) var(--spacing-4);">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-large-title" style="font-size: var(--font-title-1); font-weight: 700; color: var(--color-label-primary); margin: 0;">
-            BerganCo SEO Dashboard
-          </h1>
-          <p class="text-footnote" style="margin-top: var(--spacing-2); color: var(--color-label-secondary);">
-            www.berganco.com
-          </p>
-        </div>
-        <div class="flex gap-3" style="gap: var(--spacing-3);">
-          <a href="/admin.html" class="btn-secondary">
-            Admin Portal
-          </a>
-          <button onclick="collectData()" class="btn-primary">
-            Collect Data
-          </button>
-          <button onclick="generateReport()" class="btn-primary">
-            Generate Report
-          </button>
-        </div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">B</div>
+        <div class="sidebar-brand-text">BerganCo</div>
       </div>
+      <div class="sidebar-tagline">SEO Analytics</div>
     </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 py-8" style="padding: var(--spacing-8) var(--spacing-4);">
     
-    <!-- Loading State -->
-    <div id="loading" class="flex items-center justify-center" style="padding: var(--spacing-8) 0;">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-600 mx-auto mb-4" style="border-top-color: var(--color-blue);"></div>
-        <p class="text-footnote" style="color: var(--color-label-secondary);">Loading dashboard data...</p>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <a href="/" class="nav-item active">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11V6a2 2 0 00-2-2h-4M9 21h6"/>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/admin.html" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          <span>Analytics</span>
+        </a>
       </div>
-    </div>
-
-    <!-- Dashboard Content -->
-    <div id="dashboard" class="hidden">
       
-      <!-- Date Filter -->
-      <div class="card mb-8 p-6" style="margin-bottom: var(--spacing-8); padding: var(--spacing-6);">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 class="text-title-3" style="margin: 0 0 var(--spacing-2) 0; color: var(--color-label-primary);">
-              Select Time Period
-            </h2>
-            <p class="text-footnote" style="color: var(--color-label-secondary); margin: 0;">
-              Choose the date range for your analysis
-            </p>
-          </div>
-          <div class="flex gap-2" style="gap: var(--spacing-2);">
-            <button onclick="setDateFilter(7)" class="date-filter-btn active" id="filter-7">7 Days</button>
-            <button onclick="setDateFilter(14)" class="date-filter-btn" id="filter-14">14 Days</button>
-            <button onclick="setDateFilter(30)" class="date-filter-btn" id="filter-30">30 Days</button>
-            <button onclick="setDateFilter(90)" class="date-filter-btn" id="filter-90">90 Days</button>
-          </div>
-        </div>
-        <div style="padding-top: var(--spacing-4); border-top: 1px solid var(--color-separator);">
-          <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;" id="dateRange">
-            Loading date range...
-          </p>
-        </div>
+      <div class="nav-section">
+        <div class="nav-section-title">SEO</div>
+        <a href="/" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+          <span>Pages</span>
+        </a>
+        <a href="/" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <span>Queries</span>
+        </a>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Admin</div>
+        <a href="/admin.html" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span>Settings</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content --> -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div>
+        <h1 class="page-title">SEO Dashboard</h1>
+        <p class="page-subtitle">Track performance and insights for www.berganco.com</p>
+      </div>
+      <div class="date-filters">
+        <button class="date-filter-btn active" onclick="setDateFilter(7)" id="filter-7">7 Days</button>
+        <button class="date-filter-btn" onclick="setDateFilter(14)" id="filter-14">14 Days</button>
+        <button class="date-filter-btn" onclick="setDateFilter(30)" id="filter-30">30 Days</button>
+        <button class="date-filter-btn" onclick="setDateFilter(90)" id="filter-90">90 Days</button>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="content-area">
+      
+      <!-- Loading State -->
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
       </div>
 
-      <!-- Key Metrics Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" style="margin-bottom: var(--spacing-8); gap: var(--spacing-6);">
+      <!-- Dashboard Content -->
+      <div id="dashboard" class="hidden">
         
-        <!-- Clicks Card -->
-        <div class="card p-6">
-          <div class="flex items-start justify-between mb-4">
-            <div class="metric-icon-circle icon-blue">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1976D2" stroke-width="2">
-                <path d="M10 3L3 10h4v7h6v-7h4L10 3z"/>
-              </svg>
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          <!-- Clicks Card -->
+          <div class="card metric-card">
+            <div class="metric-header">
+              <div class="metric-icon blue">
+                <svg width="20" height="20" fill="none" stroke="#0A84FF" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-label">Total Clicks</div>
+            <div class="metric-value" id="totalClicks">-</div>
+            <div class="metric-change" id="clicksChange">
+              <span>No comparison data</span>
             </div>
           </div>
-          <div>
-            <p class="text-caption mb-2" style="color: var(--color-label-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">
-              Total Clicks
-            </p>
-            <p class="metric-number mb-2" id="totalClicks">-</p>
-            <p class="text-footnote" id="clicksChange" style="color: var(--color-label-secondary);">
-              No comparison data
-            </p>
+
+          <!-- Impressions Card -->
+          <div class="card metric-card">
+            <div class="metric-header">
+              <div class="metric-icon purple">
+                <svg width="20" height="20" fill="none" stroke="#AF52DE" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-label">Impressions</div>
+            <div class="metric-value" id="totalImpressions">-</div>
+            <div class="metric-change" id="impressionsChange">
+              <span>No comparison data</span>
+            </div>
+          </div>
+
+          <!-- CTR Card -->
+          <div class="card metric-card">
+            <div class="metric-header">
+              <div class="metric-icon green">
+                <svg width="20" height="20" fill="none" stroke="#30D158" stroke-width="2" viewBox="0 0 24 24">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-label">Avg CTR</div>
+            <div class="metric-value" id="avgCtr">-</div>
+            <div class="metric-change" id="ctrChange">
+              <span>No comparison data</span>
+            </div>
+          </div>
+
+          <!-- Position Card -->
+          <div class="card metric-card">
+            <div class="metric-header">
+              <div class="metric-icon orange">
+                <svg width="20" height="20" fill="none" stroke="#FF9F0A" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-label">Avg Position</div>
+            <div class="metric-value" id="avgPosition">-</div>
+            <div class="metric-change" id="positionChange">
+              <span>No comparison data</span>
+            </div>
           </div>
         </div>
 
-        <!-- Impressions Card -->
-        <div class="card p-6">
-          <div class="flex items-start justify-between mb-4">
-            <div class="metric-icon-circle icon-purple">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#7B1FA2" stroke-width="2">
-                <path d="M1 10s4-8 9-8 9 8 9 8-4 8-9 8-9-8-9-8z"/>
-                <circle cx="10" cy="10" r="3"/>
-              </svg>
+        <!-- AI Insights Card -->
+        <div class="card mb-6">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">AI-Powered Insights</h2>
+              <p class="section-subtitle">Market-aware analysis powered by AI</p>
             </div>
+            <button class="btn btn-secondary" onclick="loadAIInsights()" id="refreshAI">Refresh</button>
           </div>
-          <div>
-            <p class="text-caption mb-2" style="color: var(--color-label-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">
-              Impressions
-            </p>
-            <p class="metric-number mb-2" id="totalImpressions">-</p>
-            <p class="text-footnote" id="impressionsChange" style="color: var(--color-label-secondary);">
-              No comparison data
-            </p>
+          <div id="aiInsights">
+            <div class="loading">
+              <div class="spinner"></div>
+            </div>
           </div>
         </div>
 
-        <!-- CTR Card -->
-        <div class="card p-6">
-          <div class="flex items-start justify-between mb-4">
-            <div class="metric-icon-circle icon-green">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#388E3C" stroke-width="2">
-                <path d="M3 17h14M5 10l5 5 7-7"/>
-              </svg>
-            </div>
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 mb-6">
+          <div class="card">
+            <h2 class="section-title mb-4">Clicks & Impressions Trend</h2>
+            <canvas id="clicksChart" style="max-height: 300px;"></canvas>
           </div>
-          <div>
-            <p class="text-caption mb-2" style="color: var(--color-label-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">
-              Avg CTR
-            </p>
-            <p class="metric-number mb-2" id="avgCtr">-</p>
-            <p class="text-footnote" id="ctrChange" style="color: var(--color-label-secondary);">
-              No comparison data
-            </p>
+          <div class="card">
+            <h2 class="section-title mb-4">CTR & Position Trend</h2>
+            <canvas id="ctrChart" style="max-height: 300px;"></canvas>
           </div>
         </div>
 
-        <!-- Position Card -->
-        <div class="card p-6">
-          <div class="flex items-start justify-between mb-4">
-            <div class="metric-icon-circle icon-orange">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#F57C00" stroke-width="2">
-                <circle cx="10" cy="10" r="8"/>
-                <circle cx="10" cy="10" r="3"/>
-              </svg>
+        <!-- Top Pages & Queries -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 mb-6">
+          <div class="card">
+            <h2 class="section-title mb-4">Top Pages</h2>
+            <div id="topPages" style="max-height: 400px; overflow-y: auto;">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
             </div>
           </div>
-          <div>
-            <p class="text-caption mb-2" style="color: var(--color-label-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">
-              Avg Position
-            </p>
-            <p class="metric-number mb-2" id="avgPosition">-</p>
-            <p class="text-footnote" id="positionChange" style="color: var(--color-label-secondary);">
-              No comparison data
-            </p>
+          <div class="card">
+            <h2 class="section-title mb-4">Top Search Queries</h2>
+            <div id="topQueries" style="max-height: 400px; overflow-y: auto;">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Latest Report Insights -->
+        <div class="card">
+          <h2 class="section-title mb-4">Latest Report Insights</h2>
+          <div id="reportInsights">
+            <p style="color: var(--color-label-tertiary);">No reports available yet. Generate your first report to see insights.</p>
           </div>
         </div>
 
       </div>
-
-      <!-- AI Insights Card -->
-      <div class="card p-6 mb-8" style="margin-bottom: var(--spacing-8);">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">AI-Powered Insights</h2>
-            <p class="text-footnote" style="color: var(--color-label-secondary); margin: 0;">
-              Market-aware analysis powered by AI
-            </p>
-          </div>
-          <button onclick="loadAIInsights()" class="btn-secondary" id="refreshAI" style="font-size: var(--font-footnote);">
-            Refresh
-          </button>
-        </div>
-        <div id="aiInsights" style="min-height: 80px;">
-          <div class="text-center py-8" style="padding: var(--spacing-8) 0;">
-            <div class="animate-spin rounded-full h-6 w-6 border-2 border-gray-200 border-t-blue-600 mx-auto mb-2" style="border-top-color: var(--color-blue);"></div>
-            <p class="text-footnote" style="color: var(--color-label-secondary);">Generating AI insights...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" style="margin-bottom: var(--spacing-8); gap: var(--spacing-6);">
-        
-        <!-- Clicks Trend Chart -->
-        <div class="card p-6">
-          <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">Clicks & Impressions Trend</h2>
-          <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
-            Performance over time
-          </p>
-          <canvas id="clicksChart"></canvas>
-        </div>
-
-        <!-- CTR & Position Chart -->
-        <div class="card p-6">
-          <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">CTR & Position Trend</h2>
-          <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
-            Engagement metrics
-          </p>
-          <canvas id="ctrChart"></canvas>
-        </div>
-
-      </div>
-
-      <!-- Top Pages & Queries -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" style="margin-bottom: var(--spacing-8); gap: var(--spacing-6);">
-        
-        <!-- Top Pages -->
-        <div class="card p-6">
-          <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">Top Pages</h2>
-          <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
-            Highest performing pages
-          </p>
-          <div id="topPages" class="space-y-2 max-h-96 overflow-y-auto">
-            <div class="text-center py-8" style="padding: var(--spacing-8) 0;">
-              <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-blue-600 mx-auto mb-2" style="border-top-color: var(--color-blue);"></div>
-              <p class="text-footnote" style="color: var(--color-label-secondary);">Loading...</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Top Queries -->
-        <div class="card p-6">
-          <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">Top Search Queries</h2>
-          <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
-            Most searched keywords
-          </p>
-          <div id="topQueries" class="space-y-2 max-h-96 overflow-y-auto">
-            <div class="text-center py-8" style="padding: var(--spacing-8) 0;">
-              <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-blue-600 mx-auto mb-2" style="border-top-color: var(--color-blue);"></div>
-              <p class="text-footnote" style="color: var(--color-label-secondary);">Loading...</p>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Latest Report Insights -->
-      <div class="card p-6 mt-8" style="margin-top: var(--spacing-8);">
-        <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">Latest Report Insights</h2>
-        <p class="text-footnote mb-6" style="color: var(--color-label-secondary); margin-bottom: var(--spacing-6);">
-          AI-generated recommendations and analysis
-        </p>
-        <div id="reportInsights">
-          <div class="p-6 rounded-lg" style="padding: var(--spacing-6); background: var(--color-bg-secondary); border: 1px solid var(--color-separator);">
-            <p class="text-footnote text-center" style="color: var(--color-label-secondary); margin: 0;">
-              No reports available yet. Generate your first report to see insights.
-            </p>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-  </main>
+    </main>
+  </div>
 
   <script>
     let clicksChart, ctrChart;
     let currentDays = 7;
 
-    // Format numbers with commas
+    // Format numbers
     function formatNumber(num) {
       if (num === null || num === undefined || isNaN(num)) return '-';
       return num.toLocaleString('en-US');
     }
 
-    // Format change percentage (Apple style)
+    // Format change
     function formatChange(change, inverted = false) {
       if (change === null || change === undefined || isNaN(change)) {
-        return '<span style="color: var(--color-label-secondary);">No comparison data</span>';
+        return '<span>No comparison data</span>';
       }
       
       const isPositive = inverted ? change < 0 : change > 0;
-      const color = isPositive ? '#34C759' : '#FF3B30'; // Apple green/red
+      const className = isPositive ? 'positive' : 'negative';
       const arrow = isPositive ? '↑' : '↓';
-      const prefix = inverted ? '' : (isPositive ? '+' : '');
+      const sign = isPositive && !inverted ? '+' : '';
       
-      if (inverted) {
-        return `<span style="color: ${color}; font-weight: 500;">${prefix}${Math.abs(change).toFixed(1)}</span> <span style="color: var(--color-label-secondary); font-size: 11px;">vs previous period</span>`;
-      } else {
-        return `<span style="color: ${color}; font-weight: 500;">${arrow} ${Math.abs(change).toFixed(1)}%</span> <span style="color: var(--color-label-secondary); font-size: 11px;">vs previous period</span>`;
-      }
+      return `<span class="${className}">${arrow} ${sign}${Math.abs(change).toFixed(1)}${inverted ? '' : '%'}</span> <span style="color: var(--color-label-tertiary); font-size: 11px;">vs previous</span>`;
     }
 
     // Set date filter
     function setDateFilter(days) {
       currentDays = days;
-      
-      // Update active button
-      document.querySelectorAll('.date-filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
+      document.querySelectorAll('.date-filter-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById(`filter-${days}`).classList.add('active');
-      
-      // Reload dashboard
       loadDashboard();
     }
 
-    // Load dashboard data
+    // Load dashboard
     async function loadDashboard() {
       try {
         document.getElementById('loading').classList.remove('hidden');
@@ -437,19 +654,10 @@
         const response = await fetch(`/api/dashboard?days=${currentDays}`);
         const data = await response.json();
         
-        // Update date range display
-        if (data.period) {
-          const start = new Date(data.period.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          const end = new Date(data.period.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          document.getElementById('dateRange').textContent = `${start} - ${end} (${data.period.days} days)`;
-        }
-        
-        // Update metric cards with calculated metrics
         if (data.metrics) {
           updateMetricCards(data.metrics);
         }
 
-        // Update report insights if available
         if (data.latestReport) {
           updateReportInsights(data.latestReport);
         }
@@ -464,8 +672,9 @@
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('dashboard').classList.remove('hidden');
       } catch (error) {
-        console.error('Error loading dashboard:', error);
-        document.getElementById('loading').innerHTML = '<p style="color: #FF3B30; font-weight: 500;">Error loading dashboard data. Please try again.</p>';
+        console.error('Error:', error);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
       }
     }
 
@@ -477,8 +686,8 @@
       document.getElementById('totalImpressions').textContent = formatNumber(metrics.totalImpressions);
       document.getElementById('impressionsChange').innerHTML = formatChange(metrics.impressionsChange);
 
-      const ctrPercent = metrics.averageCtr ? (metrics.averageCtr * 100).toFixed(2) : '-';
-      document.getElementById('avgCtr').textContent = ctrPercent !== '-' ? ctrPercent + '%' : '-';
+      const ctr = metrics.averageCtr ? (metrics.averageCtr * 100).toFixed(2) + '%' : '-';
+      document.getElementById('avgCtr').textContent = ctr;
       document.getElementById('ctrChange').innerHTML = formatChange(metrics.ctrChange);
 
       const position = metrics.averagePosition ? metrics.averagePosition.toFixed(1) : '-';
@@ -486,16 +695,13 @@
       document.getElementById('positionChange').innerHTML = formatChange(metrics.positionChange, true);
     }
 
-    // Load trends and create charts
+    // Load trends
     async function loadTrends(days) {
       try {
         const response = await fetch(`/api/trends?days=${days}`);
         const data = await response.json();
 
-        if (!data || data.length === 0) {
-          console.warn('No trend data available');
-          return;
-        }
+        if (!data || data.length === 0) return;
 
         const dates = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
         const clicks = data.map(d => d.clicks);
@@ -503,7 +709,7 @@
         const ctrs = data.map(d => d.ctr * 100);
         const positions = data.map(d => d.position);
 
-        // Clicks & Impressions Chart
+        // Clicks Chart
         const clicksCtx = document.getElementById('clicksChart').getContext('2d');
         if (clicksChart) clicksChart.destroy();
         clicksChart = new Chart(clicksCtx, {
@@ -514,18 +720,17 @@
               {
                 label: 'Clicks',
                 data: clicks,
-                borderColor: '#007AFF',
-                backgroundColor: 'rgba(0, 122, 255, 0.08)',
+                borderColor: '#0A84FF',
+                backgroundColor: 'rgba(10, 132, 255, 0.1)',
                 tension: 0.4,
                 fill: true,
-                borderWidth: 2,
-                yAxisID: 'y'
+                borderWidth: 2
               },
               {
                 label: 'Impressions',
                 data: impressions,
                 borderColor: '#AF52DE',
-                backgroundColor: 'rgba(175, 82, 222, 0.08)',
+                backgroundColor: 'rgba(175, 82, 222, 0.1)',
                 tension: 0.4,
                 fill: true,
                 borderWidth: 2,
@@ -535,44 +740,21 @@
           },
           options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: {
-                position: 'top',
-                labels: {
-                  font: { family: '-apple-system', size: 12 },
-                  padding: 12,
-                  usePointStyle: true
-                }
+                labels: { color: '#E5E5EA', font: { family: '-apple-system', size: 12 } }
               }
             },
-            interaction: { mode: 'index', intersect: false },
             scales: {
-              y: { 
-                type: 'linear', 
-                display: true, 
-                position: 'left',
-                beginAtZero: true,
-                grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
-                ticks: { font: { family: '-apple-system', size: 11 } }
-              },
-              y1: { 
-                type: 'linear', 
-                display: true, 
-                position: 'right',
-                beginAtZero: true,
-                grid: { drawOnChartArea: false, drawBorder: false },
-                ticks: { font: { family: '-apple-system', size: 11 } }
-              },
-              x: {
-                grid: { display: false },
-                ticks: { font: { family: '-apple-system', size: 11 } }
-              }
+              x: { grid: { color: '#48484A' }, ticks: { color: '#98989D' } },
+              y: { grid: { color: '#48484A' }, ticks: { color: '#98989D' }, beginAtZero: true },
+              y1: { grid: { drawOnChartArea: false }, ticks: { color: '#98989D' }, position: 'right', beginAtZero: true }
             }
           }
         });
 
-        // CTR & Position Chart
+        // CTR Chart
         const ctrCtx = document.getElementById('ctrChart').getContext('2d');
         if (ctrChart) ctrChart.destroy();
         ctrChart = new Chart(ctrCtx, {
@@ -583,18 +765,17 @@
               {
                 label: 'CTR (%)',
                 data: ctrs,
-                borderColor: '#34C759',
-                backgroundColor: 'rgba(52, 199, 89, 0.08)',
+                borderColor: '#30D158',
+                backgroundColor: 'rgba(48, 209, 88, 0.1)',
                 tension: 0.4,
                 fill: true,
-                borderWidth: 2,
-                yAxisID: 'y'
+                borderWidth: 2
               },
               {
                 label: 'Position',
                 data: positions,
-                borderColor: '#FF9500',
-                backgroundColor: 'rgba(255, 149, 0, 0.08)',
+                borderColor: '#FF9F0A',
+                backgroundColor: 'rgba(255, 159, 10, 0.1)',
                 tension: 0.4,
                 fill: true,
                 borderWidth: 2,
@@ -604,40 +785,16 @@
           },
           options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: {
-                position: 'top',
-                labels: {
-                  font: { family: '-apple-system', size: 12 },
-                  padding: 12,
-                  usePointStyle: true
-                }
+                labels: { color: '#E5E5EA', font: { family: '-apple-system', size: 12 } }
               }
             },
-            interaction: { mode: 'index', intersect: false },
             scales: {
-              y: { 
-                type: 'linear', 
-                display: true, 
-                position: 'left',
-                beginAtZero: true,
-                grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
-                ticks: { font: { family: '-apple-system', size: 11 } }
-              },
-              y1: { 
-                type: 'linear', 
-                display: true, 
-                position: 'right',
-                reverse: true,
-                beginAtZero: true,
-                grid: { drawOnChartArea: false, drawBorder: false },
-                ticks: { font: { family: '-apple-system', size: 11 } }
-              },
-              x: {
-                grid: { display: false },
-                ticks: { font: { family: '-apple-system', size: 11 } }
-              }
+              x: { grid: { color: '#48484A' }, ticks: { color: '#98989D' } },
+              y: { grid: { color: '#48484A' }, ticks: { color: '#98989D' }, beginAtZero: true },
+              y1: { grid: { drawOnChartArea: false }, ticks: { color: '#98989D', reverse: true }, position: 'right', beginAtZero: true }
             }
           }
         });
@@ -653,21 +810,17 @@
         const data = await response.json();
 
         if (!data || data.length === 0) {
-          document.getElementById('topPages').innerHTML = '<p class="text-footnote text-center py-8" style="color: var(--color-label-secondary); padding: var(--spacing-8) 0;">No page data available</p>';
+          document.getElementById('topPages').innerHTML = '<p style="color: var(--color-label-tertiary); text-align: center; padding: var(--spacing-8) 0;">No page data available</p>';
           return;
         }
 
-        const html = data.map((page, idx) => {
+        const html = data.map(page => {
           const url = page.page.replace('https://www.berganco.com', '') || '/';
           return `
-            <div class="flex items-center justify-between py-3 px-4 rounded-lg" style="padding: var(--spacing-3) var(--spacing-4); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); margin-bottom: var(--spacing-2);">
-              <div class="flex-1 min-w-0">
-                <p class="text-body font-medium truncate" style="font-size: var(--font-body); font-weight: 500; margin: 0 0 var(--spacing-2) 0;">${url}</p>
-                <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;">${formatNumber(page._sum.clicks)} clicks · ${((page._avg.ctr || 0) * 100).toFixed(2)}% CTR</p>
-              </div>
-              <div class="text-right ml-4">
-                <p class="text-body font-semibold" style="font-size: var(--font-body); font-weight: 600; color: #AF52DE; margin: 0;">${formatNumber(page._sum.impressions)}</p>
-                <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;">impressions</p>
+            <div style="padding: var(--spacing-3) 0; border-bottom: 1px solid var(--color-separator);">
+              <div style="font-size: var(--font-body); font-weight: 500; color: var(--color-label-primary); margin-bottom: var(--spacing-1);">${url}</div>
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary);">
+                ${formatNumber(page._sum.clicks)} clicks · ${((page._avg.ctr || 0) * 100).toFixed(2)}% CTR · ${formatNumber(page._sum.impressions)} impressions
               </div>
             </div>
           `;
@@ -675,8 +828,7 @@
 
         document.getElementById('topPages').innerHTML = html;
       } catch (error) {
-        console.error('Error loading top pages:', error);
-        document.getElementById('topPages').innerHTML = '<p style="color: #FF3B30; text-align: center; padding: var(--spacing-8) 0;">Error loading pages</p>';
+        console.error('Error loading pages:', error);
       }
     }
 
@@ -687,20 +839,16 @@
         const data = await response.json();
 
         if (!data || data.length === 0) {
-          document.getElementById('topQueries').innerHTML = '<p class="text-footnote text-center py-8" style="color: var(--color-label-secondary); padding: var(--spacing-8) 0;">No query data available</p>';
+          document.getElementById('topQueries').innerHTML = '<p style="color: var(--color-label-tertiary); text-align: center; padding: var(--spacing-8) 0;">No query data available</p>';
           return;
         }
 
-        const html = data.map((query, idx) => {
+        const html = data.map(query => {
           return `
-            <div class="flex items-center justify-between py-3 px-4 rounded-lg" style="padding: var(--spacing-3) var(--spacing-4); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); margin-bottom: var(--spacing-2);">
-              <div class="flex-1 min-w-0">
-                <p class="text-body font-medium" style="font-size: var(--font-body); font-weight: 500; margin: 0 0 var(--spacing-2) 0;">"${query.query}"</p>
-                <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;">Position ${(query._avg.position || 0).toFixed(1)} · ${((query._avg.ctr || 0) * 100).toFixed(2)}% CTR</p>
-              </div>
-              <div class="text-right ml-4">
-                <p class="text-body font-semibold" style="font-size: var(--font-body); font-weight: 600; color: #34C759; margin: 0;">${formatNumber(query._sum.clicks)}</p>
-                <p class="text-caption" style="color: var(--color-label-secondary); margin: 0;">clicks</p>
+            <div style="padding: var(--spacing-3) 0; border-bottom: 1px solid var(--color-separator);">
+              <div style="font-size: var(--font-body); font-weight: 500; color: var(--color-label-primary); margin-bottom: var(--spacing-1);">"${query.query}"</div>
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary);">
+                ${formatNumber(query._sum.clicks)} clicks · ${((query._avg.ctr || 0) * 100).toFixed(2)}% CTR · Position ${(query._avg.position || 0).toFixed(1)}
               </div>
             </div>
           `;
@@ -708,8 +856,7 @@
 
         document.getElementById('topQueries').innerHTML = html;
       } catch (error) {
-        console.error('Error loading top queries:', error);
-        document.getElementById('topQueries').innerHTML = '<p style="color: #FF3B30; text-align: center; padding: var(--spacing-8) 0;">Error loading queries</p>';
+        console.error('Error loading queries:', error);
       }
     }
 
@@ -727,42 +874,16 @@
 
         if (data.insight) {
           document.getElementById('aiInsights').innerHTML = `
-            <div style="padding: var(--spacing-4); background: #F0F7FF; border: 1px solid rgba(0, 122, 255, 0.2); border-radius: 12px;">
-              <div style="display: flex; align-items: start; gap: var(--spacing-3);">
-                <div style="width: 24px; height: 24px; border-radius: 12px; background: #007AFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M6 0C2.69 0 0 2.69 0 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-.5 9L2.5 6l.71-.71L5.5 7.79l3.29-3.29L9.5 5.5 5.5 9z" fill="white"/>
-                  </svg>
-                </div>
-                <div style="flex: 1;">
-                  <p class="text-body" style="font-size: var(--font-body); color: var(--color-label-primary); margin: 0; line-height: 1.6;">
-                    ${data.insight}
-                  </p>
-                  <p class="text-caption" style="font-size: var(--font-caption); color: var(--color-label-secondary); margin: var(--spacing-2) 0 0 0;">
-                    Generated ${new Date(data.generatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            </div>
-          `;
-        } else {
-          document.getElementById('aiInsights').innerHTML = `
-            <div style="padding: var(--spacing-4); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 12px;">
-              <p class="text-footnote text-center" style="color: var(--color-label-secondary); margin: 0;">
-                AI insights unavailable. Ensure OPENAI_API_KEY is configured.
+            <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 12px;">
+              <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0;">${data.insight}</p>
+              <p style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-top: var(--spacing-2);">
+                Generated ${new Date(data.generatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </p>
             </div>
           `;
         }
       } catch (error) {
         console.error('Error loading AI insights:', error);
-        document.getElementById('aiInsights').innerHTML = `
-          <div style="padding: var(--spacing-4); background: #FFF5F5; border: 1px solid rgba(255, 59, 48, 0.2); border-radius: 12px;">
-            <p class="text-footnote text-center" style="color: #FF3B30; margin: 0;">
-              Error loading AI insights. Please try again.
-            </p>
-          </div>
-        `;
       } finally {
         const button = document.getElementById('refreshAI');
         if (button) {
@@ -779,77 +900,23 @@
 
       document.getElementById('reportInsights').innerHTML = `
         <div style="margin-bottom: var(--spacing-6);">
-          <h3 class="text-title-3 mb-3" style="font-size: var(--font-title-3); font-weight: 600; margin: 0 0 var(--spacing-3) 0;">Insights</h3>
-          <div class="p-5 rounded-lg" style="padding: var(--spacing-4); background: #FFFBF0; border-left: 3px solid #FF9500; border: 1px solid rgba(255, 149, 0, 0.2);">
-            <p class="text-body" style="font-size: var(--font-body); color: var(--color-label-primary); margin: 0; line-height: 1.6;">${insights}</p>
+          <h3 style="font-size: var(--font-title-3); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-3);">Insights</h3>
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-left: 3px solid #FF9F0A; border-radius: 12px;">
+            <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0;">${insights}</p>
           </div>
         </div>
         ${recommendations ? `
         <div>
-          <h3 class="text-title-3 mb-3" style="font-size: var(--font-title-3); font-weight: 600; margin: 0 0 var(--spacing-3) 0;">Recommendations</h3>
-          <div class="p-5 rounded-lg" style="padding: var(--spacing-4); background: #F0F7FF; border-left: 3px solid #007AFF; border: 1px solid rgba(0, 122, 255, 0.2);">
-            <p class="text-body" style="font-size: var(--font-body); color: var(--color-label-primary); margin: 0; line-height: 1.6;">${recommendations}</p>
+          <h3 style="font-size: var(--font-title-3); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-3);">Recommendations</h3>
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-left: 3px solid #0A84FF; border-radius: 12px;">
+            <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0;">${recommendations}</p>
           </div>
         </div>
         ` : ''}
       `;
     }
 
-    // Manual data collection
-    async function collectData() {
-      if (!confirm('Collect today\'s data? This may take a minute.')) return;
-      
-      try {
-        const button = event.target;
-        button.disabled = true;
-        button.textContent = 'Collecting...';
-        
-        const response = await fetch('/api/collect', { method: 'POST' });
-        const data = await response.json();
-        
-        if (data.success) {
-          alert('Data collected successfully!');
-          location.reload();
-        } else {
-          alert('Error collecting data: ' + (data.error || 'Unknown error'));
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error collecting data');
-      } finally {
-        event.target.disabled = false;
-        event.target.textContent = 'Collect Data';
-      }
-    }
-
-    // Manual report generation
-    async function generateReport() {
-      if (!confirm('Generate and send weekly report now?')) return;
-      
-      try {
-        const button = event.target;
-        button.disabled = true;
-        button.textContent = 'Generating...';
-        
-        const response = await fetch('/api/generate-report', { method: 'POST' });
-        const data = await response.json();
-        
-        if (data.success) {
-          alert('Report generated and sent successfully!');
-          location.reload();
-        } else {
-          alert('Error generating report: ' + (data.error || 'Unknown error'));
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error generating report');
-      } finally {
-        event.target.disabled = false;
-        event.target.textContent = 'Generate Report';
-      }
-    }
-
-    // Load dashboard on page load
+    // Initial load
     loadDashboard();
   </script>
 
