@@ -1,0 +1,76 @@
+// This is your Prisma schema file for storing SEO metrics over time
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model DailyMetric {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+  createdAt   DateTime @default(now())
+  
+  @@index([date])
+}
+
+model PageMetric {
+  id          String   @id @default(cuid())
+  date        DateTime
+  page        String
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+  createdAt   DateTime @default(now())
+  
+  @@unique([date, page])
+  @@index([date])
+  @@index([page])
+}
+
+model QueryMetric {
+  id          String   @id @default(cuid())
+  date        DateTime
+  query       String
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+  createdAt   DateTime @default(now())
+  
+  @@unique([date, query])
+  @@index([date])
+  @@index([query])
+}
+
+model WeeklyReport {
+  id                String   @id @default(cuid())
+  weekStartDate     DateTime
+  weekEndDate       DateTime
+  totalClicks       Int
+  totalImpressions  Int
+  averageCtr        Float
+  averagePosition   Float
+  clicksChange      Float
+  impressionsChange Float
+  ctrChange         Float
+  positionChange    Float
+  insights          String
+  topPages          String
+  topQueries        String
+  recommendations   String
+  sentAt            DateTime?
+  createdAt         DateTime @default(now())
+  
+  @@unique([weekStartDate, weekEndDate])
+  @@index([weekStartDate])
+}
+

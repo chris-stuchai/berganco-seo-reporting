@@ -1,0 +1,37 @@
+{
+  "name": "berganco-seo-reporting",
+  "version": "1.0.0",
+  "description": "Automated SEO reporting system for BerganCo using Google Search Console API",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "collect": "tsx src/scripts/collect-data.ts",
+    "report": "tsx src/scripts/generate-report.ts",
+    "migrate": "tsx src/db/migrate.ts",
+    "setup": "tsx src/scripts/setup-auth.ts"
+  },
+  "keywords": ["seo", "reporting", "google-search-console"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "express": "^4.18.2",
+    "googleapis": "^128.0.0",
+    "node-cron": "^3.0.3",
+    "resend": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "date-fns": "^3.0.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "@types/node-cron": "^3.0.11",
+    "prisma": "^5.20.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
+

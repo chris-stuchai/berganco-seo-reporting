@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BerganCo SEO Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-gray-50">
+  
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">BerganCo SEO Dashboard</h1>
+          <p class="text-sm text-gray-500 mt-1">www.berganco.com</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="collectData()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            Collect Data
+          </button>
+          <button onclick="generateReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+            Generate Report
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    
+    <!-- Loading State -->
+    <div id="loading" class="flex items-center justify-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div id="dashboard" class="hidden">
+      
+      <!-- Key Metrics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Clicks Card -->
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Total Clicks (7d)</p>
+              <p class="text-3xl font-bold text-gray-900" id="totalClicks">-</p>
+              <p class="text-sm mt-2" id="clicksChange">-</p>
+            </div>
+            <div class="text-4xl">👆</div>
+          </div>
+        </div>
+
+        <!-- Impressions Card -->
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Total Impressions (7d)</p>
+              <p class="text-3xl font-bold text-gray-900" id="totalImpressions">-</p>
+              <p class="text-sm mt-2" id="impressionsChange">-</p>
+            </div>
+            <div class="text-4xl">👁️</div>
+          </div>
+        </div>
+
+        <!-- CTR Card -->
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Average CTR (7d)</p>
+              <p class="text-3xl font-bold text-gray-900" id="avgCtr">-</p>
+              <p class="text-sm mt-2" id="ctrChange">-</p>
+            </div>
+            <div class="text-4xl">📊</div>
+          </div>
+        </div>
+
+        <!-- Position Card -->
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">Avg Position (7d)</p>
+              <p class="text-3xl font-bold text-gray-900" id="avgPosition">-</p>
+              <p class="text-sm mt-2" id="positionChange">-</p>
+            </div>
+            <div class="text-4xl">🎯</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        
+        <!-- Clicks Trend Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Clicks & Impressions Trend (30 days)</h2>
+          <canvas id="clicksChart"></canvas>
+        </div>
+
+        <!-- CTR & Position Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">CTR & Position Trend (30 days)</h2>
+          <canvas id="ctrChart"></canvas>
+        </div>
+
+      </div>
+
+      <!-- Top Pages & Queries -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Top Pages -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">🏆 Top Pages (7 days)</h2>
+          <div id="topPages" class="space-y-3">
+            <div class="text-gray-500 text-center py-4">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Top Queries -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">🔎 Top Search Queries (7 days)</h2>
+          <div id="topQueries" class="space-y-3">
+            <div class="text-gray-500 text-center py-4">Loading...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Latest Report Insights -->
+      <div class="mt-8 bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">📋 Latest Report Insights</h2>
+        <div id="reportInsights" class="prose max-w-none">
+          <p class="text-gray-500">No reports available yet.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    let clicksChart, ctrChart;
+
+    // Format numbers with commas
+    function formatNumber(num) {
+      return num.toLocaleString('en-US');
+    }
+
+    // Format change percentage
+    function formatChange(change, inverted = false) {
+      const isPositive = inverted ? change < 0 : change > 0;
+      const color = isPositive ? 'text-green-600' : 'text-red-600';
+      const arrow = change > 0 ? '↑' : '↓';
+      return `<span class="${color} font-semibold">${arrow} ${Math.abs(change).toFixed(1)}%</span> vs last week`;
+    }
+
+    // Load dashboard data
+    async function loadDashboard() {
+      try {
+        const response = await fetch('/api/dashboard');
+        const data = await response.json();
+        
+        if (data.latestReport) {
+          updateMetricCards(data.latestReport);
+          updateReportInsights(data.latestReport);
+        }
+
+        await Promise.all([
+          loadTrends(),
+          loadTopPages(),
+          loadTopQueries()
+        ]);
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+        document.getElementById('loading').innerHTML = '<p class="text-red-600">Error loading dashboard data</p>';
+      }
+    }
+
+    // Update metric cards
+    function updateMetricCards(report) {
+      document.getElementById('totalClicks').textContent = formatNumber(report.totalClicks);
+      document.getElementById('clicksChange').innerHTML = formatChange(report.clicksChange);
+
+      document.getElementById('totalImpressions').textContent = formatNumber(report.totalImpressions);
+      document.getElementById('impressionsChange').innerHTML = formatChange(report.impressionsChange);
+
+      document.getElementById('avgCtr').textContent = (report.averageCtr * 100).toFixed(2) + '%';
+      document.getElementById('ctrChange').innerHTML = formatChange(report.ctrChange);
+
+      document.getElementById('avgPosition').textContent = report.averagePosition.toFixed(1);
+      document.getElementById('positionChange').innerHTML = formatChange(report.positionChange, true);
+    }
+
+    // Load trends and create charts
+    async function loadTrends() {
+      try {
+        const response = await fetch('/api/trends?days=30');
+        const data = await response.json();
+
+        const dates = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const clicks = data.map(d => d.clicks);
+        const impressions = data.map(d => d.impressions);
+        const ctrs = data.map(d => d.ctr * 100);
+        const positions = data.map(d => d.position);
+
+        // Clicks & Impressions Chart
+        const clicksCtx = document.getElementById('clicksChart').getContext('2d');
+        if (clicksChart) clicksChart.destroy();
+        clicksChart = new Chart(clicksCtx, {
+          type: 'line',
+          data: {
+            labels: dates,
+            datasets: [
+              {
+                label: 'Clicks',
+                data: clicks,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.3,
+                yAxisID: 'y'
+              },
+              {
+                label: 'Impressions',
+                data: impressions,
+                borderColor: 'rgb(168, 85, 247)',
+                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                tension: 0.3,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+              y: { type: 'linear', display: true, position: 'left' },
+              y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+            }
+          }
+        });
+
+        // CTR & Position Chart
+        const ctrCtx = document.getElementById('ctrChart').getContext('2d');
+        if (ctrChart) ctrChart.destroy();
+        ctrChart = new Chart(ctrCtx, {
+          type: 'line',
+          data: {
+            labels: dates,
+            datasets: [
+              {
+                label: 'CTR (%)',
+                data: ctrs,
+                borderColor: 'rgb(16, 185, 129)',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.3,
+                yAxisID: 'y'
+              },
+              {
+                label: 'Position',
+                data: positions,
+                borderColor: 'rgb(245, 158, 11)',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                tension: 0.3,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+              y: { type: 'linear', display: true, position: 'left' },
+              y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, reverse: true }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error loading trends:', error);
+      }
+    }
+
+    // Load top pages
+    async function loadTopPages() {
+      try {
+        const response = await fetch('/api/top-pages?days=7&limit=10');
+        const data = await response.json();
+
+        const html = data.map((page, idx) => {
+          const url = page.page.replace('https://www.berganco.com', '');
+          return `
+            <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">${url || '/'}</p>
+                <p class="text-xs text-gray-500">${formatNumber(page._sum.clicks)} clicks · ${(page._avg.ctr * 100).toFixed(2)}% CTR</p>
+              </div>
+              <div class="text-right ml-4">
+                <p class="text-sm font-semibold text-blue-600">${formatNumber(page._sum.impressions)}</p>
+                <p class="text-xs text-gray-500">impressions</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        document.getElementById('topPages').innerHTML = html || '<p class="text-gray-500 text-center py-4">No data available</p>';
+      } catch (error) {
+        console.error('Error loading top pages:', error);
+      }
+    }
+
+    // Load top queries
+    async function loadTopQueries() {
+      try {
+        const response = await fetch('/api/top-queries?days=7&limit=10');
+        const data = await response.json();
+
+        const html = data.map((query, idx) => {
+          return `
+            <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900">"${query.query}"</p>
+                <p class="text-xs text-gray-500">Position ${query._avg.position.toFixed(1)} · ${(query._avg.ctr * 100).toFixed(2)}% CTR</p>
+              </div>
+              <div class="text-right ml-4">
+                <p class="text-sm font-semibold text-green-600">${formatNumber(query._sum.clicks)}</p>
+                <p class="text-xs text-gray-500">clicks</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        document.getElementById('topQueries').innerHTML = html || '<p class="text-gray-500 text-center py-4">No data available</p>';
+      } catch (error) {
+        console.error('Error loading top queries:', error);
+      }
+    }
+
+    // Update report insights
+    function updateReportInsights(report) {
+      const insights = report.insights ? report.insights.split('\n').join('<br>') : 'No insights available.';
+      const recommendations = report.recommendations ? report.recommendations.split('\n').join('<br>') : '';
+
+      document.getElementById('reportInsights').innerHTML = `
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Insights</h3>
+          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm">${insights}</div>
+        </div>
+        ${recommendations ? `
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Recommendations</h3>
+          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 text-sm">${recommendations}</div>
+        </div>
+        ` : ''}
+      `;
+    }
+
+    // Manual data collection
+    async function collectData() {
+      if (!confirm('Collect today\'s data? This may take a minute.')) return;
+      
+      try {
+        const button = event.target;
+        button.disabled = true;
+        button.textContent = 'Collecting...';
+        
+        const response = await fetch('/api/collect', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('Data collected successfully!');
+          location.reload();
+        } else {
+          alert('Error collecting data');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error collecting data');
+      } finally {
+        event.target.disabled = false;
+        event.target.textContent = 'Collect Data';
+      }
+    }
+
+    // Manual report generation
+    async function generateReport() {
+      if (!confirm('Generate and send weekly report now?')) return;
+      
+      try {
+        const button = event.target;
+        button.disabled = true;
+        button.textContent = 'Generating...';
+        
+        const response = await fetch('/api/generate-report', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('Report generated and sent successfully!');
+          location.reload();
+        } else {
+          alert('Error generating report');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error generating report');
+      } finally {
+        event.target.disabled = false;
+        event.target.textContent = 'Generate Report';
+      }
+    }
+
+    // Load dashboard on page load
+    loadDashboard();
+  </script>
+
+</body>
+</html>
+
