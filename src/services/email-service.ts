@@ -349,8 +349,20 @@ export async function sendWeeklyReport(reportData: ReportData) {
     
     // Provide helpful error messages
     if (error instanceof Error) {
-      if (error.message.includes('Invalid login')) {
-        throw new Error('Invalid SMTP credentials. Check SMTP_USER and SMTP_PASSWORD. For Gmail, make sure you\'re using an App Password, not your regular password.');
+      if (error.message.includes('Invalid login') || error.message.includes('Username and Password not accepted') || (error as any).code === 'EAUTH') {
+        const errorMsg = `SMTP Authentication Failed:
+
+The email address or App Password is incorrect. Please verify:
+
+1. SMTP_USER should be your full email: ${smtpUser || 'NOT SET'}
+2. SMTP_PASSWORD should be a Gmail App Password (not your regular password)
+3. Generate a new App Password at: https://myaccount.google.com/apppasswords
+4. Make sure 2-Step Verification is enabled on your Google account
+5. Copy the 16-character App Password exactly (with or without spaces)
+
+Current SMTP_USER: ${smtpUser || 'NOT SET'}
+SMTP_PASSWORD: ${smtpPassword ? '[SET]' : 'NOT SET'}`;
+        throw new Error(errorMsg);
       } else if (error.message.includes('Connection')) {
         throw new Error('Cannot connect to SMTP server. Check SMTP_HOST and SMTP_PORT.');
       }
