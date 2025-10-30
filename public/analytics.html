@@ -13,7 +13,7 @@
     // Redirect to login if not authenticated
     (async function() {
       const response = await fetch('/api/auth/me', { credentials: 'include' });
-      if (!response.ok) window.location.href = '/login.html';
+      if (!response.ok) window.location.href = '/login';
     })();
   </script>
 
@@ -31,12 +31,12 @@
         <div style="margin-bottom: 24px;">
           <div style="font-size: 11px; font-weight: 600; color: #98989D; text-transform: uppercase; padding: 0 16px; margin-bottom: 8px;">Main</div>
           <a href="/" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; color: #E5E5EA; text-decoration: none;">📊 Dashboard</a>
-          <a href="/analytics.html" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: #0A84FF; color: white; border-radius: 8px; margin: 0 8px;">📈 Analytics</a>
+          <a href="/analytics" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: #0A84FF; color: white; border-radius: 8px; margin: 0 8px;">📈 Analytics</a>
         </div>
         <div style="margin-bottom: 24px;">
           <div style="font-size: 11px; font-weight: 600; color: #98989D; text-transform: uppercase; padding: 0 16px; margin-bottom: 8px;">SEO</div>
-          <a href="/pages.html" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; color: #E5E5EA; text-decoration: none;">📄 Pages</a>
-          <a href="/queries.html" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; color: #E5E5EA; text-decoration: none;">🔍 Queries</a>
+          <a href="/pages" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; color: #E5E5EA; text-decoration: none;">📄 Pages</a>
+          <a href="/queries" style="display: flex; align-items: center; gap: 12px; padding: 8px 16px; color: #E5E5EA; text-decoration: none;">🔍 Queries</a>
         </div>
       </nav>
     </aside>

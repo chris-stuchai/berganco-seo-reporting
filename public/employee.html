@@ -121,7 +121,7 @@
     (async function() {
       const res = await fetch('/api/auth/me', { credentials: 'include' });
       if (!res.ok || !(await res.json()).user?.role || ['ADMIN', 'EMPLOYEE'].indexOf((await res.json()).user.role) === -1) {
-        window.location.href = '/login.html';
+        window.location.href = '/login';
       }
       loadUsers();
     })();

@@ -51,7 +51,40 @@ async function runMigrations() {
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static('public'));
+
+// Serve static files (images, CSS, JS)
+app.use(express.static('public', { 
+  extensions: ['html', 'js', 'css', 'png', 'jpg', 'svg']
+}));
+
+// Clean routes without .html extension
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile('login.html', { root: 'public' });
+});
+
+app.get('/employee', (req, res) => {
+  res.sendFile('employee.html', { root: 'public' });
+});
+
+app.get('/analytics', (req, res) => {
+  res.sendFile('analytics.html', { root: 'public' });
+});
+
+app.get('/pages', (req, res) => {
+  res.sendFile('pages.html', { root: 'public' });
+});
+
+app.get('/queries', (req, res) => {
+  res.sendFile('queries.html', { root: 'public' });
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile('admin.html', { root: 'public' });
+});
 
 // Auth routes (public)
 app.post('/api/auth/login', async (req, res) => {
