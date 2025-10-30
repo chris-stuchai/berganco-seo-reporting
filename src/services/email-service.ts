@@ -81,7 +81,7 @@ function generateEmailHTML(data: ReportData): string {
     
     <!-- Header -->
     <div style="border-bottom: 1px solid #48484A; padding-bottom: 24px; margin-bottom: 32px;">
-      <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.02em;">📊 Weekly SEO Report</h1>
+      <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.02em;">Weekly SEO Report</h1>
       <p style="margin: 8px 0 0 0; color: #98989D; font-size: 17px;">
         ${format(weekStartDate, 'MMMM d')} - ${format(weekEndDate, 'MMMM d, yyyy')}
       </p>
@@ -89,7 +89,7 @@ function generateEmailHTML(data: ReportData): string {
 
     <!-- Key Metrics -->
     <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.01em;">📈 Key Metrics</h2>
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.01em;">Key Metrics</h2>
       
       <div style="display: table; width: 100%; border-collapse: separate; border-spacing: 16px;">
         
@@ -150,7 +150,7 @@ function generateEmailHTML(data: ReportData): string {
 
     <!-- Insights -->
     <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">🔍 Key Insights</h2>
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">Key Insights</h2>
       <div style="background-color: #3A3A3C; border-left: 4px solid #FF9F0A; padding: 16px; border-radius: 8px;">
         <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.47; color: #E5E5EA;">${insights}</pre>
       </div>
@@ -158,7 +158,7 @@ function generateEmailHTML(data: ReportData): string {
 
     <!-- Top Pages -->
     <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">🏆 Top Performing Pages</h2>
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">Top Performing Pages</h2>
       <table style="width: 100%; border-collapse: collapse; font-size: 17px; background-color: #3A3A3C; border-radius: 8px; overflow: hidden;">
         <thead>
           <tr style="background-color: #3A3A3C; border-bottom: 1px solid #48484A;">
@@ -193,7 +193,7 @@ function generateEmailHTML(data: ReportData): string {
 
     <!-- Top Queries -->
     <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">🔎 Top Search Queries</h2>
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">Top Search Queries</h2>
       <table style="width: 100%; border-collapse: collapse; font-size: 17px; background-color: #3A3A3C; border-radius: 8px; overflow: hidden;">
         <thead>
           <tr style="background-color: #3A3A3C; border-bottom: 1px solid #48484A;">
@@ -226,7 +226,7 @@ function generateEmailHTML(data: ReportData): string {
 
     <!-- Recommendations -->
     <div style="margin-bottom: 32px;">
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">💡 Action Items & Recommendations</h2>
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">Action Items & Recommendations</h2>
       <div style="background-color: #3A3A3C; border-left: 4px solid #0A84FF; padding: 16px; border-radius: 8px;">
         <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.47; color: #E5E5EA;">${recommendations}</pre>
       </div>
@@ -270,7 +270,7 @@ export async function sendWeeklyReport(reportData: ReportData) {
     throw new Error('SMTP configuration missing. Please set SMTP_USER and SMTP_PASSWORD in .env');
   }
 
-  const subject = `Weekly SEO Report: ${format(reportData.weekStartDate, 'MMM d')} - ${format(reportData.weekEndDate, 'MMM d, yyyy')} | ${reportData.clicksChange >= 0 ? '📈' : '📉'} ${Math.abs(reportData.clicksChange).toFixed(1)}% clicks`;
+  const subject = `Weekly SEO Report: ${format(reportData.weekStartDate, 'MMM d')} - ${format(reportData.weekEndDate, 'MMM d, yyyy')} | ${reportData.clicksChange >= 0 ? '+' : ''}${reportData.clicksChange.toFixed(1)}% clicks`;
 
   const html = generateEmailHTML(reportData);
 
