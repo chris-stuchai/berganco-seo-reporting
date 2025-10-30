@@ -558,7 +558,7 @@
           <div class="section-header">
             <div>
               <h2 class="section-title">AI-Powered Insights</h2>
-              <p class="section-subtitle">Market-aware analysis powered by AI</p>
+              <p class="section-subtitle">Market-aware analysis powered by Stuchai AI</p>
             </div>
             <button class="btn btn-secondary" onclick="loadAIInsights()" id="refreshAI">Refresh</button>
           </div>
@@ -597,6 +597,22 @@
               <div class="loading">
                 <div class="spinner"></div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Competitive Analysis -->
+        <div class="card mb-6">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Competitive Analysis</h2>
+              <p class="section-subtitle">Denver Property Management Market Position</p>
+            </div>
+            <button class="btn btn-secondary" onclick="loadCompetitors()" id="refreshCompetitors">Refresh</button>
+          </div>
+          <div id="competitorAnalysis">
+            <div class="loading">
+              <div class="spinner"></div>
             </div>
           </div>
         </div>
@@ -666,7 +682,8 @@
           loadTrends(currentDays),
           loadTopPages(currentDays),
           loadTopQueries(currentDays),
-          loadAIInsights()
+          loadAIInsights(),
+          loadCompetitors()
         ]);
 
         document.getElementById('loading').classList.add('hidden');
@@ -886,6 +903,138 @@
         console.error('Error loading AI insights:', error);
       } finally {
         const button = document.getElementById('refreshAI');
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Refresh';
+        }
+      }
+    }
+
+    // Load competitive analysis
+    async function loadCompetitors() {
+      try {
+        const button = document.getElementById('refreshCompetitors');
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Refreshing...';
+        }
+
+        const response = await fetch('/api/competitors');
+        const data = await response.json();
+
+        if (data.topCompetitors && data.topCompetitors.length > 0) {
+          // Rank competitors
+          const rankedCompetitors = data.topCompetitors.map((comp, idx) => {
+            const position = idx + 1;
+            return { ...comp, position };
+          });
+
+          const html = `
+            <div style="margin-bottom: var(--spacing-6);">
+              <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; margin-bottom: var(--spacing-4);">
+                <h3 style="font-size: var(--font-title-3); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-2);">
+                  Market Position: ${data.summary.split('.')[0]}
+                </h3>
+                <p style="font-size: var(--font-body); color: var(--color-label-secondary); line-height: 1.6; margin: 0;">
+                  ${data.summary}
+                </p>
+              </div>
+
+              <div style="margin-bottom: var(--spacing-6);">
+                <h3 style="font-size: var(--font-title-3); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-4);">
+                  Competitor Rankings
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
+                  ${rankedCompetitors.map(comp => `
+                    <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 12px;">
+                      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--spacing-3);">
+                        <div style="flex: 1;">
+                          <div style="display: flex; align-items: center; gap: var(--spacing-3); margin-bottom: var(--spacing-2);">
+                            <div style="width: 32px; height: 32px; border-radius: 16px; background: ${comp.position <= 3 ? 'var(--color-blue)' : 'var(--color-bg-secondary)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                              <span style="font-size: var(--font-footnote); font-weight: 700; color: ${comp.position <= 3 ? 'white' : 'var(--color-label-secondary)'};">
+                                ${comp.position}
+                              </span>
+                            </div>
+                            <div style="flex: 1;">
+                              <div style="font-size: var(--font-body); font-weight: 600; color: var(--color-label-primary);">${comp.name}</div>
+                              <div style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-top: var(--spacing-1);">${comp.domain}</div>
+                            </div>
+                          </div>
+                          <div style="display: flex; flex-direction: column; gap: var(--spacing-2); margin-top: var(--spacing-3);">
+                            <div style="font-size: var(--font-caption); font-weight: 600; color: var(--color-label-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-1);">
+                              What They Do Well:
+                            </div>
+                            ${comp.strengths.map(strength => `
+                              <div style="display: flex; align-items: start; gap: var(--spacing-2);">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink: 0; margin-top: 2px;">
+                                  <circle cx="8" cy="8" r="7" stroke="#30D158" stroke-width="1.5"/>
+                                  <path d="M5 8l2 2 4-4" stroke="#30D158" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span style="font-size: var(--font-footnote); color: var(--color-label-secondary); line-height: 1.5;">${strength}</span>
+                              </div>
+                            `).join('')}
+                          </div>
+                        </div>
+                        <div style="text-align: right; margin-left: var(--spacing-4);">
+                          <div style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-1);">
+                            Est. Traffic
+                          </div>
+                          <div style="font-size: var(--font-body); font-weight: 600; color: var(--color-label-primary);">
+                            ${comp.estimatedTraffic ? formatNumber(comp.estimatedTraffic) : 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4);">
+                <div>
+                  <h3 style="font-size: var(--font-title-3); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-3);">
+                    BerganCo Advantages
+                  </h3>
+                  <div style="display: flex; flex-direction: column; gap: var(--spacing-2);">
+                    ${data.bergancoAdvantages.map(adv => `
+                      <div style="padding: var(--spacing-3); background: rgba(48, 209, 88, 0.1); border-left: 3px solid var(--color-green); border-radius: 8px;">
+                        <span style="font-size: var(--font-footnote); color: var(--color-label-primary);">${adv}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+                <div>
+                  <h3 style="font-size: var(--font-title-3); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-3);">
+                    Areas to Improve
+                  </h3>
+                  <div style="display: flex; flex-direction: column; gap: var(--spacing-2);">
+                    ${data.competitorAdvantages.map(area => `
+                      <div style="padding: var(--spacing-3); background: rgba(255, 69, 58, 0.1); border-left: 3px solid var(--color-red); border-radius: 8px;">
+                        <span style="font-size: var(--font-footnote); color: var(--color-label-primary);">${area}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          document.getElementById('competitorAnalysis').innerHTML = html;
+        } else {
+          document.getElementById('competitorAnalysis').innerHTML = `
+            <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 12px;">
+              <p style="color: var(--color-label-tertiary); text-align: center;">Unable to load competitive analysis data.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading competitors:', error);
+        document.getElementById('competitorAnalysis').innerHTML = `
+          <div style="padding: var(--spacing-4); background: rgba(255, 69, 58, 0.1); border: 1px solid var(--color-red); border-radius: 12px;">
+            <p style="color: var(--color-red); text-align: center;">Error loading competitive analysis. Please try again.</p>
+          </div>
+        `;
+      } finally {
+        const button = document.getElementById('refreshCompetitors');
         if (button) {
           button.disabled = false;
           button.textContent = 'Refresh';

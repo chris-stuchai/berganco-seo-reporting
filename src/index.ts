@@ -426,6 +426,18 @@ app.get('/api/ai-insights', async (req, res) => {
   }
 });
 
+// Competitive Analysis endpoint
+app.get('/api/competitors', async (req, res) => {
+  try {
+    const { analyzeCompetitors, getCompetitiveSummary } = await import('./services/competitor-analysis');
+    const summary = await getCompetitiveSummary();
+    res.json(summary);
+  } catch (error) {
+    console.error('Error fetching competitor analysis:', error);
+    res.status(500).json({ error: 'Failed to fetch competitor analysis' });
+  }
+});
+
 // Admin: Get system status
 app.get('/api/admin/status', async (req, res) => {
   try {
