@@ -290,6 +290,27 @@
 
       </div>
 
+      <!-- AI Insights Card -->
+      <div class="card p-6 mb-8" style="margin-bottom: var(--spacing-8);">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-title-3 mb-1" style="margin: 0 0 var(--spacing-2) 0;">AI-Powered Insights</h2>
+            <p class="text-footnote" style="color: var(--color-label-secondary); margin: 0;">
+              Market-aware analysis powered by AI
+            </p>
+          </div>
+          <button onclick="loadAIInsights()" class="btn-secondary" id="refreshAI" style="font-size: var(--font-footnote);">
+            Refresh
+          </button>
+        </div>
+        <div id="aiInsights" style="min-height: 80px;">
+          <div class="text-center py-8" style="padding: var(--spacing-8) 0;">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-gray-200 border-t-blue-600 mx-auto mb-2" style="border-top-color: var(--color-blue);"></div>
+            <p class="text-footnote" style="color: var(--color-label-secondary);">Generating AI insights...</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Charts Row -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" style="margin-bottom: var(--spacing-8); gap: var(--spacing-6);">
         
@@ -436,7 +457,8 @@
         await Promise.all([
           loadTrends(currentDays),
           loadTopPages(currentDays),
-          loadTopQueries(currentDays)
+          loadTopQueries(currentDays),
+          loadAIInsights()
         ]);
 
         document.getElementById('loading').classList.add('hidden');
@@ -688,6 +710,65 @@
       } catch (error) {
         console.error('Error loading top queries:', error);
         document.getElementById('topQueries').innerHTML = '<p style="color: #FF3B30; text-align: center; padding: var(--spacing-8) 0;">Error loading queries</p>';
+      }
+    }
+
+    // Load AI insights
+    async function loadAIInsights() {
+      try {
+        const button = document.getElementById('refreshAI');
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Refreshing...';
+        }
+
+        const response = await fetch(`/api/ai-insights?days=${currentDays}`);
+        const data = await response.json();
+
+        if (data.insight) {
+          document.getElementById('aiInsights').innerHTML = `
+            <div style="padding: var(--spacing-4); background: #F0F7FF; border: 1px solid rgba(0, 122, 255, 0.2); border-radius: 12px;">
+              <div style="display: flex; align-items: start; gap: var(--spacing-3);">
+                <div style="width: 24px; height: 24px; border-radius: 12px; background: #007AFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 0C2.69 0 0 2.69 0 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-.5 9L2.5 6l.71-.71L5.5 7.79l3.29-3.29L9.5 5.5 5.5 9z" fill="white"/>
+                  </svg>
+                </div>
+                <div style="flex: 1;">
+                  <p class="text-body" style="font-size: var(--font-body); color: var(--color-label-primary); margin: 0; line-height: 1.6;">
+                    ${data.insight}
+                  </p>
+                  <p class="text-caption" style="font-size: var(--font-caption); color: var(--color-label-secondary); margin: var(--spacing-2) 0 0 0;">
+                    Generated ${new Date(data.generatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          document.getElementById('aiInsights').innerHTML = `
+            <div style="padding: var(--spacing-4); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 12px;">
+              <p class="text-footnote text-center" style="color: var(--color-label-secondary); margin: 0;">
+                AI insights unavailable. Ensure OPENAI_API_KEY is configured.
+              </p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading AI insights:', error);
+        document.getElementById('aiInsights').innerHTML = `
+          <div style="padding: var(--spacing-4); background: #FFF5F5; border: 1px solid rgba(255, 59, 48, 0.2); border-radius: 12px;">
+            <p class="text-footnote text-center" style="color: #FF3B30; margin: 0;">
+              Error loading AI insights. Please try again.
+            </p>
+          </div>
+        `;
+      } finally {
+        const button = document.getElementById('refreshAI');
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Refresh';
+        }
       }
     }
 

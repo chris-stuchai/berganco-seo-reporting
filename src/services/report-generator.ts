@@ -6,6 +6,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { startOfWeek, endOfWeek, subWeeks, format } from 'date-fns';
+import { generateAIInsights } from './ai-service';
 
 const prisma = new PrismaClient();
 
@@ -275,9 +276,49 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
   const topPages = await getTopPages(startDate, endDate);
   const topQueries = await getTopQueries(startDate, endDate);
 
-  // Generate insights and recommendations
+  // Generate baseline insights and recommendations
   const insights = generateInsights(comparison);
   const recommendations = generateRecommendations(comparison, topPages, topQueries);
+
+  // Generate AI-powered insights (enhances baseline insights)
+  console.log('🤖 Generating AI-powered insights...');
+  let aiInsights = null;
+  try {
+    const aiContext = {
+      currentMetrics,
+      previousMetrics,
+      changes: {
+        clicksChange,
+        impressionsChange,
+        ctrChange,
+        positionChange,
+      },
+      topPages,
+      topQueries,
+      websiteDomain: 'www.berganco.com',
+      period: {
+        startDate: format(startDate, 'yyyy-MM-dd'),
+        endDate: format(endDate, 'yyyy-MM-dd'),
+        previousStartDate: format(prevStartDate, 'yyyy-MM-dd'),
+        previousEndDate: format(prevEndDate, 'yyyy-MM-dd'),
+      },
+    };
+
+    aiInsights = await generateAIInsights(aiContext);
+    console.log('✓ AI insights generated');
+  } catch (error) {
+    console.error('Error generating AI insights:', error);
+    // Continue without AI insights - use baseline
+  }
+
+  // Combine baseline and AI insights
+  const enhancedInsights = aiInsights 
+    ? `${insights}\n\n🤖 AI ANALYSIS:\n\n${aiInsights.executiveSummary}\n\nMarket Context: ${aiInsights.marketContext}\n\nKey Insights:\n${aiInsights.keyInsights.map((i, idx) => `• ${i}`).join('\n')}\n\nIndustry Trends: ${aiInsights.industryTrends}`
+    : insights;
+
+  const enhancedRecommendations = aiInsights
+    ? `${recommendations}\n\n🤖 AI STRATEGIC RECOMMENDATIONS:\n\n${aiInsights.urgentActions.length > 0 ? 'URGENT ACTIONS:\n' + aiInsights.urgentActions.map((a, idx) => `${idx + 1}. ${a}`).join('\n') + '\n\n' : ''}STRATEGIC RECOMMENDATIONS:\n${aiInsights.strategicRecommendations.map((r, idx) => `${idx + 1}. ${r}`).join('\n')}`
+    : recommendations;
 
   // Store report in database
   const report = await prisma.weeklyReport.create({
@@ -292,10 +333,10 @@ export async function generateWeeklyReport(weekStartDate?: Date) {
       impressionsChange,
       ctrChange,
       positionChange,
-      insights,
+      insights: enhancedInsights,
       topPages: JSON.stringify(topPages),
       topQueries: JSON.stringify(topQueries),
-      recommendations,
+      recommendations: enhancedRecommendations,
     },
   });
 

@@ -296,6 +296,136 @@ app.get('/api/top-queries', async (req, res) => {
   }
 });
 
+// AI Insights endpoint for dashboard
+app.get('/api/ai-insights', async (req, res) => {
+  try {
+    const days = parseInt(req.query.days as string) || 7;
+    const endDate = new Date();
+    const startDate = subDays(endDate, days);
+    const prevStartDate = subDays(startDate, days);
+
+    // Get current period metrics
+    const currentMetrics = await prisma.dailyMetric.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    const previousMetrics = await prisma.dailyMetric.findMany({
+      where: {
+        date: {
+          gte: prevStartDate,
+          lt: startDate,
+        },
+      },
+    });
+
+    // Calculate aggregated metrics
+    let totalClicks = 0, totalImpressions = 0, totalCtr = 0, totalPosition = 0;
+    currentMetrics.forEach((m) => {
+      totalClicks += m.clicks;
+      totalImpressions += m.impressions;
+      totalCtr += m.ctr;
+      totalPosition += m.position;
+    });
+
+    let prevTotalClicks = 0, prevTotalImpressions = 0, prevTotalCtr = 0, prevTotalPosition = 0;
+    previousMetrics.forEach((m) => {
+      prevTotalClicks += m.clicks;
+      prevTotalImpressions += m.impressions;
+      prevTotalCtr += m.ctr;
+      prevTotalPosition += m.position;
+    });
+
+    const avgCtr = currentMetrics.length > 0 ? totalCtr / currentMetrics.length : 0;
+    const avgPosition = currentMetrics.length > 0 ? totalPosition / currentMetrics.length : 0;
+    const prevAvgCtr = previousMetrics.length > 0 ? prevTotalCtr / previousMetrics.length : 0;
+    const prevAvgPosition = previousMetrics.length > 0 ? prevTotalPosition / previousMetrics.length : 0;
+
+    const clicksChange = prevTotalClicks > 0 ? ((totalClicks - prevTotalClicks) / prevTotalClicks) * 100 : 0;
+    const impressionsChange = prevTotalImpressions > 0 ? ((totalImpressions - prevTotalImpressions) / prevTotalImpressions) * 100 : 0;
+    const ctrChange = prevAvgCtr > 0 ? ((avgCtr - prevAvgCtr) / prevAvgCtr) * 100 : 0;
+    const positionChange = avgPosition - prevAvgPosition;
+
+    // Get top pages and queries
+    const topPages = await prisma.pageMetric.groupBy({
+      by: ['page'],
+      where: { date: { gte: startDate, lte: endDate } },
+      _sum: { clicks: true, impressions: true },
+      _avg: { ctr: true, position: true },
+      orderBy: { _sum: { clicks: 'desc' } },
+      take: 10,
+    });
+
+    const topQueries = await prisma.queryMetric.groupBy({
+      by: ['query'],
+      where: { date: { gte: startDate, lte: endDate } },
+      _sum: { clicks: true, impressions: true },
+      _avg: { ctr: true, position: true },
+      orderBy: { _sum: { clicks: 'desc' } },
+      take: 10,
+    });
+
+    // Import AI service
+    const { generateQuickAIInsights } = await import('./services/ai-service');
+
+    const aiContext = {
+      currentMetrics: {
+        totalClicks,
+        totalImpressions,
+        averageCtr: avgCtr,
+        averagePosition: avgPosition,
+      },
+      previousMetrics: {
+        totalClicks: prevTotalClicks,
+        totalImpressions: prevTotalImpressions,
+        averageCtr: prevAvgCtr,
+        averagePosition: prevAvgPosition,
+      },
+      changes: {
+        clicksChange,
+        impressionsChange,
+        ctrChange,
+        positionChange,
+      },
+      topPages: topPages.map(p => ({
+        page: p.page,
+        clicks: p._sum.clicks || 0,
+        impressions: p._sum.impressions || 0,
+        ctr: p._avg.ctr || 0,
+        position: p._avg.position || 0,
+      })),
+      topQueries: topQueries.map(q => ({
+        query: q.query,
+        clicks: q._sum.clicks || 0,
+        impressions: q._sum.impressions || 0,
+        ctr: q._avg.ctr || 0,
+        position: q._avg.position || 0,
+      })),
+      websiteDomain: 'www.berganco.com',
+      period: {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        previousStartDate: prevStartDate.toISOString().split('T')[0],
+        previousEndDate: startDate.toISOString().split('T')[0],
+      },
+    };
+
+    const aiInsight = await generateQuickAIInsights(aiContext);
+
+    res.json({
+      insight: aiInsight,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error generating AI insights:', error);
+    res.status(500).json({ error: 'Failed to generate AI insights' });
+  }
+});
+
 // Admin: Get system status
 app.get('/api/admin/status', async (req, res) => {
   try {
