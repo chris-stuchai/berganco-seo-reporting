@@ -1,13 +1,22 @@
 /**
  * Email Service
  * 
- * Sends weekly SEO reports via email using Resend
+ * Sends weekly SEO reports via email using Gmail/Google Workspace SMTP
  */
 
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { format } from 'date-fns';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create reusable transporter using Gmail/Google Workspace SMTP
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER, // Your Gmail or Google Workspace email
+    pass: process.env.SMTP_PASSWORD, // App Password (not regular password)
+  },
+});
 
 interface ReportData {
   weekStartDate: Date;
@@ -232,14 +241,20 @@ function generateEmailHTML(data: ReportData): string {
 }
 
 /**
- * Sends the weekly report via email
+ * Sends the weekly report via email using Gmail/Google Workspace SMTP
  */
 export async function sendWeeklyReport(reportData: ReportData) {
   const emailTo = process.env.REPORT_EMAIL_TO;
-  const emailFrom = process.env.REPORT_EMAIL_FROM;
+  const emailFrom = process.env.REPORT_EMAIL_FROM || process.env.SMTP_USER;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPassword = process.env.SMTP_PASSWORD;
 
   if (!emailTo || !emailFrom) {
     throw new Error('Email configuration missing. Please set REPORT_EMAIL_TO and REPORT_EMAIL_FROM in .env');
+  }
+
+  if (!smtpUser || !smtpPassword) {
+    throw new Error('SMTP configuration missing. Please set SMTP_USER and SMTP_PASSWORD in .env');
   }
 
   const subject = `Weekly SEO Report: ${format(reportData.weekStartDate, 'MMM d')} - ${format(reportData.weekEndDate, 'MMM d, yyyy')} | ${reportData.clicksChange >= 0 ? '📈' : '📉'} ${Math.abs(reportData.clicksChange).toFixed(1)}% clicks`;
@@ -247,17 +262,32 @@ export async function sendWeeklyReport(reportData: ReportData) {
   const html = generateEmailHTML(reportData);
 
   try {
-    const result = await resend.emails.send({
-      from: emailFrom,
+    // Verify SMTP connection
+    await transporter.verify();
+    console.log('✓ SMTP server is ready to send emails');
+
+    // Send email
+    const result = await transporter.sendMail({
+      from: `"BerganCo SEO Monitor" <${emailFrom}>`,
       to: emailTo,
       subject,
       html,
     });
 
-    console.log('✓ Email sent successfully:', result);
+    console.log('✓ Email sent successfully:', result.messageId);
     return result;
   } catch (error) {
     console.error('Error sending email:', error);
+    
+    // Provide helpful error messages
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid login')) {
+        throw new Error('Invalid SMTP credentials. Check SMTP_USER and SMTP_PASSWORD. For Gmail, make sure you\'re using an App Password, not your regular password.');
+      } else if (error.message.includes('Connection')) {
+        throw new Error('Cannot connect to SMTP server. Check SMTP_HOST and SMTP_PORT.');
+      }
+    }
+    
     throw error;
   }
 }
