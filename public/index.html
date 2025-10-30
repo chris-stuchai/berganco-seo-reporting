@@ -508,8 +508,8 @@
     <main class="content-area">
     
     <!-- Loading State -->
-      <div id="loading" class="loading">
-        <div class="spinner"></div>
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
     </div>
 
     <!-- Dashboard Content -->
@@ -1457,7 +1457,28 @@
       }
     }
     
-    init();
+    // Initialize on page load with safety timeout
+    function startInit() {
+      // Safety timeout: if dashboard hasn't loaded in 10 seconds, show it anyway
+      setTimeout(() => {
+        const loadingEl = document.getElementById('loading');
+        const dashboardEl = document.getElementById('dashboard');
+        if (loadingEl && dashboardEl && dashboardEl.classList.contains('hidden')) {
+          console.warn('Dashboard loading timeout - forcing display');
+          loadingEl.classList.add('hidden');
+          dashboardEl.classList.remove('hidden');
+        }
+      }, 10000);
+      
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        // DOM already loaded
+        init();
+      }
+    }
+    
+    startInit();
   </script>
 
 </body>
