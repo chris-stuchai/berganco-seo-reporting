@@ -1322,7 +1322,7 @@
       try {
         const response = await fetch('/api/auth/me', { credentials: 'include' });
         if (response.ok) {
-        const data = await response.json();
+          const data = await response.json();
           if (data.user) {
             // Update sidebar branding
             updateSidebarBranding(data.user);
@@ -1337,21 +1337,23 @@
             if (data.user.role !== 'CLIENT') {
               document.getElementById('adminNavSection').style.display = 'block';
             }
-        } else {
+            
+            // Load dashboard after auth check passes
+            loadDashboard();
+          } else {
             // Redirect to login if not authenticated
             window.location.href = '/login';
             return;
           }
         } else {
-          window.location.href = '/login.html';
+          window.location.href = '/login';
           return;
         }
       } catch (error) {
-        window.location.href = '/login.html';
+        console.error('Auth error:', error);
+        window.location.href = '/login';
         return;
       }
-      
-      loadDashboard();
     }
 
     function getCookie(name) {
@@ -1371,7 +1373,7 @@
         const data = await res.json();
         // Update session token and redirect
         window.location.href = '/employee';
-        } else {
+      } else {
         const error = await res.json();
         alert(`Failed to stop impersonation: ${error.error || 'Unknown error'}`);
       }
