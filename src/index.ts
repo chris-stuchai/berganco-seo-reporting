@@ -426,6 +426,82 @@ app.get('/api/ai-insights', async (req, res) => {
   }
 });
 
+// AI Chat endpoint
+app.post('/api/ai-chat', async (req, res) => {
+  try {
+    const { message, context } = req.body;
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(503).json({ 
+        error: 'AI features unavailable. Please configure OPENAI_API_KEY.' 
+      });
+    }
+
+    // Build context from dashboard data
+    const contextPrompt = context ? `
+Current SEO Metrics:
+- Total Clicks: ${context.metrics?.totalClicks || 0}
+- Total Impressions: ${context.metrics?.totalImpressions || 0}
+- Average CTR: ${((context.metrics?.averageCtr || 0) * 100).toFixed(2)}%
+- Average Position: ${(context.metrics?.averagePosition || 0).toFixed(1)}
+- Period: ${context.days} days
+
+Changes:
+- Clicks: ${(context.metrics?.clicksChange || 0).toFixed(1)}%
+- Impressions: ${(context.metrics?.impressionsChange || 0).toFixed(1)}%
+- CTR: ${(context.metrics?.ctrChange || 0).toFixed(1)}%
+- Position: ${(context.metrics?.positionChange || 0).toFixed(1)}
+` : '';
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are Stuchai AI, an expert SEO analyst specializing in property management and real estate SEO. 
+            You provide concise, actionable insights based on SEO data for www.berganco.com.
+            Be helpful, specific, and focus on actionable recommendations. Keep responses under 200 words unless more detail is needed.`
+          },
+          {
+            role: 'user',
+            content: `${contextPrompt}\n\nUser Question: ${message}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('OpenAI API error:', error);
+      return res.status(500).json({ error: 'Failed to generate AI response' });
+    }
+
+    const data = await response.json() as {
+      choices?: Array<{
+        message?: {
+          content?: string;
+        };
+      }>;
+    };
+
+    const aiResponse = data.choices?.[0]?.message?.content || 'I apologize, but I could not generate a response.';
+
+    res.json({ response: aiResponse });
+  } catch (error) {
+    console.error('Error in AI chat:', error);
+    res.status(500).json({ error: 'Failed to process chat message' });
+  }
+});
+
 // Competitive Analysis endpoint
 app.get('/api/competitors', async (req, res) => {
   try {

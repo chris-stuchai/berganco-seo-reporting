@@ -560,11 +560,49 @@
               <h2 class="section-title">AI-Powered Insights</h2>
               <p class="section-subtitle">Market-aware analysis powered by Stuchai AI</p>
             </div>
-            <button class="btn btn-secondary" onclick="loadAIInsights()" id="refreshAI">Refresh</button>
+            <button class="btn btn-primary" onclick="loadAIInsights()" id="generateAI">Generate Insights</button>
           </div>
           <div id="aiInsights">
-            <div class="loading">
-              <div class="spinner"></div>
+            <div style="padding: var(--spacing-8); text-align: center;">
+              <p style="color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">
+                Click "Generate Insights" to get AI-powered analysis for the selected time period.
+              </p>
+              <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary);">
+                This will analyze your SEO data with market context and provide actionable recommendations.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Chat Assistant -->
+        <div class="card mb-6">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Ask Stuchai AI</h2>
+              <p class="section-subtitle">Ask follow-up questions about your SEO performance</p>
+            </div>
+          </div>
+          <div id="aiChat" style="max-height: 400px; display: flex; flex-direction: column;">
+            <!-- Chat Messages -->
+            <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: var(--spacing-4); min-height: 200px; max-height: 300px;">
+              <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; margin-bottom: var(--spacing-3); border: 1px solid var(--color-separator);">
+                <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0;">
+                  Try asking: "Why did my clicks drop?", "What should I focus on for the next week?", or "How can I improve my rankings?"
+                </p>
+              </div>
+            </div>
+            <!-- Chat Input -->
+            <div style="padding: var(--spacing-4); border-top: 1px solid var(--color-separator); display: flex; gap: var(--spacing-2);">
+              <input 
+                type="text" 
+                id="chatInput" 
+                placeholder="Ask a question about your SEO data..."
+                style="flex: 1; padding: var(--spacing-3); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-body); outline: none; transition: border-color 0.2s, box-shadow 0.2s;"
+                onkeypress="if(event.key === 'Enter') sendChatMessage()"
+                onfocus="this.style.borderColor = 'var(--color-blue)'; this.style.boxShadow = '0 0 0 3px rgba(10, 132, 255, 0.15)';"
+                onblur="this.style.borderColor = 'var(--color-separator)'; this.style.boxShadow = 'none';"
+              />
+              <button class="btn btn-primary" onclick="sendChatMessage()" id="sendChatBtn">Send</button>
             </div>
           </div>
         </div>
@@ -682,7 +720,6 @@
           loadTrends(currentDays),
           loadTopPages(currentDays),
           loadTopQueries(currentDays),
-          loadAIInsights(),
           loadCompetitors()
         ]);
 
@@ -880,11 +917,19 @@
     // Load AI insights
     async function loadAIInsights() {
       try {
-        const button = document.getElementById('refreshAI');
+        const button = document.getElementById('generateAI');
         if (button) {
           button.disabled = true;
-          button.textContent = 'Refreshing...';
+          button.textContent = 'Generating...';
         }
+
+        // Show loading state
+        document.getElementById('aiInsights').innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <p style="color: var(--color-label-secondary); margin-top: var(--spacing-3);">Analyzing your SEO data with Stuchai AI...</p>
+          </div>
+        `;
 
         const response = await fetch(`/api/ai-insights?days=${currentDays}`);
         const data = await response.json();
@@ -902,12 +947,99 @@
       } catch (error) {
         console.error('Error loading AI insights:', error);
       } finally {
-        const button = document.getElementById('refreshAI');
+        const button = document.getElementById('generateAI');
         if (button) {
           button.disabled = false;
-          button.textContent = 'Refresh';
+          button.textContent = 'Generate Insights';
         }
       }
+    }
+
+    // Send chat message
+    async function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      
+      if (!message) return;
+
+      const sendBtn = document.getElementById('sendChatBtn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
+      input.disabled = true;
+
+      // Add user message to chat
+      addChatMessage('user', message);
+      input.value = '';
+
+      // Add loading message
+      const loadingId = addChatMessage('assistant', 'Thinking...', true);
+
+      try {
+        // Get current dashboard metrics for context
+        const dashboardResponse = await fetch(`/api/dashboard?days=${currentDays}`);
+        const dashboardData = await dashboardResponse.json();
+
+        const response = await fetch('/api/ai-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            context: {
+              days: currentDays,
+              metrics: dashboardData.metrics,
+              topPages: dashboardData.latestMetrics?.slice(0, 5) || [],
+            }
+          })
+        });
+
+        const data = await response.json();
+        
+        // Remove loading message and add AI response
+        removeChatMessage(loadingId);
+        addChatMessage('assistant', data.response || 'I apologize, but I encountered an error. Please try again.');
+      } catch (error) {
+        console.error('Error sending chat message:', error);
+        removeChatMessage(loadingId);
+        addChatMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send';
+        input.disabled = false;
+        input.focus();
+      }
+    }
+
+    // Add message to chat
+    function addChatMessage(role, message, isLoading = false) {
+      const messagesDiv = document.getElementById('chatMessages');
+      const messageId = 'msg-' + Date.now();
+      
+      const isUser = role === 'user';
+      const alignStyle = isUser ? 'margin-left: 20%;' : 'margin-right: 20%;';
+      const bgColor = isUser ? 'var(--color-blue)' : 'var(--color-bg-tertiary)';
+      const textColor = isUser ? 'white' : 'var(--color-label-primary)';
+
+      const messageDiv = document.createElement('div');
+      messageDiv.id = messageId;
+      messageDiv.style.cssText = `${alignStyle} margin-bottom: var(--spacing-3);`;
+      
+      messageDiv.innerHTML = `
+        <div style="padding: var(--spacing-3) var(--spacing-4); background: ${bgColor}; border-radius: 12px; display: inline-block; max-width: 100%;">
+          <p style="font-size: var(--font-body); color: ${textColor}; margin: 0; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+          ${isLoading ? '<div class="spinner" style="width: 16px; height: 16px; margin-top: var(--spacing-2);"></div>' : ''}
+        </div>
+      `;
+
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      
+      return messageId;
+    }
+
+    // Remove message from chat
+    function removeChatMessage(messageId) {
+      const msg = document.getElementById(messageId);
+      if (msg) msg.remove();
     }
 
     // Load competitive analysis
