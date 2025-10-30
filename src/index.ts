@@ -397,17 +397,36 @@ app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), 
       recommendations: result.recommendations,
     };
 
-    await sendWeeklyReport(reportData);
+    // Try to send email, but don't fail if it doesn't work
+    let emailSent = false;
+    try {
+      await sendWeeklyReport(reportData);
+      emailSent = true;
+    } catch (emailError) {
+      console.error('Warning: Failed to send email, but report was generated:', emailError);
+      // Report is still generated even if email fails
+    }
 
     await prisma.weeklyReport.update({
       where: { id: result.report.id },
-      data: { sentAt: new Date() },
+      data: { sentAt: emailSent ? new Date() : null },
     });
 
-    res.json({ success: true, reportId: result.report.id });
-  } catch (error) {
+    res.json({ 
+      success: true, 
+      reportId: result.report.id,
+      emailSent,
+      message: emailSent 
+        ? 'Report generated and email sent successfully' 
+        : 'Report generated successfully (email failed - check SMTP settings)'
+    });
+  } catch (error: any) {
     console.error('Error generating report:', error);
-    res.status(500).json({ error: 'Failed to generate report' });
+    const errorMessage = error.message || 'Failed to generate report';
+    res.status(500).json({ 
+      error: errorMessage,
+      details: error.stack // Include stack for debugging in dev
+    });
   }
 });
 

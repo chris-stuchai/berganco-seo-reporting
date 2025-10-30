@@ -124,7 +124,15 @@
 </head>
 <body>
   <div class="container">
-    <h1 style="font-size: 34px; font-weight: 700; margin-bottom: var(--spacing-6);">Employee Portal</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-6);">
+      <h1 style="font-size: 34px; font-weight: 700; margin: 0;">Employee Portal</h1>
+      <button class="btn btn-secondary" onclick="handleLogout()" style="display: flex; align-items: center; gap: var(--spacing-2);">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        Sign Out
+      </button>
+    </div>
 
     <!-- User Management -->
     <div class="card">
@@ -511,7 +519,7 @@
     }
 
     async function impersonateUser(userId) {
-      if (!confirm('View dashboard as this client? You can exit by clicking "Stop Viewing As" in the navigation.')) return;
+      if (!confirm('View dashboard as this client? You can exit by clicking "Back to Employee Portal" or "Stop Viewing As" in the navigation.')) return;
       
       const res = await fetch('/api/auth/impersonate', {
         method: 'POST',
@@ -526,6 +534,18 @@
         alert('Failed to impersonate user');
       }
     }
-  </script>
-</body>
-</html>
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/auth/logout', { 
+          method: 'POST',
+          credentials: 'include'
+        });
+        window.location.href = '/login';
+      } catch (error) {
+        window.location.href = '/login';
+      }
+    }
+      </script>
+    </body>
+    </html>

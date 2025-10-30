@@ -463,7 +463,13 @@
       </div>
       
       <div class="nav-section" id="impersonationSection" style="display: none; margin-top: auto; padding-top: var(--spacing-6); border-top: 1px solid var(--color-separator);">
-        <a href="#" onclick="stopImpersonation()" class="nav-item" style="background: rgba(255, 159, 10, 0.15); color: var(--color-orange);">
+        <a href="/employee" class="nav-item" style="background: rgba(255, 159, 10, 0.15); color: var(--color-orange);">
+          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 5l7 7-7 7"/>
+          </svg>
+          <span>Back to Employee Portal</span>
+        </a>
+        <a href="#" onclick="stopImpersonation()" class="nav-item" style="background: rgba(255, 69, 58, 0.15); color: var(--color-red);">
           <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
           </svg>
@@ -1319,9 +1325,12 @@
       });
       
       if (res.ok) {
+        const data = await res.json();
+        // Update session token and redirect
         window.location.href = '/employee';
-        } else {
-        alert('Failed to stop impersonation');
+      } else {
+        const error = await res.json();
+        alert(`Failed to stop impersonation: ${error.error || 'Unknown error'}`);
       }
     }
     
