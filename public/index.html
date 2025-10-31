@@ -67,11 +67,14 @@
     /* Sidebar */
     .sidebar {
       width: 240px;
-      background: var(--color-bg-secondary);
-      border-right: 1px solid var(--color-separator);
+      background: rgba(44, 44, 46, 0.7);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-right: 0.5px solid rgba(255, 255, 255, 0.1);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
+      box-shadow: inset -1px 0 0 0 rgba(255, 255, 255, 0.05);
     }
     
     .sidebar-header {
@@ -167,13 +170,16 @@
     }
     
     .top-bar {
-      background: var(--color-bg-secondary);
-      border-bottom: 1px solid var(--color-separator);
+      background: rgba(44, 44, 46, 0.7);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
       padding: var(--spacing-4) var(--spacing-6);
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
+      box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.05);
     }
     
     .page-title {
@@ -319,11 +325,23 @@
     
     /* Cards */
     .card {
-      background: var(--color-bg-secondary);
-      border: 1px solid var(--color-separator);
-      border-radius: 12px;
+      background: rgba(44, 44, 46, 0.6);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 0.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
       padding: var(--spacing-6);
-      box-shadow: var(--shadow-sm);
+      box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      background: rgba(44, 44, 46, 0.7);
+      box-shadow: 
+        0 12px 40px 0 rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
     }
     
     /* Chart Container - Responsive */
@@ -452,6 +470,91 @@
     
     .btn-primary:hover {
       opacity: 0.85;
+    }
+    
+    /* AI Glow Effect - Brand Aligned (Blue Gradient) */
+    .btn-ai-glow {
+      position: relative;
+      background: var(--color-bg-secondary);
+      color: var(--color-label-primary);
+      border: 1.5px solid transparent;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(10, 132, 255, 0.3), 0 0 40px rgba(10, 132, 255, 0.15);
+    }
+    
+    .btn-ai-glow::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 12px;
+      padding: 2px;
+      background: linear-gradient(90deg, 
+        rgba(10, 132, 255, 0.9) 0%,
+        rgba(10, 132, 255, 0.5) 25%,
+        rgba(94, 92, 230, 0.7) 50%,
+        rgba(10, 132, 255, 0.5) 75%,
+        rgba(10, 132, 255, 0.9) 100%);
+      background-size: 200% 100%;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: aiGlowRotate 3s ease-in-out infinite;
+      z-index: -1;
+    }
+    
+    @keyframes aiGlowRotate {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    /* Alternative AI Glow with pulsing border */
+    .btn-ai-glow::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(10, 132, 255, 0.6);
+      opacity: 0;
+      animation: aiGlowPulse 2s ease-in-out infinite;
+      z-index: -2;
+    }
+    
+    @keyframes aiGlowPulse {
+      0%, 100% { opacity: 0; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+    
+    .btn-ai-glow:hover {
+      box-shadow: 0 0 30px rgba(10, 132, 255, 0.5), 0 0 60px rgba(10, 132, 255, 0.25);
+      transform: translateY(-1px);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-ai-glow:active {
+      transform: translateY(0);
+    }
+    
+    /* Apple Liquid Glass Effect */
+    .liquid-glass {
+      background: rgba(44, 44, 46, 0.7);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 0.5px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.37),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .liquid-glass-card {
+      background: rgba(44, 44, 46, 0.6);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 0.5px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
     }
     
     .btn-secondary {
@@ -707,7 +810,7 @@
               <h2 class="section-title">AI-Powered Insights</h2>
               <p class="section-subtitle">Market-aware analysis powered by Stuchai AI</p>
             </div>
-            <button class="btn btn-primary" onclick="loadAIInsights()" id="generateAI">Generate Insights</button>
+            <button class="btn btn-ai-glow" onclick="loadAIInsights()" id="generateAI" style="padding: var(--spacing-3) var(--spacing-6); font-weight: 600;">Generate Insights</button>
           </div>
           <div id="aiInsights">
             <div style="padding: var(--spacing-8); text-align: center;">
@@ -754,7 +857,7 @@
                 onfocus="this.style.borderColor = 'var(--color-blue)'; this.style.boxShadow = '0 0 0 3px rgba(10, 132, 255, 0.15)';"
                 onblur="this.style.borderColor = 'var(--color-separator)'; this.style.boxShadow = 'none';"
               />
-              <button class="btn btn-primary" onclick="sendChatMessage()" id="sendChatBtn">Send</button>
+              <button class="btn btn-ai-glow" onclick="sendChatMessage()" id="sendChatBtn" style="padding: var(--spacing-3) var(--spacing-6); font-weight: 600;">Send</button>
             </div>
           </div>
       </div>
@@ -764,14 +867,14 @@
           <div class="card">
             <h2 class="section-title mb-4">Clicks & Impressions Trend</h2>
             <div class="chart-container">
-              <canvas id="clicksChart"></canvas>
-            </div>
+          <canvas id="clicksChart"></canvas>
+        </div>
         </div>
           <div class="card">
             <h2 class="section-title mb-4">CTR & Position Trend</h2>
             <div class="chart-container">
-              <canvas id="ctrChart"></canvas>
-            </div>
+          <canvas id="ctrChart"></canvas>
+        </div>
         </div>
       </div>
 
