@@ -48,7 +48,7 @@ interface SEODataContext {
   };
 }
 
-interface AIInsights {
+export interface AIInsights {
   executiveSummary: string;
   marketContext: string;
   keyInsights: string[];

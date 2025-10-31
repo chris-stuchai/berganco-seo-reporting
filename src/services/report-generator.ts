@@ -6,7 +6,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { startOfWeek, endOfWeek, subWeeks, format } from 'date-fns';
-import { generateAIInsights } from './ai-service';
+import { generateAIInsights, type AIInsights } from './ai-service';
 
 const prisma = new PrismaClient();
 
