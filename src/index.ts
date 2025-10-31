@@ -483,6 +483,25 @@ app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), a
     const { generateReport } = await import('./services/report-generator');
     const result = await generateReport(parsedStartDate, parsedEndDate, reportPeriodType);
     
+    // Fetch tasks for this client/week
+    let tasks: any[] = [];
+    try {
+      const clientTasks = await prisma.task.findMany({
+        where: {
+          weekStartDate: result.report.weekStartDate,
+          status: { not: 'CANCELLED' },
+        },
+        orderBy: [
+          { priority: 'desc' },
+          { dueDate: 'asc' },
+        ],
+        take: 10,
+      });
+      tasks = clientTasks;
+    } catch (error) {
+      console.warn('Could not fetch tasks for email:', error);
+    }
+    
     const reportData = {
       weekStartDate: result.report.weekStartDate,
       weekEndDate: result.report.weekEndDate,
@@ -505,6 +524,13 @@ app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), a
       } : undefined,
       trendsData: result.trendsData,
       websiteDomain: 'www.berganco.com',
+      tasks: tasks.map((t: any) => ({
+        title: t.title,
+        description: t.description,
+        priority: t.priority,
+        status: t.status,
+        dueDate: t.dueDate,
+      })),
     };
 
     const { getEmailPreview } = await import('./services/email-service');
@@ -543,6 +569,25 @@ app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), 
     const { generateReport } = await import('./services/report-generator');
     const result = await generateReport(parsedStartDate, parsedEndDate, reportPeriodType);
     
+    // Fetch tasks for this client/week
+    let emailTasks: any[] = [];
+    try {
+      const clientTasks = await prisma.task.findMany({
+        where: {
+          weekStartDate: result.report.weekStartDate,
+          status: { not: 'CANCELLED' },
+        },
+        orderBy: [
+          { priority: 'desc' },
+          { dueDate: 'asc' },
+        ],
+        take: 10,
+      });
+      emailTasks = clientTasks;
+    } catch (error) {
+      console.warn('Could not fetch tasks for email:', error);
+    }
+    
     const reportData = {
       weekStartDate: result.report.weekStartDate,
       weekEndDate: result.report.weekEndDate,
@@ -565,6 +610,13 @@ app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), 
       } : undefined,
       trendsData: result.trendsData,
       websiteDomain: 'www.berganco.com',
+      tasks: emailTasks.map((t: any) => ({
+        title: t.title,
+        description: t.description,
+        priority: t.priority,
+        status: t.status,
+        dueDate: t.dueDate,
+      })),
     };
 
     // Try to send email, but don't fail if it doesn't work
@@ -874,22 +926,32 @@ BerganCo is a property management company based in Denver, Colorado. They specia
 
 The website serves property owners, investors, and tenants in the Denver, Colorado market. They provide comprehensive property management services including rent collection, maintenance coordination, tenant screening, and financial reporting.
 
+**CRITICAL ACCURACY REQUIREMENTS:**
+1. You MUST ONLY reference metrics, numbers, and data that are explicitly provided in the conversation context.
+2. NEVER invent, estimate, assume, or hallucinate any numbers, percentages, or metrics not explicitly stated.
+3. NEVER reference specific pages, queries, or content unless they are explicitly listed in the provided context data.
+4. If you mention percentage changes, they MUST match exactly what is provided in the context.
+5. If you don't have specific data for something the user asks about, you MUST say "I don't have that specific data available" rather than making assumptions.
+6. You can discuss general SEO principles, industry trends, and best practices (general knowledge is acceptable), but ALL specific metrics and numbers MUST come from the provided data only.
+7. When interpreting data, base conclusions strictly on actual patterns visible in the provided numbers - do not extrapolate or assume trends beyond what the data shows.
+
 **Your Role:**
-You provide concise, actionable insights based on SEO data for www.berganco.com. You understand their business model, target market (Denver property owners and investors), and can relate SEO performance to their property management business goals.
+You provide concise, accurate, actionable insights based ONLY on the SEO data provided for www.berganco.com. You understand their business model, target market (Denver property owners and investors), and can relate SEO performance to their property management business goals - but always ground your analysis in the actual data provided.
 
 **Guidelines:**
-- Be helpful, specific, and focus on actionable recommendations
-- Relate SEO metrics to business outcomes (lead generation, visibility, market presence)
-- Consider local Denver market dynamics and competition
+- Be helpful, specific, accurate, and focus on actionable recommendations based on actual data
+- Relate SEO metrics to business outcomes (lead generation, visibility, market presence) only using provided metrics
+- Consider local Denver market dynamics and competition (general knowledge is acceptable here)
 - Keep responses under 200 words unless more detail is needed
-- Reference BerganCo's services and market position when relevant`
+- Reference BerganCo's services and market position when relevant
+- If you don't have data to answer a question, say so clearly rather than guessing`
           },
           {
             role: 'user',
             content: `${contextPrompt}\n\nUser Question: ${message}`
           }
         ],
-        temperature: 0.7,
+        temperature: 0.5, // Lower temperature for more accurate, factual responses
         max_tokens: 500,
       }),
     });
@@ -1049,6 +1111,125 @@ app.post('/api/admin/backfill', async (req, res) => {
 });
 
 // Admin endpoints for usage stats and schedules
+// Task management endpoints
+app.get('/api/tasks', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const { userId, weekStartDate } = req.query;
+    
+    const where: any = {};
+    if (userId) where.userId = userId as string;
+    if (weekStartDate) {
+      const startDate = new Date(weekStartDate as string);
+      where.weekStartDate = startDate;
+    }
+    
+    const tasks = await prisma.task.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            businessName: true,
+          },
+        },
+      },
+      orderBy: [
+        { dueDate: 'asc' },
+        { priority: 'desc' },
+      ],
+    });
+    
+    res.json(tasks);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/tasks', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { userId, title, description, priority, dueDate, weekStartDate, weekEndDate } = req.body;
+    
+    const task = await prisma.task.create({
+      data: {
+        userId,
+        title,
+        description,
+        priority: priority || 'MEDIUM',
+        dueDate: new Date(dueDate),
+        weekStartDate: new Date(weekStartDate),
+        weekEndDate: new Date(weekEndDate),
+        assignedTo: req.user!.name,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            businessName: true,
+          },
+        },
+      },
+    });
+    
+    res.json(task);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.put('/api/tasks/:id', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const { title, description, priority, status, dueDate } = req.body;
+    
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (priority !== undefined) updateData.priority = priority;
+    if (status !== undefined) {
+      updateData.status = status;
+      if (status === 'COMPLETED') {
+        updateData.completedAt = new Date();
+      } else if (status !== 'COMPLETED') {
+        updateData.completedAt = null;
+      }
+    }
+    if (dueDate !== undefined) updateData.dueDate = new Date(dueDate);
+    
+    const task = await prisma.task.update({
+      where: { id: req.params.id },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            businessName: true,
+          },
+        },
+      },
+    });
+    
+    res.json(task);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete('/api/tasks/:id', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    await prisma.task.delete({
+      where: { id: req.params.id },
+    });
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 app.get('/api/admin/usage', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
   try {
     const thirtyDaysAgo = subDays(new Date(), 30);

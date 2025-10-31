@@ -56,6 +56,13 @@ interface ReportData {
     position: number;
   }>;
   websiteDomain?: string;
+  tasks?: Array<{
+    title: string;
+    description: string;
+    priority: string;
+    status: string;
+    dueDate: Date;
+  }>;
 }
 
 /**
@@ -122,7 +129,7 @@ function generateTrendChart(trendsData: ReportData['trendsData'], metric: 'click
  * Generates HTML email content for the weekly report (professional UX design)
  */
 function generateEmailHTML(data: ReportData): string {
-  const { weekStartDate, weekEndDate, periodType = 'week', currentMetrics, topPages, topQueries, insights, recommendations, aiSummary, trendsData, websiteDomain = 'www.berganco.com' } = data;
+  const { weekStartDate, weekEndDate, periodType = 'week', currentMetrics, topPages, topQueries, insights, recommendations, aiSummary, trendsData, websiteDomain = 'www.berganco.com', tasks } = data;
   
   const periodLabel = periodType === 'week' ? 'Weekly' : periodType === 'month' ? 'Monthly' : 'Custom';
   const reportTitle = `${periodLabel} SEO Report`;
@@ -437,13 +444,49 @@ function generateEmailHTML(data: ReportData): string {
       </div>
     </div>
 
-    <!-- Recommendations -->
-    <div style="margin-bottom: 40px;">
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Action Items & Recommendations</h2>
-      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
-        <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.6; color: #E5E5EA;">${recommendations}</pre>
-      </div>
-    </div>
+        ${tasks && tasks.length > 0 ? `
+        <!-- Weekly Tasks -->
+        <div style="margin-bottom: 40px;">
+          <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Weekly Tasks</h2>
+          <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
+              <thead>
+                <tr style="background-color: #2C2C2E; border-bottom: 1px solid #48484A;">
+                  <th style="padding: 16px; text-align: left; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Task</th>
+                  <th style="padding: 16px; text-align: center; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Priority</th>
+                  <th style="padding: 16px; text-align: center; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
+                  <th style="padding: 16px; text-align: right; color: #98989D; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Due Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tasks.map((task, idx) => {
+                  const priorityColor = task.priority === 'URGENT' ? '#FF453A' : task.priority === 'HIGH' ? '#FF9F0A' : task.priority === 'MEDIUM' ? '#0A84FF' : '#98989D';
+                  const statusColor = task.status === 'COMPLETED' ? '#30D158' : task.status === 'IN_PROGRESS' ? '#0A84FF' : '#98989D';
+                  return `
+                    <tr style="${idx % 2 === 0 ? 'background-color: #2C2C2E;' : 'background-color: #1C1C1E;'} border-bottom: 1px solid #48484A;">
+                      <td style="padding: 16px; color: #E5E5EA; font-size: 17px;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">${task.title}</div>
+                        <div style="font-size: 15px; color: #98989D;">${task.description}</div>
+                      </td>
+                      <td style="padding: 16px; text-align: center; color: ${priorityColor}; font-size: 15px; font-weight: 600;">${task.priority}</td>
+                      <td style="padding: 16px; text-align: center; color: ${statusColor}; font-size: 15px; font-weight: 600;">${task.status}</td>
+                      <td style="padding: 16px; text-align: right; color: #E5E5EA; font-size: 15px;">${format(new Date(task.dueDate), 'MMM d, yyyy')}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Recommendations -->
+        <div style="margin-bottom: 40px;">
+          <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Action Items & Recommendations</h2>
+          <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+            <pre style="white-space: pre-wrap; margin: 0; font-family: inherit; font-size: 17px; line-height: 1.6; color: #E5E5EA;">${recommendations}</pre>
+          </div>
+        </div>
 
     <!-- Footer -->
     <div style="border-top: 1px solid #48484A; padding-top: 32px; margin-top: 40px;">

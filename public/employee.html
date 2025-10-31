@@ -158,6 +158,24 @@
       </table>
     </div>
 
+    <!-- Weekly Tasks for Clients -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-4);">
+        <h2 style="font-size: 22px; font-weight: 600;">Weekly Tasks</h2>
+        <button class="btn btn-primary" onclick="showCreateTaskModal()">+ Create Task</button>
+      </div>
+      
+      <!-- Week Filter -->
+      <div style="margin-bottom: var(--spacing-4); display: flex; gap: var(--spacing-2); align-items: center;">
+        <label style="font-size: var(--font-footnote); color: var(--color-label-secondary);">Week:</label>
+        <input type="week" id="taskWeekFilter" onchange="loadTasks()" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote);">
+      </div>
+      
+      <div id="tasksList" style="display: grid; gap: var(--spacing-3);">
+        <div style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">Loading tasks...</div>
+      </div>
+    </div>
+
     <!-- System Controls -->
     <div class="card">
       <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-4);">System Controls</h2>
@@ -327,6 +345,68 @@
     </div>
   </div>
 
+  <!-- Create/Edit Task Modal -->
+  <div id="taskModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: var(--spacing-4);">
+    <div style="background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); border-radius: 16px; padding: var(--spacing-6); width: 100%; max-width: 600px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); max-height: 90vh; overflow-y: auto;">
+      <h2 id="taskModalTitle" style="font-size: 28px; font-weight: 700; color: var(--color-label-primary); margin-bottom: var(--spacing-6);">Create Task</h2>
+      
+      <form onsubmit="event.preventDefault(); saveTask();">
+        <input type="hidden" id="taskId">
+        
+        <div class="form-group">
+          <label class="form-label" for="taskClient">Client</label>
+          <select id="taskClient" required>
+            <option value="">Select a client...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="taskTitle">Task Title</label>
+          <input type="text" id="taskTitle" placeholder="e.g., Optimize meta descriptions for top pages" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="taskDescription">Description</label>
+          <textarea id="taskDescription" rows="4" placeholder="Describe what needs to be done..." required style="width: 100%; padding: var(--spacing-3) var(--spacing-4); background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); border-radius: 12px; color: var(--color-label-primary); font-size: var(--font-body); font-family: inherit; resize: vertical;"></textarea>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4);">
+          <div class="form-group">
+            <label class="form-label" for="taskPriority">Priority</label>
+            <select id="taskPriority" required>
+              <option value="LOW">Low</option>
+              <option value="MEDIUM" selected>Medium</option>
+              <option value="HIGH">High</option>
+              <option value="URGENT">Urgent</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="taskDueDate">Due Date</label>
+            <input type="date" id="taskDueDate" required>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4);">
+          <div class="form-group">
+            <label class="form-label" for="taskWeekStart">Week Start Date</label>
+            <input type="date" id="taskWeekStart" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="taskWeekEnd">Week End Date</label>
+            <input type="date" id="taskWeekEnd" required>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: var(--spacing-3); margin-top: var(--spacing-6);">
+          <button type="submit" class="btn btn-primary" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; font-weight: 500;">Save Task</button>
+          <button type="button" onclick="closeTaskModal()" class="btn" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary);">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // Check auth - don't redirect away if user is admin/employee
     (async function() {
@@ -351,8 +431,26 @@
         // User is admin/employee - stay on this page
         console.log('Admin/Employee authenticated, loading employee portal');
         loadUsers();
+        loadTasks();
         loadUsageStats();
         loadSchedules();
+        
+        // Set default week to current week
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+        const year = startOfWeek.getFullYear();
+        const weekNum = getWeekNumber(startOfWeek);
+        document.getElementById('taskWeekFilter').value = `${year}-W${weekNum.toString().padStart(2, '0')}`;
+        
+        // Helper function to get week number
+        function getWeekNumber(date) {
+          const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+          const dayNum = d.getUTCDay() || 7;
+          d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+          const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+          return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
       } catch (error) {
         console.error('Auth check failed:', error);
         window.location.replace('/login');
@@ -551,6 +649,241 @@
       if (!confirm('Are you sure?')) return;
       await fetch(`/api/users/${id}`, { method: 'DELETE', credentials: 'include' });
       loadUsers();
+    }
+
+    // Task Management Functions
+    async function loadTasks() {
+      try {
+        const weekFilter = document.getElementById('taskWeekFilter').value;
+        let url = '/api/tasks';
+        
+        if (weekFilter) {
+          // Convert week format (YYYY-Www) to date range
+          const [year, week] = weekFilter.split('-W');
+          const weekStart = getDateOfISOWeek(parseInt(year), parseInt(week));
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          
+          url += `?weekStartDate=${weekStart.toISOString().split('T')[0]}`;
+        }
+        
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) {
+          throw new Error('Failed to load tasks');
+        }
+        
+        const tasks = await res.json();
+        const tasksList = document.getElementById('tasksList');
+        
+        if (!tasks || tasks.length === 0) {
+          tasksList.innerHTML = '<div style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">No tasks for this week. Create one above.</div>';
+          return;
+        }
+        
+        tasksList.innerHTML = tasks.map(task => {
+          const priorityColors = {
+            LOW: '#98989D',
+            MEDIUM: '#0A84FF',
+            HIGH: '#FF9F0A',
+            URGENT: '#FF453A'
+          };
+          const statusColors = {
+            PENDING: '#98989D',
+            IN_PROGRESS: '#0A84FF',
+            COMPLETED: '#30D158',
+            CANCELLED: '#98989D'
+          };
+          
+          const priorityBg = priorityColors[task.priority] || '#98989D';
+          const statusBg = statusColors[task.status] || '#98989D';
+          
+          return `
+            <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; border: 1px solid var(--color-separator);">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--spacing-2);">
+                <div style="flex: 1;">
+                  <h3 style="font-size: var(--font-body); font-weight: 600; margin: 0 0 var(--spacing-1) 0;">${task.title}</h3>
+                  <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0;">
+                    ${task.user.businessName || task.user.name} • Due: ${new Date(task.dueDate).toLocaleDateString()}
+                  </p>
+                </div>
+                <div style="display: flex; gap: var(--spacing-2);">
+                  <span style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: ${priorityBg}20; color: ${priorityBg};">
+                    ${task.priority}
+                  </span>
+                  <span style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: ${statusBg}20; color: ${statusBg};">
+                    ${task.status}
+                  </span>
+                </div>
+              </div>
+              <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0 0 var(--spacing-3) 0; line-height: 1.5;">
+                ${task.description}
+              </p>
+              <div style="display: flex; gap: var(--spacing-2);">
+                <button onclick="editTask('${task.id}')" class="btn" style="padding: 4px 8px; font-size: var(--font-footnote);">Edit</button>
+                ${task.status !== 'COMPLETED' ? `<button onclick="updateTaskStatus('${task.id}', 'COMPLETED')" class="btn" style="padding: 4px 8px; font-size: var(--font-footnote); background: var(--color-green); color: white;">Mark Complete</button>` : ''}
+                <button onclick="deleteTask('${task.id}')" class="btn btn-danger" style="padding: 4px 8px; font-size: var(--font-footnote);">Delete</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+        document.getElementById('tasksList').innerHTML = '<div style="text-align: center; padding: var(--spacing-6); color: var(--color-red);">Failed to load tasks.</div>';
+      }
+    }
+
+    function getDateOfISOWeek(year, week) {
+      const simple = new Date(year, 0, 1 + (week - 1) * 7);
+      const dow = simple.getDay();
+      const ISOweekStart = simple;
+      if (dow <= 4) {
+        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+      } else {
+        ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+      }
+      return ISOweekStart;
+    }
+
+    async function showCreateTaskModal() {
+      // Load clients
+      const usersRes = await fetch('/api/users', { credentials: 'include' });
+      const users = await usersRes.json();
+      const clients = users.filter(u => u.role === 'CLIENT');
+      
+      const clientSelect = document.getElementById('taskClient');
+      clientSelect.innerHTML = '<option value="">Select a client...</option>' + 
+        clients.map(c => `<option value="${c.id}">${c.businessName || c.name}</option>`).join('');
+      
+      // Set default dates to current week
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6); // Sunday
+      
+      document.getElementById('taskWeekStart').value = startOfWeek.toISOString().split('T')[0];
+      document.getElementById('taskWeekEnd').value = endOfWeek.toISOString().split('T')[0];
+      document.getElementById('taskDueDate').value = endOfWeek.toISOString().split('T')[0];
+      
+      document.getElementById('taskModalTitle').textContent = 'Create Task';
+      document.getElementById('taskId').value = '';
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskDescription').value = '';
+      document.getElementById('taskPriority').value = 'MEDIUM';
+      
+      document.getElementById('taskModal').style.display = 'flex';
+    }
+
+    function closeTaskModal() {
+      document.getElementById('taskModal').style.display = 'none';
+    }
+
+    async function saveTask() {
+      const id = document.getElementById('taskId').value;
+      const data = {
+        userId: document.getElementById('taskClient').value,
+        title: document.getElementById('taskTitle').value,
+        description: document.getElementById('taskDescription').value,
+        priority: document.getElementById('taskPriority').value,
+        dueDate: document.getElementById('taskDueDate').value,
+        weekStartDate: document.getElementById('taskWeekStart').value,
+        weekEndDate: document.getElementById('taskWeekEnd').value,
+      };
+      
+      try {
+        const url = id ? `/api/tasks/${id}` : '/api/tasks';
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        });
+        
+        if (res.ok) {
+          alert('Task saved successfully!');
+          closeTaskModal();
+          loadTasks();
+        } else {
+          const error = await res.json();
+          alert(`Error: ${error.error || 'Failed to save task'}`);
+        }
+      } catch (error) {
+        console.error('Error saving task:', error);
+        alert('Failed to save task');
+      }
+    }
+
+    async function editTask(id) {
+      const res = await fetch('/api/tasks', { credentials: 'include' });
+      const tasks = await res.json();
+      const task = tasks.find(t => t.id === id);
+      
+      if (!task) {
+        alert('Task not found');
+        return;
+      }
+      
+      // Load clients
+      const usersRes = await fetch('/api/users', { credentials: 'include' });
+      const users = await usersRes.json();
+      const clients = users.filter(u => u.role === 'CLIENT');
+      
+      const clientSelect = document.getElementById('taskClient');
+      clientSelect.innerHTML = '<option value="">Select a client...</option>' + 
+        clients.map(c => `<option value="${c.id}" ${c.id === task.userId ? 'selected' : ''}>${c.businessName || c.name}</option>`).join('');
+      
+      document.getElementById('taskModalTitle').textContent = 'Edit Task';
+      document.getElementById('taskId').value = task.id;
+      document.getElementById('taskTitle').value = task.title;
+      document.getElementById('taskDescription').value = task.description;
+      document.getElementById('taskPriority').value = task.priority;
+      document.getElementById('taskDueDate').value = new Date(task.dueDate).toISOString().split('T')[0];
+      document.getElementById('taskWeekStart').value = new Date(task.weekStartDate).toISOString().split('T')[0];
+      document.getElementById('taskWeekEnd').value = new Date(task.weekEndDate).toISOString().split('T')[0];
+      
+      document.getElementById('taskModal').style.display = 'flex';
+    }
+
+    async function updateTaskStatus(id, status) {
+      try {
+        const res = await fetch(`/api/tasks/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ status })
+        });
+        
+        if (res.ok) {
+          loadTasks();
+        } else {
+          alert('Failed to update task status');
+        }
+      } catch (error) {
+        console.error('Error updating task:', error);
+        alert('Failed to update task');
+      }
+    }
+
+    async function deleteTask(id) {
+      if (!confirm('Are you sure you want to delete this task?')) return;
+      
+      try {
+        const res = await fetch(`/api/tasks/${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        
+        if (res.ok) {
+          loadTasks();
+        } else {
+          alert('Failed to delete task');
+        }
+      } catch (error) {
+        console.error('Error deleting task:', error);
+        alert('Failed to delete task');
+      }
     }
 
     async function collectData() {

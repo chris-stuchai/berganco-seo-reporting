@@ -85,22 +85,33 @@ export async function generateAIInsights(context: SEODataContext): Promise<AIIns
         messages: [
           {
             role: 'system',
-            content: `You are an expert SEO analyst specializing in property management and real estate SEO. 
-            Analyze SEO data considering:
-            1. Current Google algorithm updates and SEO best practices
-            2. Property management/real estate industry trends
-            3. Competitive landscape and market dynamics
-            4. Technical SEO factors
-            5. Content strategy opportunities
-            
-            Provide actionable, specific recommendations. Be concise but comprehensive.`
+            content: `You are an expert SEO analyst specializing in property management and real estate SEO.
+
+CRITICAL ACCURACY RULES:
+1. You MUST ONLY use data explicitly provided in the user's prompt. NEVER invent, estimate, or assume any numbers, metrics, or facts.
+2. You MUST NOT reference pages, queries, or content unless they are specifically listed in the provided data.
+3. You MUST NOT mention percentage changes unless they exactly match the numbers provided in the prompt.
+4. If you reference specific metrics, they MUST be verbatim from the provided data.
+5. If you don't have data for something, you MUST state "Data not available" rather than making assumptions.
+6. You MUST base all insights strictly on actual patterns and trends visible in the provided data.
+
+Your analysis should consider:
+1. Current Google algorithm updates and SEO best practices (general knowledge is acceptable here)
+2. Property management/real estate industry trends (general knowledge is acceptable)
+3. Competitive landscape and market dynamics (general knowledge is acceptable)
+4. Technical SEO factors (general knowledge is acceptable)
+5. Content strategy opportunities (general knowledge is acceptable)
+
+However, when discussing specific metrics, performance numbers, pages, or queries, you MUST ONLY reference what is explicitly provided in the data.
+
+Provide actionable, specific recommendations based on the actual data provided. Be concise but comprehensive.`
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.7,
+        temperature: 0.5, // Lower temperature for more accurate, factual responses
         max_tokens: 2000,
       }),
     });
@@ -300,13 +311,19 @@ export async function generateQuickAIInsights(context: SEODataContext): Promise<
   }
 
   try {
-    const prompt = `Briefly analyze SEO performance for ${context.websiteDomain}:
+    const prompt = `Briefly analyze SEO performance for ${context.websiteDomain} based ONLY on the following actual data:
 
-Current: ${context.currentMetrics.totalClicks} clicks, ${context.currentMetrics.totalImpressions} impressions
-Change: ${context.changes.clicksChange >= 0 ? '+' : ''}${context.changes.clicksChange.toFixed(1)}% clicks, ${context.changes.impressionsChange >= 0 ? '+' : ''}${context.changes.impressionsChange.toFixed(1)}% impressions
-Position: ${context.currentMetrics.averagePosition.toFixed(1)}, CTR: ${(context.currentMetrics.averageCtr * 100).toFixed(2)}%
+**ACTUAL METRICS PROVIDED:**
+- Current Clicks: ${context.currentMetrics.totalClicks}
+- Current Impressions: ${context.currentMetrics.totalImpressions}
+- Change in Clicks: ${context.changes.clicksChange >= 0 ? '+' : ''}${context.changes.clicksChange.toFixed(1)}%
+- Change in Impressions: ${context.changes.impressionsChange >= 0 ? '+' : ''}${context.changes.impressionsChange.toFixed(1)}%
+- Average Position: ${context.currentMetrics.averagePosition.toFixed(1)}
+- Average CTR: ${(context.currentMetrics.averageCtr * 100).toFixed(2)}%
 
-Provide a 2-3 sentence insight considering current SEO trends and property management industry context. Be specific and actionable.`;
+**CRITICAL: You MUST ONLY reference these exact numbers. Do NOT invent, estimate, or assume any other metrics or facts. Base your insight strictly on these actual numbers and their changes.**
+
+Provide a 2-3 sentence insight considering current SEO trends and property management industry context. Be specific and actionable, but only discuss what the data shows.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -319,11 +336,11 @@ Provide a 2-3 sentence insight considering current SEO trends and property manag
         messages: [
           {
             role: 'system',
-            content: 'You are a concise SEO analyst. Provide brief, actionable insights.'
+            content: `You are a concise SEO analyst. Provide brief, actionable insights based ONLY on the actual data provided. NEVER invent, estimate, or assume metrics not explicitly stated. You can reference general SEO trends and property management industry knowledge, but specific numbers MUST come from the provided data only.`
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        temperature: 0.5, // Lower temperature for more accurate, factual responses
         max_tokens: 150,
       }),
     });
