@@ -358,9 +358,52 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
     const endDate = new Date();
     const startDate = subDays(endDate, days);
 
-    // Get daily metrics for the date range
+    // Get user's accessible site IDs (if authenticated)
+    let accessibleSiteIds: string[] = [];
+    if (req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+    } else {
+      // For unauthenticated requests, get all active sites (public view)
+      const allSites = await prisma.site.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      accessibleSiteIds = allSites.map(s => s.id);
+    }
+
+    // If no sites accessible, return empty data
+    if (accessibleSiteIds.length === 0) {
+      return res.json({
+        period: { days, startDate, endDate },
+        metrics: {
+          totalClicks: 0,
+          totalImpressions: 0,
+          averageCtr: 0,
+          averagePosition: 0,
+          clicksChange: 0,
+          impressionsChange: 0,
+          ctrChange: 0,
+          positionChange: 0,
+          dataPoints: 0,
+          expectedDataPoints: days,
+          dataCoverage: 0,
+        },
+        latestMetrics: [],
+        latestReport: null,
+        lastUpdate: null,
+        diagnostics: {
+          missingDays: days,
+          oldestDate: null,
+          newestDate: null,
+        },
+      });
+    }
+
+    // Get daily metrics for the date range, filtered by accessible sites
     const dailyMetrics = await prisma.dailyMetric.findMany({
       where: {
+        siteId: { in: accessibleSiteIds },
         date: {
           gte: startDate,
           lte: endDate,
@@ -392,6 +435,7 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
     const [prevDailyMetrics, latestReport] = await Promise.all([
       prisma.dailyMetric.findMany({
         where: {
+          siteId: { in: accessibleSiteIds },
           date: {
             gte: prevStartDate,
             lt: startDate,
@@ -399,6 +443,7 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
         },
       }),
       prisma.weeklyReport.findFirst({
+        where: { siteId: { in: accessibleSiteIds } },
         orderBy: { weekStartDate: 'desc' },
       }),
     ]);
@@ -744,13 +789,32 @@ app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), 
   }
 });
 
-// Get historical trends
-app.get('/api/trends', async (req, res) => {
+// Get historical trends (optional auth - filters by user's sites if authenticated)
+app.get('/api/trends', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const days = parseInt(req.query.days as string) || 30;
     
+    // Get user's accessible site IDs
+    let accessibleSiteIds: string[] = [];
+    if (req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+    } else {
+      // For unauthenticated, get all active sites
+      const allSites = await prisma.site.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      accessibleSiteIds = allSites.map(s => s.id);
+    }
+    
+    if (accessibleSiteIds.length === 0) {
+      return res.json([]);
+    }
+    
     const metrics = await prisma.dailyMetric.findMany({
       where: {
+        siteId: { in: accessibleSiteIds },
         date: {
           gte: subDays(new Date(), days),
         },
@@ -765,15 +829,33 @@ app.get('/api/trends', async (req, res) => {
   }
 });
 
-// Get top pages
-app.get('/api/top-pages', async (req, res) => {
+// Get top pages (optional auth - filters by user's sites if authenticated)
+app.get('/api/top-pages', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const days = parseInt(req.query.days as string) || 7;
     const limit = parseInt(req.query.limit as string) || 20;
     
+    // Get user's accessible site IDs
+    let accessibleSiteIds: string[] = [];
+    if (req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      accessibleSiteIds = await getUserAccessibleSiteIds(req.user.id);
+    } else {
+      const allSites = await prisma.site.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      accessibleSiteIds = allSites.map(s => s.id);
+    }
+    
+    if (accessibleSiteIds.length === 0) {
+      return res.json([]);
+    }
+    
     const pages = await prisma.pageMetric.groupBy({
       by: ['page'],
       where: {
+        siteId: { in: accessibleSiteIds },
         date: {
           gte: subDays(new Date(), days),
         },
