@@ -1757,10 +1757,17 @@
       }
     }
     async function runMigration() {
+      console.log('🔄 Migration button clicked');
       const btn = document.getElementById('migrationBtn');
       const statusDiv = document.getElementById('migrationStatus');
       
-      if (!btn || !statusDiv) return;
+      if (!btn || !statusDiv) {
+        console.error('❌ Migration button or status div not found', { btn, statusDiv });
+        alert('Error: Migration button not found. Please refresh the page.');
+        return;
+      }
+      
+      console.log('✅ Button found, starting migration...');
       
       btn.disabled = true;
       btn.textContent = 'Running...';
@@ -1768,6 +1775,7 @@
       statusDiv.innerHTML = '<div style="color: var(--color-label-secondary); font-size: var(--font-footnote);">🔄 Migration started. This may take a few minutes. Check Railway logs for detailed progress...</div>';
       
       try {
+        console.log('📡 Sending migration request to /api/admin/migrate-berganco...');
         const response = await fetch('/api/admin/migrate-berganco', {
           method: 'POST',
           headers: {
@@ -1776,7 +1784,9 @@
           credentials: 'include',
         });
         
+        console.log('📥 Response received:', response.status, response.statusText);
         const data = await response.json();
+        console.log('📦 Response data:', data);
         
         if (response.ok) {
           statusDiv.innerHTML = `
@@ -1794,10 +1804,11 @@
           btn.disabled = false;
           btn.textContent = 'Run Migration';
         }
-      } catch (error: any) {
+      } catch (error) {
+        console.error('Migration error:', error);
         statusDiv.innerHTML = `
           <div style="color: var(--color-red); font-size: var(--font-footnote); margin-top: var(--spacing-2);">
-            ❌ Error: ${error.message || 'Failed to start migration'}
+            ❌ Error: ${error.message || 'Failed to start migration. Check console for details.'}
           </div>
         `;
         btn.disabled = false;

@@ -21,7 +21,9 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
-export async function migrateBerganCoData() {
+export async function migrateBerganCoData(prismaInstance?: PrismaClient) {
+  // Use provided instance if available (from API), otherwise create new one
+  const db = prismaInstance || prisma || new PrismaClient();
   console.log('\n🔄 BerganCo Data Migration Script\n');
   console.log('This will:');
   console.log('1. Create a Site record for BerganCo');
@@ -40,7 +42,7 @@ export async function migrateBerganCoData() {
     // If no email provided, try to find an admin user in the database
     if (!adminEmail) {
       console.log('📧 No admin email provided, searching database for admin user...');
-      const adminUser = await prisma.user.findFirst({
+      const adminUser = await db.user.findFirst({
         where: {
           OR: [
             { role: 'ADMIN' },
@@ -70,7 +72,7 @@ export async function migrateBerganCoData() {
     console.log(`   Admin Email: ${adminEmail}\n`);
 
     // Step 1: Check if site already exists
-    let site = await prisma.site.findUnique({
+    let site = await db.site.findUnique({
       where: { domain },
     });
 
@@ -78,14 +80,14 @@ export async function migrateBerganCoData() {
       console.log(`✅ Site already exists: ${site.domain} (ID: ${site.id})`);
     } else {
       // Find or get admin user
-      let adminUser = await prisma.user.findUnique({
+      let adminUser = await db.user.findUnique({
         where: { email: adminEmail.toLowerCase() },
       });
 
       if (!adminUser) {
         console.error(`❌ Error: Admin user not found with email: ${adminEmail}`);
         console.log('\nAvailable users:');
-        const allUsers = await prisma.user.findMany({
+        const allUsers = await db.user.findMany({
           select: { email: true, name: true, role: true },
         });
         allUsers.forEach(u => console.log(`   - ${u.email} (${u.name}, ${u.role})`));
@@ -107,18 +109,18 @@ export async function migrateBerganCoData() {
     console.log('📊 Counting existing metrics...');
     // Note: siteId is required now, so we'll check for any metrics and update them all
     const [dailyCount, pageCount, queryCount, reportCount] = await Promise.all([
-      prisma.dailyMetric.count(),
-      prisma.pageMetric.count(),
-      prisma.queryMetric.count(),
-      prisma.weeklyReport.count(),
+      db.dailyMetric.count(),
+      db.pageMetric.count(),
+      db.queryMetric.count(),
+      db.weeklyReport.count(),
     ]);
     
     // Check how many already have siteId
     const [dailyWithSite, pageWithSite, queryWithSite, reportWithSite] = await Promise.all([
-      prisma.dailyMetric.count({ where: { siteId: site.id } }),
-      prisma.pageMetric.count({ where: { siteId: site.id } }),
-      prisma.queryMetric.count({ where: { siteId: site.id } }),
-      prisma.weeklyReport.count({ where: { siteId: site.id } }),
+      db.dailyMetric.count({ where: { siteId: site.id } }),
+      db.pageMetric.count({ where: { siteId: site.id } }),
+      db.queryMetric.count({ where: { siteId: site.id } }),
+      db.weeklyReport.count({ where: { siteId: site.id } }),
     ]);
     
     const dailyToMigrate = dailyCount - dailyWithSite;
@@ -146,7 +148,7 @@ export async function migrateBerganCoData() {
 
     if (dailyToMigrate > 0) {
       // Update metrics that don't have this siteId
-      const result = await prisma.$executeRaw`
+      const result = await db.$executeRaw`
         UPDATE "DailyMetric" 
         SET "siteId" = ${site.id}
         WHERE "siteId" IS NULL OR "siteId" != ${site.id}
@@ -156,7 +158,7 @@ export async function migrateBerganCoData() {
     }
 
     if (pageToMigrate > 0) {
-      const result = await prisma.$executeRaw`
+      const result = await db.$executeRaw`
         UPDATE "PageMetric" 
         SET "siteId" = ${site.id}
         WHERE "siteId" IS NULL OR "siteId" != ${site.id}
@@ -166,7 +168,7 @@ export async function migrateBerganCoData() {
     }
 
     if (queryToMigrate > 0) {
-      const result = await prisma.$executeRaw`
+      const result = await db.$executeRaw`
         UPDATE "QueryMetric" 
         SET "siteId" = ${site.id}
         WHERE "siteId" IS NULL OR "siteId" != ${site.id}
@@ -176,7 +178,7 @@ export async function migrateBerganCoData() {
     }
 
     if (reportToMigrate > 0) {
-      const result = await prisma.$executeRaw`
+      const result = await db.$executeRaw`
         UPDATE "WeeklyReport" 
         SET "siteId" = ${site.id}
         WHERE "siteId" IS NULL OR "siteId" != ${site.id}
@@ -206,7 +208,11 @@ export async function migrateBerganCoData() {
     console.error('\nStack:', error.stack);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    // Don't disconnect if called from API (we're using shared Prisma instance)
+    // Only disconnect if running as standalone script and we created the instance
+    if (require.main === module && !prismaInstance) {
+      await db.$disconnect();
+    }
   }
 }
 

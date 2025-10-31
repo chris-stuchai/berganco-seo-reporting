@@ -1693,25 +1693,29 @@ app.post('/api/admin/migrate-berganco', requireAuth, requireRole('ADMIN', 'EMPLO
   try {
     console.log('🔄 Migration triggered via API...');
     
-    // Import and run migration
-    const { migrateBerganCoData } = await import('./scripts/migrate-berganco-data');
+    // Import migration function
+    const migrationModule = await import('./scripts/migrate-berganco-data');
     
-    // Run in background (don't block response)
-    (async () => {
-      try {
-        await migrateBerganCoData();
-      } catch (error: any) {
-        console.error('Migration error:', error.message);
-      }
-    })();
-    
-    res.json({ 
-      success: true, 
-      message: 'Migration started. Check logs for progress.',
-      note: 'This may take a few minutes. Check Railway logs to see progress.'
-    });
+    // Run migration synchronously, passing our Prisma instance
+    // We need to run it and wait for completion to return accurate status
+    try {
+      await migrationModule.migrateBerganCoData(prisma);
+      
+      res.json({ 
+        success: true, 
+        message: 'Migration completed successfully!',
+        note: 'All BerganCo data has been linked to the site. Check Site Management to verify.'
+      });
+    } catch (migrationError: any) {
+      console.error('Migration execution error:', migrationError);
+      res.status(500).json({ 
+        error: 'Migration failed', 
+        details: migrationError.message,
+        note: 'Check Railway logs for more details.'
+      });
+    }
   } catch (error: any) {
-    console.error('Error starting migration:', error);
+    console.error('Error importing/starting migration:', error);
     res.status(500).json({ error: 'Failed to start migration', details: error.message });
   }
 });
