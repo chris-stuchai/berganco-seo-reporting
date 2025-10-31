@@ -252,6 +252,22 @@
       </button>
     </div>
 
+    <!-- Data Migration (one-time) -->
+    <div class="card" style="border-left: 4px solid var(--color-orange); margin-bottom: var(--spacing-6);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+          <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-1);">Migrate BerganCo Data</h2>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin: 0;">
+            One-time migration to link existing BerganCo data to the new multi-tenant system
+          </p>
+        </div>
+        <button class="btn" onclick="runMigration()" id="migrationBtn" style="margin-left: var(--spacing-4); background: var(--color-orange); color: white;">
+          Run Migration
+        </button>
+      </div>
+      <div id="migrationStatus" style="margin-top: var(--spacing-4); display: none;"></div>
+    </div>
+
     <!-- Client Onboarding -->
     <div class="card" style="border-left: 4px solid var(--color-blue);">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-4);">
@@ -1740,6 +1756,54 @@
         window.location.href = '/login';
       }
     }
-      </script>
-    </body>
-    </html>
+    async function runMigration() {
+      const btn = document.getElementById('migrationBtn');
+      const statusDiv = document.getElementById('migrationStatus');
+      
+      if (!btn || !statusDiv) return;
+      
+      btn.disabled = true;
+      btn.textContent = 'Running...';
+      statusDiv.style.display = 'block';
+      statusDiv.innerHTML = '<div style="color: var(--color-label-secondary); font-size: var(--font-footnote);">🔄 Migration started. This may take a few minutes. Check Railway logs for detailed progress...</div>';
+      
+      try {
+        const response = await fetch('/api/admin/migrate-berganco', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          statusDiv.innerHTML = `
+            <div style="color: var(--color-green); font-size: var(--font-footnote); margin-top: var(--spacing-2);">
+              ✅ ${data.message}<br>
+              <span style="color: var(--color-label-tertiary);">${data.note}</span>
+            </div>
+          `;
+        } else {
+          statusDiv.innerHTML = `
+            <div style="color: var(--color-red); font-size: var(--font-footnote); margin-top: var(--spacing-2);">
+              ❌ Error: ${data.error || 'Failed to start migration'}
+            </div>
+          `;
+          btn.disabled = false;
+          btn.textContent = 'Run Migration';
+        }
+      } catch (error: any) {
+        statusDiv.innerHTML = `
+          <div style="color: var(--color-red); font-size: var(--font-footnote); margin-top: var(--spacing-2);">
+            ❌ Error: ${error.message || 'Failed to start migration'}
+          </div>
+        `;
+        btn.disabled = false;
+        btn.textContent = 'Run Migration';
+      }
+    }
+  </script>
+</body>
+</html>

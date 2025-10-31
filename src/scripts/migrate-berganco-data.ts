@@ -21,7 +21,7 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
-async function migrateBerganCoData() {
+export async function migrateBerganCoData() {
   console.log('\n🔄 BerganCo Data Migration Script\n');
   console.log('This will:');
   console.log('1. Create a Site record for BerganCo');
@@ -210,5 +210,7 @@ async function migrateBerganCoData() {
   }
 }
 
-migrateBerganCoData();
-
+// Run if called directly (not imported)
+if (require.main === module) {
+  migrateBerganCoData();
+}

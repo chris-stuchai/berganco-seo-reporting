@@ -1688,6 +1688,34 @@ cron.schedule('0 8 * * 1', async () => {
   }
 });
 
+// Migration endpoint - triggers BerganCo data migration
+app.post('/api/admin/migrate-berganco', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('🔄 Migration triggered via API...');
+    
+    // Import and run migration
+    const { migrateBerganCoData } = await import('./scripts/migrate-berganco-data');
+    
+    // Run in background (don't block response)
+    (async () => {
+      try {
+        await migrateBerganCoData();
+      } catch (error: any) {
+        console.error('Migration error:', error.message);
+      }
+    })();
+    
+    res.json({ 
+      success: true, 
+      message: 'Migration started. Check logs for progress.',
+      note: 'This may take a few minutes. Check Railway logs to see progress.'
+    });
+  } catch (error: any) {
+    console.error('Error starting migration:', error);
+    res.status(500).json({ error: 'Failed to start migration', details: error.message });
+  }
+});
+
 // Auto-create admin user if environment variables are set
 async function createAdminIfNeeded() {
   const adminEmail = process.env.ADMIN_EMAIL;
