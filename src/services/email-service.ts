@@ -152,12 +152,19 @@ function generateEmailHTML(data: ReportData): string {
       .dark-mode-text-tertiary { color: #98989D !important; }
       .dark-mode-border { border-color: #48484A !important; }
     }
+    details summary::-webkit-details-marker { display: none; }
+    details summary { list-style: none; cursor: pointer; }
   </style>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; line-height: 1.47; color: #FFFFFF; max-width: 800px; margin: 0 auto; padding: 32px 24px; background-color: #1C1C1E;" class="dark-mode-bg">
   
   <!-- Main Container -->
   <div style="background-color: #2C2C2E; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); border: 1px solid #48484A;" class="dark-mode-card dark-mode-border">
+    
+    <!-- Logo Header -->
+    <div style="margin-bottom: 32px; text-align: center; border-bottom: 1px solid #48484A; padding-bottom: 24px;">
+      <img src="https://framerusercontent.com/images/AhyGPdkv1Kr9JeLtiQvJBU0uJE.png?scale-down-to=1024&width=2088&height=518" alt="StuchAI Logo" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
+    </div>
     
     <!-- Header -->
     <div style="margin-bottom: 40px;">
@@ -197,9 +204,10 @@ function generateEmailHTML(data: ReportData): string {
           <td style="width: 50%; padding-right: 12px; vertical-align: top;">
             <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
               <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(10, 132, 255, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                  <svg width="20" height="20" fill="none" stroke="#0A84FF" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
-                    <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(10, 132, 255, 0.2); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; border: 1px solid rgba(10, 132, 255, 0.3);">
+                  <svg width="22" height="22" fill="none" stroke="#0A84FF" stroke-width="2.5" viewBox="0 0 24 24" style="display: block;">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
                   </svg>
                 </div>
                 <div style="flex: 1;">
@@ -220,10 +228,10 @@ function generateEmailHTML(data: ReportData): string {
           <td style="width: 50%; padding-left: 12px; vertical-align: top;">
             <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
               <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(175, 82, 222, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                  <svg width="20" height="20" fill="none" stroke="#AF52DE" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
+                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(175, 82, 222, 0.2); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; border: 1px solid rgba(175, 82, 222, 0.3);">
+                  <svg width="22" height="22" fill="none" stroke="#AF52DE" stroke-width="2.5" viewBox="0 0 24 24" style="display: block;">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
                   </svg>
                 </div>
                 <div style="flex: 1;">
@@ -246,9 +254,11 @@ function generateEmailHTML(data: ReportData): string {
           <td style="width: 50%; padding-right: 12px; vertical-align: top;">
             <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
               <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(48, 209, 88, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                  <svg width="20" height="20" fill="none" stroke="#30D158" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(48, 209, 88, 0.2); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; border: 1px solid rgba(48, 209, 88, 0.3);">
+                  <svg width="22" height="22" fill="none" stroke="#30D158" stroke-width="2.5" viewBox="0 0 24 24" style="display: block;">
+                    <path d="M18 20V10"/>
+                    <path d="M12 20V4"/>
+                    <path d="M6 20v-6"/>
                   </svg>
                 </div>
                 <div style="flex: 1;">
@@ -269,10 +279,9 @@ function generateEmailHTML(data: ReportData): string {
           <td style="width: 50%; padding-left: 12px; vertical-align: top;">
             <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
               <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(255, 159, 10, 0.15); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
-                  <svg width="20" height="20" fill="none" stroke="#FF9F0A" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
-                    <circle cx="12" cy="12" r="10"/>
-                    <circle cx="12" cy="12" r="3"/>
+                <div style="width: 40px; height: 40px; border-radius: 20px; background: rgba(255, 159, 10, 0.2); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; border: 1px solid rgba(255, 159, 10, 0.3);">
+                  <svg width="22" height="22" fill="none" stroke="#FF9F0A" stroke-width="2.5" viewBox="0 0 24 24" style="display: block;">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                 </div>
                 <div style="flex: 1;">
@@ -293,46 +302,58 @@ function generateEmailHTML(data: ReportData): string {
     </div>
     
     <!-- Trend Chart -->
-    ${trendsData && trendsData.length > 0 ? `
     <div style="margin-bottom: 40px;">
       <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;" class="dark-mode-text">Performance Trends</h2>
       <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);" class="dark-mode-card dark-mode-border">
-        ${generateTrendChart(trendsData, 'clicks')}
-        <div style="margin-top: 24px;">
-          ${generateTrendChart(trendsData, 'impressions')}
-        </div>
+        ${trendsData && trendsData.length > 0 ? `
+          ${generateTrendChart(trendsData, 'clicks')}
+          <div style="margin-top: 24px;">
+            ${generateTrendChart(trendsData, 'impressions')}
+          </div>
+        ` : `
+          <div style="text-align: center; padding: 40px 20px; color: #98989D;">
+            <p style="margin: 0; font-size: 17px;">Trend data will appear here once daily metrics are collected.</p>
+            <p style="margin: 8px 0 0 0; font-size: 15px;">Please ensure daily data collection is running.</p>
+          </div>
+        `}
       </div>
     </div>
-    ` : ''}
     
-    <!-- AI Summary: Wins, Awareness, Next Steps -->
+    <!-- AI Summary: Wins, Awareness, Next Steps (Collapsible) -->
     ${aiSummary && (aiSummary.wins?.length || aiSummary.awareness?.length || aiSummary.nextSteps?.length) ? `
     <div style="margin-bottom: 40px;">
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;" class="dark-mode-text">Market-Aware Analysis</h2>
-      ${aiSummary.wins && aiSummary.wins.length > 0 ? `
-      <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #30D158;" class="dark-mode-card dark-mode-border">
-        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">Key Wins</h3>
-        <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
-          ${aiSummary.wins.map(win => `<li style="margin-bottom: 8px;">${win}</li>`).join('')}
-        </ul>
-      </div>
-      ` : ''}
-      ${aiSummary.awareness && aiSummary.awareness.length > 0 ? `
-      <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #FF9F0A;" class="dark-mode-card dark-mode-border">
-        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">What We're Tracking</h3>
-        <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
-          ${aiSummary.awareness.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
-        </ul>
-      </div>
-      ` : ''}
-      ${aiSummary.nextSteps && aiSummary.nextSteps.length > 0 ? `
-      <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #0A84FF;" class="dark-mode-card dark-mode-border">
-        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">Next Steps</h3>
-        <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
-          ${aiSummary.nextSteps.map(step => `<li style="margin-bottom: 8px;">${step}</li>`).join('')}
-        </ul>
-      </div>
-      ` : ''}
+      <details style="margin-bottom: 16px;" open>
+        <summary style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em; cursor: pointer; list-style: none; padding: 12px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;" class="dark-mode-text dark-mode-card dark-mode-border">
+          <span>Market-Aware Analysis</span>
+          <span style="font-size: 18px; color: #98989D;">▼</span>
+        </summary>
+        <div style="margin-top: 16px;">
+          ${aiSummary.wins && aiSummary.wins.length > 0 ? `
+          <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #30D158;" class="dark-mode-card dark-mode-border">
+            <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">Key Wins</h3>
+            <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
+              ${aiSummary.wins.map(win => `<li style="margin-bottom: 8px;">${win}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+          ${aiSummary.awareness && aiSummary.awareness.length > 0 ? `
+          <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #FF9F0A;" class="dark-mode-card dark-mode-border">
+            <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">What We're Tracking</h3>
+            <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
+              ${aiSummary.awareness.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+          ${aiSummary.nextSteps && aiSummary.nextSteps.length > 0 ? `
+          <div style="margin-bottom: 24px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #0A84FF;" class="dark-mode-card dark-mode-border">
+            <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 600; margin-bottom: 12px;" class="dark-mode-text">Next Steps</h3>
+            <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.6;" class="dark-mode-text-secondary">
+              ${aiSummary.nextSteps.map(step => `<li style="margin-bottom: 8px;">${step}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+        </div>
+      </details>
     </div>
     ` : ''}
 

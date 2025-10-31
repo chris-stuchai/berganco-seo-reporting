@@ -174,23 +174,28 @@ ${topQueries.slice(0, 5).map((q, i) =>
   `${i + 1}. "${q.query}": ${q.clicks} clicks, ${q.impressions} impressions, ${(q.ctr * 100).toFixed(2)}% CTR, Position ${q.position.toFixed(1)}`
 ).join('\n')}
 
+CRITICAL: You must ONLY use the data provided in this prompt. Do NOT invent, assume, or hallucinate any metrics, numbers, or facts not explicitly stated in the data. Base ALL insights strictly on the actual numbers and trends provided.
+
 Please provide analysis in the following JSON format:
 {
-  "executiveSummary": "2-3 sentence overview of the situation and what this report covers",
+  "executiveSummary": "2-3 sentence overview of the situation and what this report covers - use ONLY the metrics provided",
   "marketContext": "How current SEO trends and property management industry dynamics relate to this data",
-  "keyInsights": ["Insight 1", "Insight 2", "Insight 3"],
+  "keyInsights": ["Insight 1 based on actual data", "Insight 2 based on actual data", "Insight 3 based on actual data"],
   "urgentActions": ["Action 1", "Action 2"],
   "strategicRecommendations": ["Recommendation 1", "Recommendation 2", "Recommendation 3"],
   "industryTrends": "Relevant trends affecting property management SEO",
-  "wins": ["Positive achievement or improvement 1", "Positive achievement or improvement 2", "Positive achievement or improvement 3"],
-  "awareness": ["Issue or trend we are actively monitoring 1", "Issue or trend we are actively monitoring 2"],
-  "nextSteps": ["Specific action item we will work on 1", "Specific action item we will work on 2", "Specific action item we will work on 3"]
+  "wins": ["Positive achievement based on ACTUAL metric changes provided", "Positive achievement based on ACTUAL data only", "Positive achievement based on ACTUAL data only"],
+  "awareness": ["Issue or trend we are actively monitoring - based on actual data patterns", "Issue or trend we are actively monitoring - based on actual data patterns"],
+  "nextSteps": ["Specific action item based on actual data patterns", "Specific action item based on actual data patterns", "Specific action item based on actual data patterns"]
 }
 
-Focus on:
-- Wins: Highlight positive changes, improvements, or successful optimizations
-- Awareness: Note issues, trends, or metrics we're tracking and actively addressing
-- Next Steps: Concrete, actionable items the team will work on based on this data
+IMPORTANT RULES:
+1. ONLY reference metrics, percentages, and numbers that are explicitly provided in the data above
+2. DO NOT make up or estimate any numbers
+3. DO NOT reference pages, queries, or content unless they are specifically listed in the "Top 5 Performing Pages" or "Top 5 Search Queries" sections
+4. If you mention a percentage change, it MUST match exactly what is provided in "Week-over-Week Changes"
+5. If you mention specific pages or queries, they MUST be from the lists provided
+6. Focus on patterns and trends visible in the actual data, not assumptions
 
 Focus on actionable insights considering:
 - Recent Google algorithm updates (Helpful Content Update, Core Updates, etc.)

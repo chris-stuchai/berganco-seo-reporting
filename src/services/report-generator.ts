@@ -196,41 +196,46 @@ function generateRecommendations(
 
   // Based on overall trends
   if (comparison.clicksChange < -20) {
-    recommendations.push('1. URGENT: Audit top pages for technical issues (404s, slow load times, mobile issues)');
-    recommendations.push('2. Check Google Search Console for manual penalties or Core Web Vitals issues');
-    recommendations.push('3. Review recent website changes that may have impacted SEO');
+    recommendations.push('URGENT: Audit top pages for technical issues (404s, slow load times, mobile issues)');
+    recommendations.push('Check Google Search Console for manual penalties or Core Web Vitals issues');
+    recommendations.push('Review recent website changes that may have impacted SEO');
   }
 
   if (comparison.positionChange > 2) {
-    recommendations.push('4. Analyze top-ranking competitors for content gaps');
-    recommendations.push('5. Update content on declining pages with fresh information');
-    recommendations.push('6. Build quality backlinks to key landing pages');
+    recommendations.push('Analyze top-ranking competitors for content gaps');
+    recommendations.push('Update content on declining pages with fresh information');
+    recommendations.push('Build quality backlinks to key landing pages');
   }
 
   if (comparison.ctrChange < -10) {
-    recommendations.push('7. Rewrite meta titles and descriptions for low-CTR pages');
-    recommendations.push('8. Add schema markup to enhance search result appearance');
+    recommendations.push('Rewrite meta titles and descriptions for low-CTR pages');
+    recommendations.push('Add schema markup to enhance search result appearance');
   }
 
   // Based on page performance
   const lowCtrPages = topPages.filter(p => p.ctr < 0.02 && p.impressions > 100);
   if (lowCtrPages.length > 0) {
-    recommendations.push(`9. Optimize CTR for pages with high impressions but low CTR: ${lowCtrPages.slice(0, 3).map(p => p.page.split('/').pop()).join(', ')}`);
+    recommendations.push(`Optimize CTR for pages with high impressions but low CTR: ${lowCtrPages.slice(0, 3).map(p => p.page.split('/').pop()).join(', ')}`);
   }
 
   // Based on query performance
   const highImpLowCtr = topQueries.filter(q => q.impressions > 500 && q.ctr < 0.02);
   if (highImpLowCtr.length > 0) {
-    recommendations.push(`10. Target high-impression, low-CTR queries: "${highImpLowCtr.slice(0, 2).map(q => q.query).join('", "')}"`);
+    recommendations.push(`Target high-impression, low-CTR queries: "${highImpLowCtr.slice(0, 2).map(q => q.query).join('", "')}"`);
   }
 
   // Opportunity keywords
   const opportunityQueries = topQueries.filter(q => q.position > 5 && q.position < 15 && q.impressions > 200);
   if (opportunityQueries.length > 0) {
-    recommendations.push(`11. Quick win opportunities (position 5-15): "${opportunityQueries.slice(0, 3).map(q => q.query).join('", "')}"`);
+    recommendations.push(`Quick win opportunities (position 5-15): "${opportunityQueries.slice(0, 3).map(q => q.query).join('", "')}"`);
   }
 
-  return recommendations.join('\n') || 'Continue monitoring metrics and maintaining current SEO strategy.';
+  // Number all recommendations starting from 1
+  if (recommendations.length > 0) {
+    return recommendations.map((rec, idx) => `${idx + 1}. ${rec}`).join('\n');
+  }
+
+  return 'Continue monitoring metrics and maintaining current SEO strategy.';
 }
 
 /**
