@@ -187,18 +187,57 @@ export async function migrateBerganCoData(prismaInstance?: PrismaClient) {
       console.log(`   ✅ Updated ${updatedReports} weekly reports`);
     }
 
+    // Step 4: Assign all existing CLIENT users to this site (so they can see their data)
+    console.log('\n👥 Assigning existing CLIENT users to site...');
+    const allClientUsers = await db.user.findMany({
+      where: { role: 'CLIENT', isActive: true },
+      select: { id: true, email: true, name: true },
+    });
+    
+    let assignedCount = 0;
+    for (const client of allClientUsers) {
+      // Check if already assigned
+      const existingAssignment = await db.clientSite.findUnique({
+        where: {
+          userId_siteId: {
+            userId: client.id,
+            siteId: site.id,
+          },
+        },
+      });
+      
+      if (!existingAssignment) {
+        try {
+          await db.clientSite.create({
+            data: {
+              userId: client.id,
+              siteId: site.id,
+            },
+          });
+          assignedCount++;
+          console.log(`   ✅ Assigned ${client.email} to ${site.domain}`);
+        } catch (error: any) {
+          console.warn(`   ⚠️  Could not assign ${client.email}: ${error.message}`);
+        }
+      } else {
+        console.log(`   ℹ️  ${client.email} already assigned`);
+      }
+    }
+
     console.log('\n✅ Migration Complete!\n');
     console.log('Summary:');
     console.log(`   Site: ${site.domain} (${site.id})`);
     console.log(`   Daily Metrics: ${updatedDaily} updated`);
     console.log(`   Page Metrics: ${updatedPage} updated`);
     console.log(`   Query Metrics: ${updatedQuery} updated`);
-    console.log(`   Weekly Reports: ${updatedReports} updated\n`);
+    console.log(`   Weekly Reports: ${updatedReports} updated`);
+    console.log(`   Client Users Assigned: ${assignedCount}${allClientUsers.length > 0 ? ` of ${allClientUsers.length}` : ' (none found)'}\n`);
 
     console.log('Next Steps:');
-    console.log('   1. Verify data in the dashboard');
+    console.log('   1. Verify data in the dashboard (as admin and as client users)');
     console.log('   2. All existing data is now linked to the BerganCo site');
-    console.log('   3. You can now onboard additional clients using the admin dashboard\n');
+    console.log('   3. All CLIENT users can now see BerganCo data');
+    console.log('   4. You can now onboard additional clients using the admin dashboard\n');
 
   } catch (error: any) {
     console.error('\n❌ Migration failed:', error.message);
