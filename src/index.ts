@@ -376,10 +376,73 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
 // Manual data collection endpoint (all authenticated users can sync)
 app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
-    // Collect data for 3 days ago (GSC data has 2-3 day delay)
-    const date = subDays(new Date(), 3);
-    await collectAllMetrics(date);
-    res.json({ success: true, date: format(date, 'yyyy-MM-dd'), message: 'Data sync started successfully' });
+    const { days } = req.body;
+    const selectedDays = days || 7; // Default to 7 days if not specified
+    
+    // Calculate date range (respecting GSC 2-3 day delay)
+    const endDate = subDays(new Date(), 3); // GSC data available up to 3 days ago
+    const startDate = subDays(endDate, selectedDays - 1);
+    
+    // Check which days are missing in the database
+    const existingMetrics = await prisma.dailyMetric.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        date: true,
+      },
+    });
+    
+    const existingDates = new Set(
+      existingMetrics.map(m => format(m.date, 'yyyy-MM-dd'))
+    );
+    
+    // Find missing days (only dates that are 3+ days ago, as GSC has delay)
+    const missingDates: Date[] = [];
+    for (let i = 3; i < selectedDays + 3; i++) {
+      const checkDate = subDays(new Date(), i);
+      const dateStr = format(checkDate, 'yyyy-MM-dd');
+      if (!existingDates.has(dateStr)) {
+        missingDates.push(checkDate);
+      }
+    }
+    
+    if (missingDates.length === 0) {
+      return res.json({ 
+        success: true, 
+        message: 'All data is already synced for this period',
+        synced: 0 
+      });
+    }
+    
+    // Start syncing missing days in background (don't block response)
+    (async () => {
+      try {
+        let syncedCount = 0;
+        for (const date of missingDates) {
+          try {
+            await collectAllMetrics(date);
+            syncedCount++;
+            console.log(`✓ Synced data for ${format(date, 'yyyy-MM-dd')}`);
+          } catch (error) {
+            console.error(`Error syncing ${format(date, 'yyyy-MM-dd')}:`, error);
+          }
+        }
+        console.log(`✅ Sync complete: ${syncedCount}/${missingDates.length} days synced`);
+      } catch (error) {
+        console.error('Error during sync:', error);
+      }
+    })();
+    
+    res.json({ 
+      success: true, 
+      message: `Syncing ${missingDates.length} missing day${missingDates.length > 1 ? 's' : ''}...`,
+      syncing: missingDates.length,
+      dates: missingDates.map(d => format(d, 'yyyy-MM-dd'))
+    });
   } catch (error) {
     console.error('Error collecting data:', error);
     res.status(500).json({ error: 'Failed to collect data' });

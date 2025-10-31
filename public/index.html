@@ -867,32 +867,53 @@
         syncButtonText.textContent = 'Syncing...';
         syncButton.style.opacity = '0.6';
         
+        // Pass current date range to sync missing days for that range
         const res = await fetch('/api/collect', { 
-          method: 'POST', 
-          credentials: 'include' 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ days: currentDays || 7 })
         });
         
         const data = await res.json();
         
         if (res.ok) {
-          syncButtonText.textContent = 'Synced!';
-          syncButton.style.opacity = '1';
-          
-          // Show success message
-          const successMsg = document.createElement('div');
-          successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--color-green); color: white; padding: var(--spacing-3) var(--spacing-4); border-radius: 8px; font-size: var(--font-footnote); z-index: 1000; box-shadow: var(--shadow-md);';
-          successMsg.textContent = '✓ Data sync started. Data will be available shortly.';
-          document.body.appendChild(successMsg);
-          
-          // Remove message after 3 seconds
-          setTimeout(() => {
-            successMsg.remove();
-          }, 3000);
-          
-          // Reload dashboard after a short delay
-          setTimeout(() => {
-            loadDashboard();
-          }, 2000);
+          if (data.syncing > 0) {
+            syncButtonText.textContent = `Syncing ${data.syncing}...`;
+            
+            // Show progress message
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--color-blue); color: white; padding: var(--spacing-3) var(--spacing-4); border-radius: 8px; font-size: var(--font-footnote); z-index: 1000; box-shadow: var(--shadow-md);';
+            successMsg.textContent = `✓ Syncing ${data.syncing} missing day${data.syncing > 1 ? 's' : ''}... Please wait.`;
+            document.body.appendChild(successMsg);
+            
+            // Reload dashboard after sync completes (longer delay to allow background sync)
+            setTimeout(() => {
+              loadDashboard();
+              successMsg.textContent = '✓ Sync complete! Dashboard refreshed.';
+              successMsg.style.background = 'var(--color-green)';
+              setTimeout(() => successMsg.remove(), 3000);
+            }, 5000); // Give it 5 seconds for background sync
+            
+          } else {
+            syncButtonText.textContent = 'All Synced';
+            syncButton.style.opacity = '1';
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--color-green); color: white; padding: var(--spacing-3) var(--spacing-4); border-radius: 8px; font-size: var(--font-footnote); z-index: 1000; box-shadow: var(--shadow-md);';
+            successMsg.textContent = '✓ All data is already synced!';
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+              successMsg.remove();
+            }, 3000);
+            
+            // Still refresh to clear any warnings
+            setTimeout(() => {
+              loadDashboard();
+            }, 1000);
+          }
         } else {
           syncButtonText.textContent = 'Sync Failed';
           syncButton.style.opacity = '1';
@@ -909,7 +930,7 @@
           syncButton.disabled = false;
           syncButtonText.textContent = 'Sync';
           syncButton.style.opacity = '1';
-        }, 3000);
+        }, 6000); // Longer timeout since sync may take time
       }
     }
     
@@ -1007,7 +1028,7 @@
       if (diagnostics && diagnostics.dataCoverage < 100) {
         const missingDays = diagnostics.missingDays || 0;
         if (missingDays > 0) {
-          const warningMsg = `⚠️ Missing data for ${missingDays} day${missingDays > 1 ? 's' : ''}. Numbers may be lower than Google Search Console. Click "Collect Now" in Employee Portal to sync missing days.`;
+          const warningMsg = `Missing data for ${missingDays} day${missingDays > 1 ? 's' : ''}. Numbers may be lower than Google Search Console. Click the "Sync" button above to sync missing days.`;
           // Remove existing warning if any
           const existingWarning = document.getElementById('dataCoverageWarning');
           if (existingWarning) {
