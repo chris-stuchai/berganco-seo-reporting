@@ -1752,6 +1752,133 @@
       }
     }
 
+    let allUsersList = [];
+    
+    async function showAssignUserModal(siteId) {
+      // Load users if not already loaded
+      if (allUsersList.length === 0) {
+        try {
+          const res = await fetch('/api/users', { credentials: 'include' });
+          if (res.ok) {
+            allUsersList = await res.json();
+          }
+        } catch (error) {
+          console.error('Error loading users:', error);
+          alert('Failed to load users. Please refresh the page.');
+          return;
+        }
+      }
+      
+      // Get site info to check current assignments
+      let site;
+      try {
+        const sitesRes = await fetch('/api/sites', { credentials: 'include' });
+        if (sitesRes.ok) {
+          const sites = await sitesRes.json();
+          site = sites.find(s => s.id === siteId);
+        }
+      } catch (error) {
+        console.error('Error loading sites:', error);
+      }
+      
+      // Filter to CLIENT users not already assigned
+      const assignedUserIds = new Set([
+        site?.ownerId,
+        ...(site?.clientSites?.map(cs => cs.userId) || [])
+      ].filter(Boolean));
+      
+      const availableClients = allUsersList.filter(u => 
+        u.role === 'CLIENT' && 
+        u.isActive &&
+        !assignedUserIds.has(u.id)
+      );
+      
+      if (availableClients.length === 0) {
+        alert('No available CLIENT users to assign. All clients are already assigned or no clients exist.');
+        return;
+      }
+      
+      // Create modal
+      const modal = document.createElement('div');
+      modal.id = 'assignUserModal';
+      modal.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: var(--spacing-4);';
+      modal.innerHTML = `
+        <div style="background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); border-radius: 16px; padding: var(--spacing-6); width: 100%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+          <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-2);">Assign User to Site</h2>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">
+            Select a CLIENT user to assign to this site
+          </p>
+          <div style="margin-bottom: var(--spacing-4); max-height: 300px; overflow-y: auto;">
+            ${availableClients.map(user => {
+              const safeName = (user.name || user.email || '').replace(/'/g, "\\'");
+              const safeEmail = (user.email || '').replace(/'/g, "\\'");
+              return `
+              <button onclick="assignUserToSite('${siteId}', '${user.id}', '${safeEmail}')" 
+                style="width: 100%; padding: var(--spacing-3); margin-bottom: var(--spacing-2); background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); text-align: left; cursor: pointer;">
+                <div style="font-weight: 500;">${safeName}</div>
+                <div style="font-size: var(--font-caption); color: var(--color-label-tertiary);">${safeEmail}</div>
+              </button>
+            `;
+            }).join('')}
+          </div>
+          <button onclick="closeAssignUserModal()" class="btn" style="width: 100%; background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary);">
+            Cancel
+          </button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    function closeAssignUserModal() {
+      const modal = document.getElementById('assignUserModal');
+      if (modal) modal.remove();
+    }
+    
+    async function assignUserToSite(siteId, userId, userEmail) {
+      try {
+        const res = await fetch(`/api/sites/${siteId}/assign`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ userId }),
+        });
+        
+        if (res.ok) {
+          alert(`✅ ${userEmail} assigned to site successfully`);
+          closeAssignUserModal();
+          loadSites(); // Refresh sites list
+        } else {
+          const error = await res.json();
+          alert(`❌ Error: ${error.error || 'Failed to assign user'}`);
+        }
+      } catch (error) {
+        alert(`❌ Error: ${error.message || 'Failed to assign user'}`);
+        console.error(error);
+      }
+    }
+    
+    async function unassignUserFromSite(siteId, userId, userName) {
+      if (!confirm(`Remove ${userName} from this site? They will no longer see this site's data.`)) return;
+      
+      try {
+        const res = await fetch(`/api/sites/${siteId}/assign/${userId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        
+        if (res.ok) {
+          alert(`✅ ${userName} removed from site`);
+          loadSites(); // Refresh sites list
+        } else {
+          const error = await res.json();
+          alert(`❌ Error: ${error.error || 'Failed to remove user'}`);
+        }
+      } catch (error) {
+        alert(`❌ Error: ${error.message || 'Failed to remove user'}`);
+        console.error(error);
+      }
+    }
+
     async function handleLogout() {
       try {
         await fetch('/api/auth/logout', { 
