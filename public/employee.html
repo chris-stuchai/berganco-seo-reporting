@@ -75,7 +75,10 @@
     input[type="text"],
     input[type="email"],
     input[type="password"],
-    select {
+    input[type="date"],
+    input[type="week"],
+    select,
+    textarea {
       width: 100%;
       padding: var(--spacing-3) var(--spacing-4);
       background: var(--color-bg-tertiary);
@@ -83,19 +86,31 @@
       border-radius: 12px;
       color: var(--color-label-primary);
       font-size: var(--font-body);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
+      box-sizing: border-box;
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.47;
     }
     
     input[type="text"]:focus,
     input[type="email"]:focus,
     input[type="password"]:focus,
-    select:focus {
+    input[type="date"]:focus,
+    input[type="week"]:focus,
+    select:focus,
+    textarea:focus {
       border-color: var(--color-blue);
       box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
     }
     
-    input::placeholder {
+    input::placeholder,
+    textarea::placeholder {
       color: var(--color-label-tertiary);
     }
     .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
@@ -367,7 +382,7 @@
         
         <div class="form-group">
           <label class="form-label" for="taskDescription">Description</label>
-          <textarea id="taskDescription" rows="4" placeholder="Describe what needs to be done..." required style="width: 100%; padding: var(--spacing-3) var(--spacing-4); background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); border-radius: 12px; color: var(--color-label-primary); font-size: var(--font-body); font-family: inherit; resize: vertical;"></textarea>
+          <textarea id="taskDescription" rows="4" placeholder="Describe what needs to be done..." required></textarea>
         </div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4);">

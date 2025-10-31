@@ -83,14 +83,15 @@ function formatChange(change: number, invertColors: boolean = false): string {
 }
 
 /**
- * Generates a simple SVG trend chart for email
+ * Generates a simple SVG trend chart for email (responsive and desktop-friendly)
  */
 function generateTrendChart(trendsData: ReportData['trendsData'], metric: 'clicks' | 'impressions'): string {
   if (!trendsData || trendsData.length === 0) return '';
   
-  const width = 600;
-  const height = 200;
-  const padding = 40;
+  // Use smaller dimensions that fit better in email clients
+  const width = 560;
+  const height = 180;
+  const padding = 50;
   const chartWidth = width - (padding * 2);
   const chartHeight = height - (padding * 2);
   
@@ -107,21 +108,45 @@ function generateTrendChart(trendsData: ReportData['trendsData'], metric: 'click
   
   const color = metric === 'clicks' ? '#0A84FF' : '#AF52DE';
   
+  // Add axis labels for better readability
+  const labelY = padding + chartHeight / 2;
+  const labelX = width / 2;
+  
   return `
-    <svg width="${width}" height="${height}" style="display: block; margin: 0 auto;">
-      <polyline
-        fill="none"
-        stroke="${color}"
-        stroke-width="3"
-        points="${points}"
-      />
-      ${trendsData.map((d, i) => {
-        const x = padding + (i / (trendsData.length - 1 || 1)) * chartWidth;
-        const y = padding + chartHeight - ((values[i] - minValue) / range) * chartHeight;
-        return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"/>`;
-      }).join('')}
-      <text x="${width / 2}" y="${height - 10}" text-anchor="middle" fill="#98989D" font-size="12" fill="#98989D">${metric === 'clicks' ? 'Clicks' : 'Impressions'} Over Time</text>
-    </svg>
+    <div style="width: 100%; max-width: 560px; margin: 0 auto; overflow: hidden;">
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display: block; width: 100%; height: auto; max-width: 560px; margin: 0 auto;" preserveAspectRatio="xMidYMid meet">
+        <!-- Grid lines -->
+        ${Array.from({ length: 5 }, (_, i) => {
+          const y = padding + (i * chartHeight / 4);
+          return `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="#48484A" stroke-width="0.5" opacity="0.3"/>`;
+        }).join('')}
+        
+        <!-- Chart line -->
+        <polyline
+          fill="none"
+          stroke="${color}"
+          stroke-width="2.5"
+          points="${points}"
+        />
+        
+        <!-- Data points -->
+        ${trendsData.map((d, i) => {
+          const x = padding + (i / (trendsData.length - 1 || 1)) * chartWidth;
+          const y = padding + chartHeight - ((values[i] - minValue) / range) * chartHeight;
+          return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
+        }).join('')}
+        
+        <!-- Y-axis label -->
+        <text x="15" y="${labelY}" fill="#98989D" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" transform="rotate(-90, 15, ${labelY})" text-anchor="middle">${metric === 'clicks' ? 'Clicks' : 'Impressions'}</text>
+        
+        <!-- Chart title -->
+        <text x="${labelX}" y="${height - 15}" text-anchor="middle" fill="#E5E5EA" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif">${metric === 'clicks' ? 'Clicks' : 'Impressions'} Over Time</text>
+        
+        <!-- Min/Max values -->
+        <text x="${padding - 5}" y="${height - padding + 5}" text-anchor="end" fill="#98989D" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif">${Math.round(minValue)}</text>
+        <text x="${padding - 5}" y="${padding + 5}" text-anchor="end" fill="#98989D" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif">${Math.round(maxValue)}</text>
+      </svg>
+    </div>
   `;
 }
 
@@ -308,23 +333,25 @@ function generateEmailHTML(data: ReportData): string {
       </table>
     </div>
     
-    <!-- Trend Chart -->
-    <div style="margin-bottom: 40px;">
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;" class="dark-mode-text">Performance Trends</h2>
-      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);" class="dark-mode-card dark-mode-border">
-        ${trendsData && trendsData.length > 0 ? `
-          ${generateTrendChart(trendsData, 'clicks')}
-          <div style="margin-top: 24px;">
-            ${generateTrendChart(trendsData, 'impressions')}
+        <!-- Trend Chart -->
+        <div style="margin-bottom: 40px;">
+          <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;" class="dark-mode-text">Performance Trends</h2>
+          <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); overflow: hidden;" class="dark-mode-card dark-mode-border">
+            ${trendsData && trendsData.length > 0 ? `
+              <div style="margin-bottom: 32px;">
+                ${generateTrendChart(trendsData, 'clicks')}
+              </div>
+              <div>
+                ${generateTrendChart(trendsData, 'impressions')}
+              </div>
+            ` : `
+              <div style="text-align: center; padding: 40px 20px; color: #98989D;">
+                <p style="margin: 0; font-size: 17px;">Trend data will appear here once daily metrics are collected.</p>
+                <p style="margin: 8px 0 0 0; font-size: 15px;">Please ensure daily data collection is running.</p>
+              </div>
+            `}
           </div>
-        ` : `
-          <div style="text-align: center; padding: 40px 20px; color: #98989D;">
-            <p style="margin: 0; font-size: 17px;">Trend data will appear here once daily metrics are collected.</p>
-            <p style="margin: 8px 0 0 0; font-size: 15px;">Please ensure daily data collection is running.</p>
-          </div>
-        `}
-      </div>
-    </div>
+        </div>
     
     <!-- AI Summary: Wins, Awareness, Next Steps (Collapsible) -->
     ${aiSummary && (aiSummary.wins?.length || aiSummary.awareness?.length || aiSummary.nextSteps?.length) ? `
