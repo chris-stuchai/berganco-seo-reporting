@@ -203,7 +203,7 @@
         <input type="week" id="taskWeekFilter" onchange="loadTasks()" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote);">
       </div>
       
-      <div id="tasksList" style="display: grid; gap: var(--spacing-3);">
+      <div id="tasksList" style="display: flex; flex-direction: column; gap: var(--spacing-4);">
         <div style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">Loading tasks...</div>
       </div>
     </div>
@@ -714,50 +714,149 @@
         
         tasksList.innerHTML = tasks.map(task => {
           const priorityColors = {
-            LOW: '#98989D',
-            MEDIUM: '#0A84FF',
-            HIGH: '#FF9F0A',
-            URGENT: '#FF453A'
+            LOW: { bg: 'rgba(152, 152, 157, 0.15)', text: '#98989D', border: 'rgba(152, 152, 157, 0.3)' },
+            MEDIUM: { bg: 'rgba(10, 132, 255, 0.15)', text: '#0A84FF', border: 'rgba(10, 132, 255, 0.3)' },
+            HIGH: { bg: 'rgba(255, 159, 10, 0.15)', text: '#FF9F0A', border: 'rgba(255, 159, 10, 0.3)' },
+            URGENT: { bg: 'rgba(255, 69, 58, 0.15)', text: '#FF453A', border: 'rgba(255, 69, 58, 0.3)' }
           };
           const statusColors = {
-            PENDING: '#98989D',
-            IN_PROGRESS: '#0A84FF',
-            COMPLETED: '#30D158',
-            CANCELLED: '#98989D'
+            PENDING: { bg: 'rgba(152, 152, 157, 0.15)', text: '#98989D', border: 'rgba(152, 152, 157, 0.3)' },
+            IN_PROGRESS: { bg: 'rgba(10, 132, 255, 0.15)', text: '#0A84FF', border: 'rgba(10, 132, 255, 0.3)' },
+            COMPLETED: { bg: 'rgba(48, 209, 88, 0.15)', text: '#30D158', border: 'rgba(48, 209, 88, 0.3)' },
+            CANCELLED: { bg: 'rgba(152, 152, 157, 0.15)', text: '#98989D', border: 'rgba(152, 152, 157, 0.3)' }
           };
           
-          const priorityBg = priorityColors[task.priority] || '#98989D';
-          const statusBg = statusColors[task.status] || '#98989D';
+          const priorityStyle = priorityColors[task.priority] || priorityColors.MEDIUM;
+          const statusStyle = statusColors[task.status] || statusColors.PENDING;
           
           const isAI = task.isAiGenerated || false;
+          const dueDate = new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          
           return `
-            <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; border: 1px solid var(--color-separator); ${isAI ? 'border-left: 4px solid var(--color-blue);' : ''}">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--spacing-2);">
-                <div style="flex: 1;">
-                  <div style="display: flex; align-items: center; gap: var(--spacing-2); margin-bottom: var(--spacing-1);">
-                    <h3 style="font-size: var(--font-body); font-weight: 600; margin: 0;">${task.title}</h3>
-                    ${isAI ? `<span style="padding: 2px 6px; background: rgba(10, 132, 255, 0.2); color: var(--color-blue); border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase;">AI</span>` : ''}
+            <div style="
+              padding: var(--spacing-6);
+              background: var(--color-bg-secondary);
+              border: 0.5px solid var(--color-separator);
+              border-radius: 16px;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+              ${isAI ? 'border-left: 4px solid var(--color-blue);' : ''}
+              margin-bottom: var(--spacing-4);
+            ">
+              <!-- Header Row -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-4); gap: var(--spacing-4);">
+                <!-- Left: Title and Metadata -->
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: var(--spacing-2); margin-bottom: var(--spacing-2); flex-wrap: wrap;">
+                    <h3 style="
+                      font-size: var(--font-title-3);
+                      font-weight: 600;
+                      color: var(--color-label-primary);
+                      margin: 0;
+                      line-height: 1.4;
+                      letter-spacing: -0.01em;
+                    ">${task.title}</h3>
+                    ${isAI ? `<span style="
+                      padding: 4px 8px;
+                      background: rgba(10, 132, 255, 0.2);
+                      color: var(--color-blue);
+                      border: 0.5px solid rgba(10, 132, 255, 0.3);
+                      border-radius: 6px;
+                      font-size: var(--font-caption);
+                      font-weight: 600;
+                      text-transform: uppercase;
+                      letter-spacing: 0.5px;
+                      white-space: nowrap;
+                    ">AI</span>` : ''}
                   </div>
-                  <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0;">
-                    ${task.user.businessName || task.user.name} • Due: ${new Date(task.dueDate).toLocaleDateString()}${task.assignedTo ? ` • Assigned by: ${task.assignedTo}` : ''}
+                  <p style="
+                    font-size: var(--font-footnote);
+                    color: var(--color-label-tertiary);
+                    margin: 0;
+                    line-height: 1.47;
+                  ">
+                    <span style="color: var(--color-label-secondary);">${task.user.businessName || task.user.name}</span>
+                    <span style="margin: 0 var(--spacing-1);">•</span>
+                    Due: <strong style="color: var(--color-label-primary);">${dueDate}</strong>
+                    ${task.assignedTo ? `<span style="margin: 0 var(--spacing-1);">•</span>Assigned by: ${task.assignedTo}` : ''}
                   </p>
                 </div>
-                <div style="display: flex; gap: var(--spacing-2);">
-                  <span style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: ${priorityBg}20; color: ${priorityBg};">
-                    ${task.priority}
-                  </span>
-                  <span style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: ${statusBg}20; color: ${statusBg};">
-                    ${task.status}
-                  </span>
+                
+                <!-- Right: Badges -->
+                <div style="display: flex; gap: var(--spacing-2); flex-shrink: 0; align-items: flex-start;">
+                  <span style="
+                    padding: 6px 10px;
+                    border-radius: 8px;
+                    font-size: var(--font-caption);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    background: ${priorityStyle.bg};
+                    color: ${priorityStyle.text};
+                    border: 0.5px solid ${priorityStyle.border};
+                    white-space: nowrap;
+                  ">${task.priority}</span>
+                  <span style="
+                    padding: 6px 10px;
+                    border-radius: 8px;
+                    font-size: var(--font-caption);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    background: ${statusStyle.bg};
+                    color: ${statusStyle.text};
+                    border: 0.5px solid ${statusStyle.border};
+                    white-space: nowrap;
+                  ">${task.status.replace('_', ' ')}</span>
                 </div>
               </div>
-              <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0 0 var(--spacing-3) 0; line-height: 1.5;">
-                ${task.description}
-              </p>
-              <div style="display: flex; gap: var(--spacing-2);">
-                <button onclick="editTask('${task.id}')" class="btn" style="padding: 4px 8px; font-size: var(--font-footnote);">Edit</button>
-                ${task.status !== 'COMPLETED' ? `<button onclick="updateTaskStatus('${task.id}', 'COMPLETED')" class="btn" style="padding: 4px 8px; font-size: var(--font-footnote); background: var(--color-green); color: white;">Mark Complete</button>` : ''}
-                <button onclick="deleteTask('${task.id}')" class="btn btn-danger" style="padding: 4px 8px; font-size: var(--font-footnote);">Delete</button>
+              
+              <!-- Description -->
+              <p style="
+                font-size: var(--font-body);
+                color: var(--color-label-secondary);
+                margin: 0 0 var(--spacing-6) 0;
+                line-height: 1.6;
+                letter-spacing: -0.01em;
+              ">${task.description}</p>
+              
+              <!-- Action Buttons -->
+              <div style="display: flex; gap: var(--spacing-3); padding-top: var(--spacing-4); border-top: 0.5px solid var(--color-separator);">
+                <button onclick="editTask('${task.id}')" style="
+                  padding: var(--spacing-2) var(--spacing-4);
+                  border-radius: 12px;
+                  border: 0.5px solid var(--color-separator);
+                  background: var(--color-bg-tertiary);
+                  color: var(--color-label-primary);
+                  font-size: var(--font-footnote);
+                  font-weight: 500;
+                  cursor: pointer;
+                  transition: opacity 0.2s;
+                  font-family: inherit;
+                " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Edit</button>
+                ${task.status !== 'COMPLETED' ? `<button onclick="updateTaskStatus('${task.id}', 'COMPLETED')" style="
+                  padding: var(--spacing-2) var(--spacing-4);
+                  border-radius: 12px;
+                  border: none;
+                  background: var(--color-green);
+                  color: white;
+                  font-size: var(--font-footnote);
+                  font-weight: 500;
+                  cursor: pointer;
+                  transition: opacity 0.2s;
+                  font-family: inherit;
+                " onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Mark Complete</button>` : ''}
+                <button onclick="deleteTask('${task.id}')" style="
+                  padding: var(--spacing-2) var(--spacing-4);
+                  border-radius: 12px;
+                  border: none;
+                  background: var(--color-red);
+                  color: white;
+                  font-size: var(--font-footnote);
+                  font-weight: 500;
+                  cursor: pointer;
+                  transition: opacity 0.2s;
+                  font-family: inherit;
+                " onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Delete</button>
               </div>
             </div>
           `;
