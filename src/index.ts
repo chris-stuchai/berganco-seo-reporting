@@ -977,17 +977,50 @@ app.get('/api/top-queries', async (req, res) => {
   }
 });
 
-// AI Insights endpoint for dashboard
-app.get('/api/ai-insights', async (req, res) => {
+// AI Insights endpoint for dashboard (supports multi-tenant)
+app.get('/api/ai-insights', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const days = parseInt(req.query.days as string) || 7;
     const endDate = new Date();
     const startDate = subDays(endDate, days);
     const prevStartDate = subDays(startDate, days);
 
-    // Get current period metrics
+    // Get user's accessible site IDs
+    let accessibleSiteIds: string[] = [];
+    let primarySite: { id: string; domain: string; displayName: string | null } | null = null;
+    
+    if (req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+      
+      // Get primary site (first accessible site) for domain
+      if (accessibleSiteIds.length > 0) {
+        primarySite = await prisma.site.findFirst({
+          where: { id: accessibleSiteIds[0], isActive: true },
+          select: { id: true, domain: true, displayName: true },
+        });
+      }
+    } else {
+      // For unauthenticated, get first active site
+      const allSites = await prisma.site.findMany({
+        where: { isActive: true },
+        select: { id: true, domain: true, displayName: true },
+        take: 1,
+      });
+      if (allSites.length > 0) {
+        primarySite = allSites[0];
+        accessibleSiteIds = [primarySite.id];
+      }
+    }
+
+    if (accessibleSiteIds.length === 0) {
+      return res.status(404).json({ error: 'No accessible sites found' });
+    }
+
+    // Get current period metrics filtered by site
     const currentMetrics = await prisma.dailyMetric.findMany({
       where: {
+        siteId: { in: accessibleSiteIds },
         date: {
           gte: startDate,
           lte: endDate,
@@ -997,6 +1030,7 @@ app.get('/api/ai-insights', async (req, res) => {
 
     const previousMetrics = await prisma.dailyMetric.findMany({
       where: {
+        siteId: { in: accessibleSiteIds },
         date: {
           gte: prevStartDate,
           lt: startDate,
