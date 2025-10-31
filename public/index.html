@@ -1065,16 +1065,23 @@
 
         if (!data || data.length === 0) return;
 
-        const dates = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        // Format dates - responsive formatting
+        const isMobile = window.innerWidth < 768;
+        const dates = data.map(d => {
+          const date = new Date(d.date);
+          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
         const clicks = data.map(d => d.clicks);
         const impressions = data.map(d => d.impressions);
         const ctrs = data.map(d => d.ctr * 100);
         const positions = data.map(d => d.position);
 
         // Clicks Chart
-        const clicksCtx = document.getElementById('clicksChart').getContext('2d');
+        const clicksCtx = document.getElementById('clicksChart');
+        if (!clicksCtx) return;
+        const clicksCtx2d = clicksCtx.getContext('2d');
         if (clicksChart) clicksChart.destroy();
-        clicksChart = new Chart(clicksCtx, {
+        clicksChart = new Chart(clicksCtx2d, {
           type: 'line',
           data: {
             labels: dates,
