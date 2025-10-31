@@ -610,6 +610,183 @@
       }
     })();
 
+    // Onboarding Functions
+    function showOnboardClientModal() {
+      document.getElementById('onboardClientModal').style.display = 'flex';
+      // Clear form
+      document.getElementById('onboardDisplayName').value = '';
+      document.getElementById('onboardDomain').value = '';
+      document.getElementById('onboardGoogleSiteUrl').value = '';
+      document.getElementById('onboardUserName').value = '';
+      document.getElementById('onboardUserEmail').value = '';
+      document.getElementById('onboardPassword').value = '';
+      document.getElementById('onboardSendEmail').checked = true;
+    }
+
+    function closeOnboardClientModal() {
+      document.getElementById('onboardClientModal').style.display = 'none';
+    }
+
+    async function onboardClient() {
+      const displayName = document.getElementById('onboardDisplayName').value.trim();
+      const domain = document.getElementById('onboardDomain').value.trim();
+      const googleSiteUrl = document.getElementById('onboardGoogleSiteUrl').value.trim();
+      const userName = document.getElementById('onboardUserName').value.trim();
+      const userEmail = document.getElementById('onboardUserEmail').value.trim().toLowerCase();
+      const password = document.getElementById('onboardPassword').value;
+      const sendEmail = document.getElementById('onboardSendEmail').checked;
+
+      // Validation
+      if (!displayName || !domain || !googleSiteUrl || !userName || !userEmail || !password) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const submitBtn = document.getElementById('onboardSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+
+      try {
+        // Step 1: Create user
+        const userRes = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: userName,
+            email: userEmail,
+            password,
+            role: 'CLIENT',
+            businessName: displayName,
+            sendOnboardingEmail: sendEmail,
+          }),
+        });
+
+        if (!userRes.ok) {
+          const error = await userRes.json();
+          throw new Error(error.error || 'Failed to create user');
+        }
+
+        const user = await userRes.json();
+
+        // Step 2: Create site
+        const siteRes = await fetch('/api/sites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            domain,
+            displayName,
+            googleSiteUrl,
+            ownerId: user.id,
+          }),
+        });
+
+        if (!siteRes.ok) {
+          const error = await siteRes.json();
+          throw new Error(error.error || 'Failed to create site');
+        }
+
+        const site = await siteRes.json();
+
+        alert(`✅ Success! Client and site created.\n\nSite: ${site.domain}\nUser: ${user.email}\n${sendEmail && user.emailSent ? 'Onboarding email sent.' : ''}`);
+        closeOnboardClientModal();
+        loadUsers();
+        loadSites();
+      } catch (error) {
+        console.error('Error onboarding client:', error);
+        alert(`❌ Error: ${error.message || 'Failed to onboard client'}`);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Client & Site';
+      }
+    }
+
+    async function loadSites() {
+      try {
+        const res = await fetch('/api/sites', { credentials: 'include' });
+        if (!res.ok) {
+          const error = await res.json();
+          document.getElementById('sitesList').innerHTML = `
+            <div style="text-align: center; padding: var(--spacing-6); color: var(--color-red);">
+              Error loading sites: ${error.error || 'Unknown error'}
+            </div>
+          `;
+          return;
+        }
+        const sites = await res.json();
+        updateSitesDisplay(sites);
+      } catch (error) {
+        console.error('Error loading sites:', error);
+        document.getElementById('sitesList').innerHTML = `
+          <div style="text-align: center; padding: var(--spacing-6); color: var(--color-red);">
+            Failed to load sites. Please refresh the page.
+          </div>
+        `;
+      }
+    }
+
+    function updateSitesDisplay(sites) {
+      const container = document.getElementById('sitesList');
+      if (!container) return;
+
+      if (!sites || sites.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">
+            No sites yet. Use "Onboard New Client" to create your first site.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = sites.map(site => {
+        const assignedUsers = site.clientSites?.map(cs => cs.user).filter(Boolean) || [];
+        const allUsers = [site.owner, ...assignedUsers];
+        const uniqueUsers = Array.from(new Map(allUsers.map(u => [u.id, u])).values());
+
+        return `
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; margin-bottom: var(--spacing-3); border: 0.5px solid var(--color-separator);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-3);">
+              <div style="flex: 1;">
+                <h3 style="font-size: var(--font-body); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-1);">
+                  ${site.displayName}
+                </h3>
+                <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0;">
+                  ${site.domain} • ${site.googleSiteUrl}
+                </p>
+              </div>
+              <span style="
+                padding: 4px 8px;
+                background: ${site.isActive ? 'rgba(48, 209, 88, 0.15)' : 'rgba(255, 69, 58, 0.15)'};
+                color: ${site.isActive ? 'var(--color-green)' : 'var(--color-red)'};
+                border-radius: 6px;
+                font-size: var(--font-caption);
+                font-weight: 600;
+              ">
+                ${site.isActive ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <div style="margin-top: var(--spacing-3); padding-top: var(--spacing-3); border-top: 0.5px solid var(--color-separator);">
+              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-2);">Assigned Users:</div>
+              <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-2);">
+                ${uniqueUsers.map(user => `
+                  <span style="
+                    padding: 4px 8px;
+                    background: ${user.id === site.owner.id ? 'rgba(10, 132, 255, 0.15)' : 'var(--color-bg-secondary)'};
+                    color: ${user.id === site.owner.id ? 'var(--color-blue)' : 'var(--color-label-secondary)'};
+                    border-radius: 6px;
+                    font-size: var(--font-caption);
+                  ">
+                    ${user.name || user.email}${user.id === site.owner.id ? ' (Owner)' : ''}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     async function loadUsers() {
       try {
         const res = await fetch('/api/users', { credentials: 'include' });
