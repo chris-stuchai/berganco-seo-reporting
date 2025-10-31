@@ -746,9 +746,10 @@
           
           const isAI = task.isAiGenerated || false;
           const dueDate = new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const taskCardId = `task-${task.id}`;
           
           return `
-            <div style="
+            <div id="${taskCardId}" style="
               padding: var(--spacing-6);
               background: var(--color-bg-secondary);
               border: 0.5px solid var(--color-separator);
@@ -796,7 +797,7 @@
                   </p>
                 </div>
                 
-                <!-- Right: Badges -->
+                <!-- Right: Badges and Collapse Button -->
                 <div style="display: flex; gap: var(--spacing-2); flex-shrink: 0; align-items: flex-start;">
                   <span style="
                     padding: 6px 10px;
@@ -822,56 +823,82 @@
                     border: 0.5px solid ${statusStyle.border};
                     white-space: nowrap;
                   ">${task.status.replace('_', ' ')}</span>
+                  <button onclick="toggleTaskCollapse('${task.id}')" style="
+                    padding: 6px;
+                    border-radius: 8px;
+                    border: 0.5px solid var(--color-separator);
+                    background: var(--color-bg-tertiary);
+                    color: var(--color-label-secondary);
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-family: inherit;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 28px;
+                    height: 28px;
+                    flex-shrink: 0;
+                  " onmouseover="this.style.background='var(--color-bg-primary)'; this.style.color='var(--color-label-primary)'" onmouseout="this.style.background='var(--color-bg-tertiary)'; this.style.color='var(--color-label-secondary)'" id="collapse-btn-${task.id}">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 6l4 4 4-4"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
               
-              <!-- Description -->
-              <p style="
-                font-size: var(--font-body);
-                color: var(--color-label-secondary);
-                margin: 0 0 var(--spacing-6) 0;
-                line-height: 1.6;
-                letter-spacing: -0.01em;
-              ">${task.description}</p>
-              
-              <!-- Action Buttons -->
-              <div style="display: flex; gap: var(--spacing-3); padding-top: var(--spacing-4); border-top: 0.5px solid var(--color-separator);">
-                <button onclick="editTask('${task.id}')" style="
-                  padding: var(--spacing-2) var(--spacing-4);
-                  border-radius: 12px;
-                  border: 0.5px solid var(--color-separator);
-                  background: var(--color-bg-tertiary);
-                  color: var(--color-label-primary);
-                  font-size: var(--font-footnote);
-                  font-weight: 500;
-                  cursor: pointer;
-                  transition: opacity 0.2s;
-                  font-family: inherit;
-                " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Edit</button>
-                ${task.status !== 'COMPLETED' ? `<button onclick="updateTaskStatus('${task.id}', 'COMPLETED')" style="
-                  padding: var(--spacing-2) var(--spacing-4);
-                  border-radius: 12px;
-                  border: none;
-                  background: var(--color-green);
-                  color: white;
-                  font-size: var(--font-footnote);
-                  font-weight: 500;
-                  cursor: pointer;
-                  transition: opacity 0.2s;
-                  font-family: inherit;
-                " onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Mark Complete</button>` : ''}
-                <button onclick="deleteTask('${task.id}')" style="
-                  padding: var(--spacing-2) var(--spacing-4);
-                  border-radius: 12px;
-                  border: none;
-                  background: var(--color-red);
-                  color: white;
-                  font-size: var(--font-footnote);
-                  font-weight: 500;
-                  cursor: pointer;
-                  transition: opacity 0.2s;
-                  font-family: inherit;
-                " onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Delete</button>
+              <!-- Collapsible Content -->
+              <div id="task-content-${task.id}" style="overflow: hidden; transition: max-height 0.3s ease-out; max-height: 1000px;">
+                <!-- Description -->
+                <p style="
+                  font-size: var(--font-body);
+                  color: var(--color-label-secondary);
+                  margin: 0 0 var(--spacing-6) 0;
+                  line-height: 1.6;
+                  letter-spacing: -0.01em;
+                ">${task.description}</p>
+                
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: var(--spacing-4); padding-top: var(--spacing-4); border-top: 0.5px solid var(--color-separator);">
+                  <button onclick="editTask('${task.id}')" style="
+                    padding: 6px 12px;
+                    border-radius: 10px;
+                    border: 0.5px solid var(--color-separator);
+                    background: var(--color-bg-tertiary);
+                    color: var(--color-label-primary);
+                    font-size: var(--font-caption);
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-family: inherit;
+                    white-space: nowrap;
+                  " onmouseover="this.style.background='var(--color-bg-primary)'; this.style.borderColor='var(--color-separator)'" onmouseout="this.style.background='var(--color-bg-tertiary)'; this.style.borderColor='var(--color-separator)'">Edit</button>
+                  ${task.status !== 'COMPLETED' ? `<button onclick="updateTaskStatus('${task.id}', 'COMPLETED')" style="
+                    padding: 6px 12px;
+                    border-radius: 10px;
+                    border: none;
+                    background: var(--color-green);
+                    color: white;
+                    font-size: var(--font-caption);
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: opacity 0.2s;
+                    font-family: inherit;
+                    white-space: nowrap;
+                  " onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Mark Complete</button>` : ''}
+                  <button onclick="deleteTask('${task.id}')" style="
+                    padding: 6px 12px;
+                    border-radius: 10px;
+                    border: none;
+                    background: var(--color-red);
+                    color: white;
+                    font-size: var(--font-caption);
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: opacity 0.2s;
+                    font-family: inherit;
+                    white-space: nowrap;
+                  " onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Delete</button>
+                </div>
               </div>
             </div>
           `;
@@ -1013,6 +1040,37 @@
       } catch (error) {
         console.error('Error updating task:', error);
         alert('Failed to update task');
+      }
+    }
+
+    function toggleTaskCollapse(id) {
+      const contentDiv = document.getElementById(`task-content-${id}`);
+      const btn = document.getElementById(`collapse-btn-${id}`);
+      
+      if (!contentDiv || !btn) return;
+      
+      const svg = btn.querySelector('svg path');
+      const currentHeight = contentDiv.style.maxHeight;
+      const isCollapsed = currentHeight === '0px' || (!currentHeight && contentDiv.offsetHeight === 0);
+      
+      if (isCollapsed) {
+        // Expand - measure content height first
+        contentDiv.style.maxHeight = 'none';
+        const height = contentDiv.scrollHeight;
+        contentDiv.style.maxHeight = '0px';
+        // Force reflow
+        contentDiv.offsetHeight;
+        // Now animate to full height
+        requestAnimationFrame(() => {
+          contentDiv.style.maxHeight = height + 'px';
+        });
+        svg.setAttribute('d', 'M4 6l4 4 4-4'); // Down arrow (can collapse)
+        btn.setAttribute('aria-label', 'Collapse task');
+      } else {
+        // Collapse
+        contentDiv.style.maxHeight = '0px';
+        svg.setAttribute('d', 'M4 10l4-4 4-4'); // Up arrow (can expand)
+        btn.setAttribute('aria-label', 'Expand task');
       }
     }
 
