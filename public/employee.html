@@ -853,20 +853,27 @@
               </span>
             </div>
             <div style="margin-top: var(--spacing-3); padding-top: var(--spacing-3); border-top: 0.5px solid var(--color-separator);">
-              <div style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-bottom: var(--spacing-2);">Assigned Users:</div>
-              <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-2);">
-                ${uniqueUsers.map(user => `
-                  <span style="
-                    padding: 4px 8px;
-                    background: ${user.id === site.owner.id ? 'rgba(10, 132, 255, 0.15)' : 'var(--color-bg-secondary)'};
-                    color: ${user.id === site.owner.id ? 'var(--color-blue)' : 'var(--color-label-secondary)'};
-                    border-radius: 6px;
-                    font-size: var(--font-caption);
-                  ">
-                    ${user.name || user.email}${user.id === site.owner.id ? ' (Owner)' : ''}
-                  </span>
-                `).join('')}
-              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-2);">
+              <span style="font-size: var(--font-caption); color: var(--color-label-tertiary);">Assigned Users:</span>
+              <button onclick="showAssignUserModal('${site.id}')" class="btn" style="padding: 4px 8px; font-size: var(--font-caption); background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary); cursor: pointer;">
+                + Assign User
+              </button>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-2);">
+              ${uniqueUsers.length > 0 ? uniqueUsers.map(user => `
+                <span style="
+                  padding: 4px 8px;
+                  background: ${user.id === site.owner?.id ? 'rgba(10, 132, 255, 0.15)' : 'var(--color-bg-secondary)'};
+                  color: ${user.id === site.owner?.id ? 'var(--color-blue)' : 'var(--color-label-secondary)'};
+                  border: 0.5px solid var(--color-separator);
+                  border-radius: 6px;
+                  font-size: var(--font-caption);
+                ">
+                  ${user.name || user.email}${user.id === site.owner?.id ? ' (Owner)' : ''}
+                  ${user.id !== site.owner?.id ? `<button onclick="unassignUserFromSite('${site.id}', '${user.id}', '${(user.name || user.email).replace(/'/g, "\\'")}')" style="margin-left: 6px; padding: 2px 4px; background: transparent; border: none; color: var(--color-red); cursor: pointer; font-size: 10px;">✕</button>` : ''}
+                </span>
+              `).join('') : '<span style="font-size: var(--font-caption); color: var(--color-label-tertiary);">No users assigned</span>'}
+            </div>
             </div>
           </div>
         `;
