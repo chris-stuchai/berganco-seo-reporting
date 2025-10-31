@@ -72,6 +72,7 @@
       margin-bottom: var(--spacing-2);
     }
     
+    /* Form Input Styling - Matching Login Page Exactly */
     input[type="text"],
     input[type="email"],
     input[type="password"],
@@ -90,6 +91,17 @@
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
       box-sizing: border-box;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    
+    /* Select dropdown styling */
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%2398989D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right var(--spacing-4) center;
+      padding-right: calc(var(--spacing-4) + 20px);
     }
     
     textarea {
@@ -175,9 +187,14 @@
 
     <!-- Weekly Tasks for Clients -->
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-4);">
-        <h2 style="font-size: 22px; font-weight: 600;">Weekly Tasks</h2>
-        <button class="btn btn-primary" onclick="showCreateTaskModal()">+ Create Task</button>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-4);">
+        <div style="flex: 1;">
+          <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-1);">Weekly Tasks</h2>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin: 0;">
+            AI automatically generates tasks weekly based on SEO analysis. You can also create manual tasks.
+          </p>
+        </div>
+        <button class="btn btn-primary" onclick="showCreateTaskModal()" style="margin-left: var(--spacing-4);">+ Create Task</button>
       </div>
       
       <!-- Week Filter -->
@@ -712,13 +729,17 @@
           const priorityBg = priorityColors[task.priority] || '#98989D';
           const statusBg = statusColors[task.status] || '#98989D';
           
+          const isAI = task.isAiGenerated || false;
           return `
-            <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; border: 1px solid var(--color-separator);">
+            <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 12px; border: 1px solid var(--color-separator); ${isAI ? 'border-left: 4px solid var(--color-blue);' : ''}">
               <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--spacing-2);">
                 <div style="flex: 1;">
-                  <h3 style="font-size: var(--font-body); font-weight: 600; margin: 0 0 var(--spacing-1) 0;">${task.title}</h3>
+                  <div style="display: flex; align-items: center; gap: var(--spacing-2); margin-bottom: var(--spacing-1);">
+                    <h3 style="font-size: var(--font-body); font-weight: 600; margin: 0;">${task.title}</h3>
+                    ${isAI ? `<span style="padding: 2px 6px; background: rgba(10, 132, 255, 0.2); color: var(--color-blue); border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase;">AI</span>` : ''}
+                  </div>
                   <p style="font-size: var(--font-footnote); color: var(--color-label-secondary); margin: 0;">
-                    ${task.user.businessName || task.user.name} • Due: ${new Date(task.dueDate).toLocaleDateString()}
+                    ${task.user.businessName || task.user.name} • Due: ${new Date(task.dueDate).toLocaleDateString()}${task.assignedTo ? ` • Assigned by: ${task.assignedTo}` : ''}
                   </p>
                 </div>
                 <div style="display: flex; gap: var(--spacing-2);">

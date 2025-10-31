@@ -433,6 +433,46 @@ export async function generateReport(
 
   console.log('✓ Report generated successfully');
 
+  // Generate AI tasks for all client users after report generation
+  try {
+    const { createAITasksForClient } = await import('./ai-task-generator');
+    const clients = await prisma.user.findMany({
+      where: { role: 'CLIENT', isActive: true },
+    });
+
+    for (const client of clients) {
+      try {
+        await createAITasksForClient(
+          client.id,
+          calculatedStartDate,
+          calculatedEndDate,
+          {
+            currentMetrics,
+            changes: {
+              clicksChange,
+              impressionsChange,
+              ctrChange,
+              positionChange,
+            },
+            topPages,
+            topQueries,
+            recommendations: enhancedRecommendations,
+            websiteDomain: 'www.berganco.com',
+            userId: client.id,
+            weekStartDate: calculatedStartDate,
+            weekEndDate: calculatedEndDate,
+          }
+        );
+      } catch (error) {
+        console.error(`Error generating AI tasks for client ${client.email}:`, error);
+      }
+    }
+    console.log('✓ AI task generation completed');
+  } catch (error) {
+    console.error('Error during AI task generation:', error);
+    // Don't fail report generation if task generation fails
+  }
+
   return {
     report,
     currentMetrics,

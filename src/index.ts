@@ -1136,8 +1136,8 @@ app.get('/api/tasks', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req,
         },
       },
       orderBy: [
+        { priority: 'desc' }, // Urgent/High priority first
         { dueDate: 'asc' },
-        { priority: 'desc' },
       ],
     });
     
