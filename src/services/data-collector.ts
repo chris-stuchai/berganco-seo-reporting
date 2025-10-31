@@ -224,15 +224,28 @@ export async function collectAllMetrics(date: Date, siteId: string, siteUrl?: st
 }
 
 /**
- * Backfills historical data for the last N days
+ * Backfills historical data for the last N days for all active sites
  */
 export async function backfillMetrics(days: number = 30) {
   console.log(`Backfilling metrics for the last ${days} days...`);
 
-  for (let i = days; i >= 3; i--) {
-    // GSC data has a 2-3 day delay
-    const date = subDays(new Date(), i);
-    await collectAllMetrics(date);
+  // Get all active sites
+  const activeSites = await prisma.site.findMany({
+    where: { isActive: true },
+  });
+
+  if (activeSites.length === 0) {
+    console.log('⚠️  No active sites found, skipping backfill');
+    return;
+  }
+
+  for (const site of activeSites) {
+    console.log(`Backfilling for site: ${site.domain}`);
+    for (let i = days; i >= 3; i--) {
+      // GSC data has a 2-3 day delay
+      const date = subDays(new Date(), i);
+      await collectAllMetrics(date, site.id, site.googleSiteUrl);
+    }
   }
 
   console.log('✓ Backfill complete');

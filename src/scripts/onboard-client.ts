@@ -35,13 +35,19 @@ async function onboardClient(
       console.log(`Creating user account for ${ownerEmail}...`);
       // Generate a temporary password - should be changed on first login
       const tempPassword = Math.random().toString(36).slice(-12) + 'A1!';
-      owner = await authService.createUser({
-        email: ownerEmail,
-        password: tempPassword,
-        name: displayName,
-        role: 'CLIENT',
-        businessName: displayName,
+      const newUser = await authService.createUser(
+        ownerEmail,
+        tempPassword,
+        displayName,
+        'CLIENT',
+        displayName
+      );
+      owner = await prisma.user.findUnique({
+        where: { email: ownerEmail },
       });
+      if (!owner) {
+        throw new Error('Failed to create user');
+      }
       console.log(`✓ Created user: ${owner.email}`);
       console.log(`⚠️  Temporary password: ${tempPassword} (user should change on first login)\n`);
     } else {
@@ -54,7 +60,7 @@ async function onboardClient(
       domain,
       displayName,
       googleSiteUrl,
-      ownerId: owner.id,
+      ownerId: owner!.id,
     });
     console.log(`✓ Created site: ${site.domain} (ID: ${site.id})\n`);
 
@@ -63,7 +69,7 @@ async function onboardClient(
     console.log('Summary:');
     console.log(`  - Site: ${site.domain}`);
     console.log(`  - Display Name: ${site.displayName}`);
-    console.log(`  - Owner: ${owner.email}`);
+    console.log(`  - Owner: ${owner!.email}`);
     console.log(`  - Site ID: ${site.id}`);
     console.log(`  - Google Site URL: ${site.googleSiteUrl}\n`);
 

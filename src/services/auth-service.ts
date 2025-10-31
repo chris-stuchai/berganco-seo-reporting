@@ -43,7 +43,9 @@ export async function createUser(
   email: string,
   password: string,
   name: string,
-  role: Role = Role.CLIENT
+  role: Role = Role.CLIENT,
+  businessName?: string,
+  logoUrl?: string
 ) {
   const existingUser = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },
@@ -61,6 +63,8 @@ export async function createUser(
       passwordHash,
       name,
       role,
+      businessName,
+      logoUrl,
     },
   });
 
@@ -69,6 +73,8 @@ export async function createUser(
     email: user.email,
     name: user.name,
     role: user.role,
+    businessName: user.businessName,
+    logoUrl: user.logoUrl,
   };
 }
 

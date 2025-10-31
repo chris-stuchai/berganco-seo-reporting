@@ -171,8 +171,8 @@ app.get('/api/users', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req,
 
 app.post('/api/users', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
   try {
-    const { email, password, name, role, sendOnboardingEmail: sendEmail } = req.body;
-    const user = await authService.createUser(email, password, name, role || Role.CLIENT);
+    const { email, password, name, role, businessName, logoUrl, sendOnboardingEmail: sendEmail } = req.body;
+    const user = await authService.createUser(email, password, name, role || Role.CLIENT, businessName, logoUrl);
     
     // Send onboarding email if requested
     let emailSent = false;
@@ -512,15 +512,30 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
       });
     }
     
+    // Get all active sites to collect for
+    const activeSites = await prisma.site.findMany({
+      where: { isActive: true },
+    });
+
+    if (activeSites.length === 0) {
+      return res.json({ 
+        success: false, 
+        message: 'No active sites found. Please create a site first.' 
+      });
+    }
+
     // Start syncing missing days in background (don't block response)
     (async () => {
       try {
         let syncedCount = 0;
         for (const date of missingDates) {
           try {
-            await collectAllMetrics(date);
+            // Collect metrics for each active site
+            for (const site of activeSites) {
+              await collectAllMetrics(date, site.id, site.googleSiteUrl);
+            }
             syncedCount++;
-            console.log(`✓ Synced data for ${format(date, 'yyyy-MM-dd')}`);
+            console.log(`✓ Synced data for ${format(date, 'yyyy-MM-dd')} (${activeSites.length} sites)`);
           } catch (error) {
             console.error(`Error syncing ${format(date, 'yyyy-MM-dd')}:`, error);
           }
@@ -1383,7 +1398,19 @@ cron.schedule('0 3 * * *', async () => {
     }
     
     const date = subDays(new Date(), 3);
-    await collectAllMetrics(date);
+    // Get all active sites and collect for each
+    const activeSites = await prisma.site.findMany({
+      where: { isActive: true },
+    });
+    
+    if (activeSites.length === 0) {
+      console.log('⏸️  No active sites found, skipping data collection');
+      return;
+    }
+    
+    for (const site of activeSites) {
+      await collectAllMetrics(date, site.id, site.googleSiteUrl);
+    }
     
     // Update last run time
     if (config) {

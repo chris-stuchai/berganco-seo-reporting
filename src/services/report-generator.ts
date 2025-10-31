@@ -29,10 +29,12 @@ interface ComparisonMetrics extends WeeklyMetrics {
  */
 async function calculateWeekMetrics(
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  siteId: string
 ): Promise<WeeklyMetrics> {
   const metrics = await prisma.dailyMetric.findMany({
     where: {
+      siteId,
       date: {
         gte: startDate,
         lte: endDate,
@@ -65,10 +67,11 @@ async function calculateWeekMetrics(
 /**
  * Gets top performing pages for a week
  */
-async function getTopPages(startDate: Date, endDate: Date, limit: number = 10) {
+async function getTopPages(startDate: Date, endDate: Date, siteId: string, limit: number = 10) {
   const pages = await prisma.pageMetric.groupBy({
     by: ['page'],
     where: {
+      siteId,
       date: {
         gte: startDate,
         lte: endDate,
@@ -102,10 +105,11 @@ async function getTopPages(startDate: Date, endDate: Date, limit: number = 10) {
 /**
  * Gets top performing queries for a week
  */
-async function getTopQueries(startDate: Date, endDate: Date, limit: number = 10) {
+async function getTopQueries(startDate: Date, endDate: Date, siteId: string, limit: number = 10) {
   const queries = await prisma.queryMetric.groupBy({
     by: ['query'],
     where: {
+      siteId,
       date: {
         gte: startDate,
         lte: endDate,
@@ -241,7 +245,7 @@ function generateRecommendations(
 /**
  * Gets daily trends data for a date range (for charts)
  */
-async function getTrendsData(startDate: Date, endDate: Date): Promise<Array<{
+async function getTrendsData(startDate: Date, endDate: Date, siteId: string): Promise<Array<{
   date: string;
   clicks: number;
   impressions: number;
@@ -250,6 +254,7 @@ async function getTrendsData(startDate: Date, endDate: Date): Promise<Array<{
 }>> {
   const metrics = await prisma.dailyMetric.findMany({
     where: {
+      siteId,
       date: {
         gte: startDate,
         lte: endDate,
@@ -271,16 +276,35 @@ async function getTrendsData(startDate: Date, endDate: Date): Promise<Array<{
 
 /**
  * Generates a complete report for any date range
+ * @param startDate - Optional start date
+ * @param endDate - Optional end date
+ * @param periodType - Type of period ('week' | 'month' | 'custom')
+ * @param siteId - Optional site ID (if not provided, will use first active site)
  */
 export async function generateReport(
   startDate?: Date,
   endDate?: Date,
-  periodType: 'week' | 'month' | 'custom' = 'week'
+  periodType: 'week' | 'month' | 'custom' = 'week',
+  siteId?: string
 ) {
   let calculatedStartDate: Date;
   let calculatedEndDate: Date;
   let calculatedPrevStartDate: Date;
   let calculatedPrevEndDate: Date;
+
+  // Get siteId if not provided (use first active site)
+  let targetSiteId = siteId;
+  if (!targetSiteId) {
+    const firstSite = await prisma.site.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (firstSite) {
+      targetSiteId = firstSite.id;
+    } else {
+      throw new Error('No active sites found. Please create a site first.');
+    }
+  }
 
   if (startDate && endDate) {
     // Custom date range provided
@@ -311,14 +335,19 @@ export async function generateReport(
     calculatedPrevEndDate = endOfWeek(calculatedPrevStartDate, { weekStartsOn: 1 });
   }
 
-  console.log(`Generating ${periodType} report for ${format(calculatedStartDate, 'MMM d')} - ${format(calculatedEndDate, 'MMM d, yyyy')}...`);
+  console.log(`Generating ${periodType} report for ${format(calculatedStartDate, 'MMM d')} - ${format(calculatedEndDate, 'MMM d, yyyy')} (site: ${targetSiteId})...`);
+
+  // Ensure targetSiteId is defined (should be set above)
+  if (!targetSiteId) {
+    throw new Error('Site ID is required but not found');
+  }
 
   // Calculate current and previous period metrics
-  const currentMetrics = await calculateWeekMetrics(calculatedStartDate, calculatedEndDate);
-  const previousMetrics = await calculateWeekMetrics(calculatedPrevStartDate, calculatedPrevEndDate);
+  const currentMetrics = await calculateWeekMetrics(calculatedStartDate, calculatedEndDate, targetSiteId);
+  const previousMetrics = await calculateWeekMetrics(calculatedPrevStartDate, calculatedPrevEndDate, targetSiteId);
   
   // Get trends data for chart
-  const trendsData = await getTrendsData(calculatedStartDate, calculatedEndDate);
+  const trendsData = await getTrendsData(calculatedStartDate, calculatedEndDate, targetSiteId);
 
   // Calculate percentage changes
   const clicksChange = previousMetrics.totalClicks > 0
@@ -344,8 +373,8 @@ export async function generateReport(
   };
 
   // Get top pages and queries
-  const topPages = await getTopPages(calculatedStartDate, calculatedEndDate);
-  const topQueries = await getTopQueries(calculatedStartDate, calculatedEndDate);
+  const topPages = await getTopPages(calculatedStartDate, calculatedEndDate, targetSiteId);
+  const topQueries = await getTopQueries(calculatedStartDate, calculatedEndDate, targetSiteId);
 
   // Generate baseline insights and recommendations
   const insights = generateInsights(comparison);
@@ -394,7 +423,8 @@ export async function generateReport(
   // Store report in database (use upsert to handle duplicates)
   const report = await prisma.weeklyReport.upsert({
     where: {
-      weekStartDate_weekEndDate: {
+      siteId_weekStartDate_weekEndDate: {
+        siteId: targetSiteId,
         weekStartDate: calculatedStartDate,
         weekEndDate: calculatedEndDate,
       },
@@ -414,6 +444,7 @@ export async function generateReport(
       recommendations: enhancedRecommendations,
     },
     create: {
+      siteId: targetSiteId,
       weekStartDate: calculatedStartDate,
       weekEndDate: calculatedEndDate,
       totalClicks: currentMetrics.totalClicks,
