@@ -35,13 +35,32 @@ async function migrateBerganCoData() {
     const googleSiteUrl = process.env.MIGRATE_GOOGLE_SITE_URL || 'https://www.berganco.com';
     
     // Get admin email from args or env
-    const adminEmail = process.argv[2] || process.env.ADMIN_EMAIL || process.env.MIGRATE_ADMIN_EMAIL;
+    let adminEmail = process.argv[2] || process.env.ADMIN_EMAIL || process.env.MIGRATE_ADMIN_EMAIL;
     
+    // If no email provided, try to find an admin user in the database
     if (!adminEmail) {
-      console.error('❌ Error: Admin email required');
-      console.log('Usage: tsx src/scripts/migrate-berganco-data.ts <adminEmail>');
-      console.log('Or set MIGRATE_ADMIN_EMAIL environment variable');
-      process.exit(1);
+      console.log('📧 No admin email provided, searching database for admin user...');
+      const adminUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { role: 'ADMIN' },
+            { role: 'EMPLOYEE' },
+          ],
+        },
+        orderBy: { createdAt: 'asc' }, // Get oldest admin (likely the first one created)
+      });
+      
+      if (adminUser) {
+        adminEmail = adminUser.email;
+        console.log(`✅ Found admin user: ${adminEmail}\n`);
+      } else {
+        console.error('❌ Error: No admin user found in database');
+        console.log('\nPlease either:');
+        console.log('1. Provide admin email: npm run migrate-berganco <adminEmail>');
+        console.log('2. Set ADMIN_EMAIL or MIGRATE_ADMIN_EMAIL environment variable');
+        console.log('3. Create an admin user first using the admin creation setup');
+        process.exit(1);
+      }
     }
 
     console.log(`📍 Site Info:`);
