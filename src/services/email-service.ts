@@ -88,64 +88,95 @@ function formatChange(change: number, invertColors: boolean = false): string {
 function generateTrendChart(trendsData: ReportData['trendsData'], metric: 'clicks' | 'impressions'): string {
   if (!trendsData || trendsData.length === 0) return '';
   
-  // Use smaller dimensions that fit better in email clients
-  const width = 560;
-  const height = 180;
-  const padding = 50;
-  const chartWidth = width - (padding * 2);
-  const chartHeight = height - (padding * 2);
+  // Use compact dimensions optimized for email clients
+  const width = 500;
+  const height = 160;
+  const padding = { top: 20, right: 30, bottom: 35, left: 50 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
   
   const values = trendsData.map(d => metric === 'clicks' ? d.clicks : d.impressions);
   const maxValue = Math.max(...values, 1);
   const minValue = Math.min(...values, 0);
   const range = maxValue - minValue || 1;
   
+  // Build polyline points
   const points = trendsData.map((d, i) => {
-    const x = padding + (i / (trendsData.length - 1 || 1)) * chartWidth;
-    const y = padding + chartHeight - ((values[i] - minValue) / range) * chartHeight;
+    const x = padding.left + (i / (trendsData.length - 1 || 1)) * chartWidth;
+    const y = padding.top + chartHeight - ((values[i] - minValue) / range) * chartHeight;
     return `${x},${y}`;
   }).join(' ');
   
   const color = metric === 'clicks' ? '#0A84FF' : '#AF52DE';
   
-  // Add axis labels for better readability
-  const labelY = padding + chartHeight / 2;
-  const labelX = width / 2;
+  // Format numbers for display
+  const formatNum = (num: number) => {
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+    return Math.round(num).toString();
+  };
   
   return `
-    <div style="width: 100%; max-width: 560px; margin: 0 auto; overflow: hidden;">
-      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display: block; width: 100%; height: auto; max-width: 560px; margin: 0 auto;" preserveAspectRatio="xMidYMid meet">
-        <!-- Grid lines -->
-        ${Array.from({ length: 5 }, (_, i) => {
-          const y = padding + (i * chartHeight / 4);
-          return `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="#48484A" stroke-width="0.5" opacity="0.3"/>`;
-        }).join('')}
-        
-        <!-- Chart line -->
-        <polyline
-          fill="none"
-          stroke="${color}"
-          stroke-width="2.5"
-          points="${points}"
-        />
-        
-        <!-- Data points -->
-        ${trendsData.map((d, i) => {
-          const x = padding + (i / (trendsData.length - 1 || 1)) * chartWidth;
-          const y = padding + chartHeight - ((values[i] - minValue) / range) * chartHeight;
-          return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
-        }).join('')}
-        
-        <!-- Y-axis label -->
-        <text x="15" y="${labelY}" fill="#98989D" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" transform="rotate(-90, 15, ${labelY})" text-anchor="middle">${metric === 'clicks' ? 'Clicks' : 'Impressions'}</text>
-        
-        <!-- Chart title -->
-        <text x="${labelX}" y="${height - 15}" text-anchor="middle" fill="#E5E5EA" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif">${metric === 'clicks' ? 'Clicks' : 'Impressions'} Over Time</text>
-        
-        <!-- Min/Max values -->
-        <text x="${padding - 5}" y="${height - padding + 5}" text-anchor="end" fill="#98989D" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif">${Math.round(minValue)}</text>
-        <text x="${padding - 5}" y="${padding + 5}" text-anchor="end" fill="#98989D" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif">${Math.round(maxValue)}</text>
-      </svg>
+    <div style="width: 100%; max-width: 500px; margin: 0 auto 24px auto; background: #1C1C1E; border-radius: 8px; padding: 16px; box-sizing: border-box;">
+      <div style="color: #E5E5EA; font-size: 14px; font-weight: 600; margin-bottom: 12px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;">
+        ${metric === 'clicks' ? 'Clicks' : 'Impressions'} Over Time
+      </div>
+      <div style="width: 100%; overflow-x: auto;">
+        <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display: block; width: 100%; height: auto;" preserveAspectRatio="xMidYMid meet">
+          <!-- Background -->
+          <rect width="${width}" height="${height}" fill="#1C1C1E"/>
+          
+          <!-- Horizontal grid lines -->
+          ${Array.from({ length: 4 }, (_, i) => {
+            const y = padding.top + (i * chartHeight / 3);
+            const value = maxValue - (i * (range / 3));
+            return `
+              <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#48484A" stroke-width="0.5" opacity="0.4"/>
+              <text x="${padding.left - 8}" y="${y + 4}" fill="#98989D" font-size="10" font-family="-apple-system, sans-serif" text-anchor="end">${formatNum(value)}</text>
+            `;
+          }).join('')}
+          
+          <!-- Vertical grid lines (optional, for date markers) -->
+          ${trendsData.length > 1 ? trendsData.map((_, i) => {
+            if (i === 0 || i === trendsData.length - 1 || (trendsData.length > 7 && i % Math.ceil(trendsData.length / 4) === 0)) {
+              const x = padding.left + (i / (trendsData.length - 1)) * chartWidth;
+              return `<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${height - padding.bottom}" stroke="#48484A" stroke-width="0.5" opacity="0.2"/>`;
+            }
+            return '';
+          }).join('') : ''}
+          
+          <!-- Chart area background (optional subtle fill) -->
+          <defs>
+            <linearGradient id="grad-${metric}" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:${color};stop-opacity:0.15" />
+              <stop offset="100%" style="stop-color:${color};stop-opacity:0" />
+            </linearGradient>
+          </defs>
+          <polygon points="${padding.left},${height - padding.bottom} ${points} ${width - padding.right},${height - padding.bottom}" fill="url(#grad-${metric})" opacity="0.3"/>
+          
+          <!-- Chart line -->
+          <polyline
+            fill="none"
+            stroke="${color}"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            points="${points}"
+          />
+          
+          <!-- Data points (larger for visibility) -->
+          ${trendsData.map((d, i) => {
+            const x = padding.left + (i / (trendsData.length - 1 || 1)) * chartWidth;
+            const y = padding.top + chartHeight - ((values[i] - minValue) / range) * chartHeight;
+            return `<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="#1C1C1E" stroke-width="1.5"/>`;
+          }).join('')}
+          
+          <!-- Axis labels -->
+          <text x="${width / 2}" y="${height - 8}" text-anchor="middle" fill="#98989D" font-size="10" font-family="-apple-system, sans-serif">Date</text>
+          
+          <!-- Min/Max annotation -->
+          <text x="${padding.left - 8}" y="${height - padding.bottom + 5}" fill="#98989D" font-size="10" font-family="-apple-system, sans-serif" text-anchor="end">${formatNum(minValue)}</text>
+        </svg>
+      </div>
     </div>
   `;
 }

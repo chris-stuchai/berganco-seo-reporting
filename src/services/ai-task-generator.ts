@@ -52,6 +52,20 @@ interface TaskGenerationContext {
   userId: string;
   weekStartDate: Date;
   weekEndDate: Date;
+  technicalIssues?: {
+    sitemapIssues: Array<{
+      page: string;
+      issue: string;
+      severity: string;
+    }>;
+    potentialIssues: Array<{
+      page: string;
+      issue: string;
+      severity: string;
+    }>;
+    totalErrors: number;
+    totalWarnings: number;
+  };
 }
 
 interface GeneratedTask {
@@ -147,7 +161,20 @@ Return tasks in JSON format only.`
  * Builds the prompt for AI task generation
  */
 function buildTaskGenerationPrompt(context: TaskGenerationContext): string {
-  const { currentMetrics, changes, topPages, topQueries, recommendations, websiteDomain, weekStartDate, weekEndDate } = context;
+  const { currentMetrics, changes, topPages, topQueries, recommendations, websiteDomain, weekStartDate, weekEndDate, technicalIssues } = context;
+
+  let technicalIssuesSection = '';
+  if (technicalIssues) {
+    const allIssues = [...technicalIssues.sitemapIssues, ...technicalIssues.potentialIssues];
+    if (allIssues.length > 0) {
+      technicalIssuesSection = `
+**Technical SEO Issues Detected (${technicalIssues.totalErrors} errors, ${technicalIssues.totalWarnings} warnings):**
+${allIssues.slice(0, 10).map((issue, i) => 
+  `${i + 1}. [${issue.severity.toUpperCase()}] ${issue.page}: ${issue.issue}`
+).join('\n')}
+`;
+    }
+  }
 
   return `Analyze SEO performance for ${websiteDomain} and generate specific, actionable tasks to improve SEO.
 
@@ -174,22 +201,24 @@ ${topPages.slice(0, 5).map((p, i) =>
 ${topQueries.slice(0, 5).map((q, i) => 
   `${i + 1}. "${q.query}": ${q.clicks} clicks, Position ${q.position.toFixed(1)}, CTR ${(q.ctr * 100).toFixed(2)}%`
 ).join('\n')}
-
+${technicalIssuesSection}
 **Current Recommendations:**
 ${recommendations}
 
 **CRITICAL:** Generate 3-5 specific, actionable SEO tasks based ONLY on this data. Each task should:
 - Address a specific issue or opportunity identified in the data
+- Prioritize technical issues (indexing, 404 errors, sitemap problems) as URGENT or HIGH priority
 - Be achievable within a week
-- Have clear priority (URGENT for critical drops, HIGH for high-impact improvements, MEDIUM for standard optimizations, LOW for nice-to-haves)
+- Have clear priority (URGENT for critical drops or technical errors, HIGH for high-impact improvements, MEDIUM for standard optimizations, LOW for nice-to-haves)
 - Include specific pages or queries to target if mentioned in the data
+- If technical issues are detected, create tasks to fix them (e.g., "Fix indexing issue for [page]" or "Resolve sitemap submission error")
 
 Return JSON format:
 {
   "tasks": [
     {
-      "title": "Specific task title (e.g., 'Optimize meta descriptions for top 5 pages')",
-      "description": "Detailed description of what needs to be done, why it matters, and how to do it. Reference specific metrics or pages from the data.",
+      "title": "Specific task title (e.g., 'Fix indexing issue: [page] not being indexed' or 'Optimize meta descriptions for top 5 pages')",
+      "description": "Detailed description of what needs to be done, why it matters, and how to do it. Reference specific metrics, pages, or technical issues from the data.",
       "priority": "URGENT|HIGH|MEDIUM|LOW"
     }
   ]

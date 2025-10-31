@@ -436,9 +436,22 @@ export async function generateReport(
   // Generate AI tasks for all client users after report generation
   try {
     const { createAITasksForClient } = await import('./ai-task-generator');
+    const { getAllTechnicalIssues } = await import('./search-console-issues');
     const clients = await prisma.user.findMany({
       where: { role: 'CLIENT', isActive: true },
     });
+
+    // Fetch technical issues from Google Search Console
+    let technicalIssues = null;
+    try {
+      const startDateStr = format(calculatedStartDate, 'yyyy-MM-dd');
+      const endDateStr = format(calculatedEndDate, 'yyyy-MM-dd');
+      technicalIssues = await getAllTechnicalIssues(startDateStr, endDateStr);
+      console.log(`✓ Found ${technicalIssues.totalErrors} errors and ${technicalIssues.totalWarnings} warnings`);
+    } catch (error) {
+      console.error('Error fetching technical issues:', error);
+      // Continue without technical issues data
+    }
 
     for (const client of clients) {
       try {
@@ -461,6 +474,7 @@ export async function generateReport(
             userId: client.id,
             weekStartDate: calculatedStartDate,
             weekEndDate: calculatedEndDate,
+            technicalIssues: technicalIssues || undefined,
           }
         );
       } catch (error) {
