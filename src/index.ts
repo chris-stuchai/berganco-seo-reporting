@@ -839,7 +839,7 @@ app.get('/api/top-pages', optionalAuth, async (req: AuthenticatedRequest, res) =
     let accessibleSiteIds: string[] = [];
     if (req.user) {
       const { getUserAccessibleSiteIds } = await import('./utils/site-access');
-      accessibleSiteIds = await getUserAccessibleSiteIds(req.user.id);
+      accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
     } else {
       const allSites = await prisma.site.findMany({
         where: { isActive: true },
