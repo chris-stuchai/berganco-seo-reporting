@@ -10,6 +10,7 @@
     "collect": "tsx src/scripts/collect-data.ts",
     "report": "tsx src/scripts/generate-report.ts",
     "migrate": "tsx src/db/migrate.ts",
+    "migrate-berganco": "tsx src/scripts/migrate-berganco-data.ts",
     "setup": "tsx src/scripts/setup-auth.ts"
   },
   "keywords": [

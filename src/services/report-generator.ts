@@ -380,6 +380,12 @@ export async function generateReport(
   const insights = generateInsights(comparison);
   const recommendations = generateRecommendations(comparison, topPages, topQueries);
 
+  // Get site info for domain
+  const site = await prisma.site.findUnique({
+    where: { id: targetSiteId },
+    select: { domain: true },
+  });
+
   // Generate AI-powered insights (enhances baseline insights)
   console.log('🤖 Generating AI-powered insights...');
   let aiInsights = null;
@@ -395,7 +401,7 @@ export async function generateReport(
       },
       topPages,
       topQueries,
-      websiteDomain: 'www.berganco.com',
+      websiteDomain: site?.domain || 'unknown',
       period: {
         startDate: format(calculatedStartDate, 'yyyy-MM-dd'),
         endDate: format(calculatedEndDate, 'yyyy-MM-dd'),
@@ -472,20 +478,40 @@ export async function generateReport(
       where: { role: 'CLIENT', isActive: true },
     });
 
-    // Fetch technical issues from Google Search Console
-    let technicalIssues = null;
-    try {
-      const startDateStr = format(calculatedStartDate, 'yyyy-MM-dd');
-      const endDateStr = format(calculatedEndDate, 'yyyy-MM-dd');
-      technicalIssues = await getAllTechnicalIssues(startDateStr, endDateStr);
-      console.log(`✓ Found ${technicalIssues.totalErrors} errors and ${technicalIssues.totalWarnings} warnings`);
-    } catch (error) {
-      console.error('Error fetching technical issues:', error);
-      // Continue without technical issues data
-    }
-
+    // Get each client's primary site for domain and technical issues
     for (const client of clients) {
       try {
+        // Get client's primary site (or first accessible site)
+        const clientSites = await prisma.site.findMany({
+          where: {
+            OR: [
+              { ownerId: client.id },
+              { clientSites: { some: { userId: client.id } } },
+            ],
+            isActive: true,
+          },
+          take: 1,
+        });
+
+        if (clientSites.length === 0) {
+          console.log(`⚠️  No sites found for client ${client.email}, skipping AI task generation`);
+          continue;
+        }
+
+        const clientSite = clientSites[0];
+
+        // Fetch technical issues from Google Search Console for this site
+        let technicalIssues = null;
+        try {
+          const startDateStr = format(calculatedStartDate, 'yyyy-MM-dd');
+          const endDateStr = format(calculatedEndDate, 'yyyy-MM-dd');
+          technicalIssues = await getAllTechnicalIssues(startDateStr, endDateStr, clientSite.googleSiteUrl);
+          console.log(`✓ Found ${technicalIssues.totalErrors} errors and ${technicalIssues.totalWarnings} warnings for ${clientSite.domain}`);
+        } catch (error) {
+          console.error(`Error fetching technical issues for ${clientSite.domain}:`, error);
+          // Continue without technical issues data
+        }
+
         await createAITasksForClient(
           client.id,
           calculatedStartDate,
@@ -501,7 +527,7 @@ export async function generateReport(
             topPages,
             topQueries,
             recommendations: enhancedRecommendations,
-            websiteDomain: 'www.berganco.com',
+            websiteDomain: clientSite.domain,
             userId: client.id,
             weekStartDate: calculatedStartDate,
             weekEndDate: calculatedEndDate,

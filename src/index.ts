@@ -604,7 +604,7 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
 });
 
 // Preview email endpoint (generates report but doesn't send)
-app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req: AuthenticatedRequest, res) => {
   try {
     const { startDate, endDate, periodType } = req.body;
     
@@ -617,15 +617,44 @@ app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), a
       parsedEndDate = new Date(endDate);
     }
     
-    const { generateReport } = await import('./services/report-generator');
-    const result = await generateReport(parsedStartDate, parsedEndDate, reportPeriodType);
+    // Get siteId from request or user's primary site
+    let targetSiteId: string | undefined = req.body.siteId;
     
-    // Fetch tasks for this client/week
+    if (!targetSiteId && req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      const accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+      if (accessibleSiteIds.length > 0) {
+        targetSiteId = accessibleSiteIds[0]; // Use first accessible site
+      }
+    }
+
+    const { generateReport } = await import('./services/report-generator');
+    const result = await generateReport(parsedStartDate, parsedEndDate, reportPeriodType, targetSiteId);
+    
+    // Get site info for domain
+    const site = await prisma.site.findUnique({
+      where: { id: result.report.siteId },
+      select: { domain: true },
+    });
+    
+    // Fetch tasks for this client/week (filter by users who have access to this site)
     let tasks: any[] = [];
     try {
+      // Get all user IDs who have access to this site
+      const siteAccess = await prisma.clientSite.findMany({
+        where: { siteId: result.report.siteId },
+        select: { userId: true },
+      });
+      const siteOwner = await prisma.site.findUnique({
+        where: { id: result.report.siteId },
+        select: { ownerId: true },
+      });
+      const userIds = [siteOwner?.ownerId, ...siteAccess.map(cs => cs.userId)].filter((id): id is string => !!id);
+      
       const clientTasks = await prisma.task.findMany({
         where: {
           weekStartDate: result.report.weekStartDate,
+          userId: { in: Array.from(userIds) },
           status: { not: 'CANCELLED' },
         },
         orderBy: [
@@ -660,7 +689,7 @@ app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), a
         nextSteps: result.aiInsights.nextSteps,
       } : undefined,
       trendsData: result.trendsData,
-      websiteDomain: 'www.berganco.com',
+      websiteDomain: site?.domain || 'unknown',
       tasks: tasks.map((t: any) => ({
         title: t.title,
         description: t.description,
@@ -690,7 +719,7 @@ app.post('/api/preview-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), a
 });
 
 // Manual report generation endpoint
-app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req: AuthenticatedRequest, res) => {
   try {
     const { startDate, endDate, periodType } = req.body;
     
@@ -703,15 +732,44 @@ app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), 
       parsedEndDate = new Date(endDate);
     }
     
-    const { generateReport } = await import('./services/report-generator');
-    const result = await generateReport(parsedStartDate, parsedEndDate, reportPeriodType);
+    // Get siteId from request or user's primary site
+    let targetSiteId: string | undefined = req.body.siteId;
     
-    // Fetch tasks for this client/week
+    if (!targetSiteId && req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      const accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+      if (accessibleSiteIds.length > 0) {
+        targetSiteId = accessibleSiteIds[0]; // Use first accessible site
+      }
+    }
+
+    const { generateReport } = await import('./services/report-generator');
+    const result = await generateReport(parsedStartDate, parsedEndDate, reportPeriodType, targetSiteId);
+    
+    // Get site info for domain
+    const site = await prisma.site.findUnique({
+      where: { id: result.report.siteId },
+      select: { domain: true },
+    });
+    
+    // Fetch tasks for this client/week (filter by users who have access to this site)
     let emailTasks: any[] = [];
     try {
+      // Get all user IDs who have access to this site
+      const siteAccess = await prisma.clientSite.findMany({
+        where: { siteId: result.report.siteId },
+        select: { userId: true },
+      });
+      const siteOwner = await prisma.site.findUnique({
+        where: { id: result.report.siteId },
+        select: { ownerId: true },
+      });
+      const userIds = [siteOwner?.ownerId, ...siteAccess.map(cs => cs.userId)].filter((id): id is string => !!id);
+      
       const clientTasks = await prisma.task.findMany({
         where: {
           weekStartDate: result.report.weekStartDate,
+          userId: { in: Array.from(userIds) },
           status: { not: 'CANCELLED' },
         },
         orderBy: [
@@ -746,7 +804,7 @@ app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), 
         nextSteps: result.aiInsights.nextSteps,
       } : undefined,
       trendsData: result.trendsData,
-      websiteDomain: 'www.berganco.com',
+      websiteDomain: site?.domain || 'unknown',
       tasks: emailTasks.map((t: any) => ({
         title: t.title,
         description: t.description,
@@ -973,10 +1031,13 @@ app.get('/api/ai-insights', async (req, res) => {
     const ctrChange = prevAvgCtr > 0 ? ((avgCtr - prevAvgCtr) / prevAvgCtr) * 100 : 0;
     const positionChange = avgPosition - prevAvgPosition;
 
-    // Get top pages and queries
+    // Get top pages and queries filtered by site
     const topPages = await prisma.pageMetric.groupBy({
       by: ['page'],
-      where: { date: { gte: startDate, lte: endDate } },
+      where: { 
+        siteId: { in: accessibleSiteIds },
+        date: { gte: startDate, lte: endDate } 
+      },
       _sum: { clicks: true, impressions: true },
       _avg: { ctr: true, position: true },
       orderBy: { _sum: { clicks: 'desc' } },
@@ -985,7 +1046,10 @@ app.get('/api/ai-insights', async (req, res) => {
 
     const topQueries = await prisma.queryMetric.groupBy({
       by: ['query'],
-      where: { date: { gte: startDate, lte: endDate } },
+      where: { 
+        siteId: { in: accessibleSiteIds },
+        date: { gte: startDate, lte: endDate } 
+      },
       _sum: { clicks: true, impressions: true },
       _avg: { ctr: true, position: true },
       orderBy: { _sum: { clicks: 'desc' } },
@@ -1028,7 +1092,7 @@ app.get('/api/ai-insights', async (req, res) => {
         ctr: q._avg.ctr || 0,
         position: q._avg.position || 0,
       })),
-      websiteDomain: 'www.berganco.com',
+      websiteDomain: primarySite?.domain || 'unknown',
       period: {
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
@@ -1049,8 +1113,8 @@ app.get('/api/ai-insights', async (req, res) => {
   }
 });
 
-// AI Chat endpoint
-app.post('/api/ai-chat', async (req, res) => {
+// AI Chat endpoint (supports multi-tenant)
+app.post('/api/ai-chat', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { message, context } = req.body;
     const apiKey = process.env.OPENAI_API_KEY;
@@ -1059,6 +1123,45 @@ app.post('/api/ai-chat', async (req, res) => {
       return res.status(503).json({ 
         error: 'AI features unavailable. Please configure OPENAI_API_KEY.' 
       });
+    }
+
+    // Get user's primary site for context
+    let websiteDomain = 'your website';
+    let businessName = 'your business';
+    let businessContext = '';
+    
+    if (req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      const accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+      
+      if (accessibleSiteIds.length > 0) {
+        const primarySite = await prisma.site.findFirst({
+          where: { id: accessibleSiteIds[0], isActive: true },
+          select: { domain: true, displayName: true },
+        });
+        
+        if (primarySite) {
+          websiteDomain = primarySite.domain;
+          businessName = primarySite.displayName || primarySite.domain;
+        }
+      }
+    } else if (context?.websiteDomain) {
+      websiteDomain = context.websiteDomain;
+    }
+
+    // Build dynamic business context based on domain
+    if (websiteDomain.includes('berganco') || websiteDomain.includes('property') || websiteDomain.includes('management')) {
+      businessContext = `**About ${businessName} (${websiteDomain}):**
+${businessName} appears to be a property management company. They likely specialize in:
+- Property management services
+- Rental property management
+- Residential property management
+- Property maintenance and tenant relations
+
+The website serves property owners, investors, and tenants. They provide comprehensive property management services including rent collection, maintenance coordination, tenant screening, and financial reporting.`;
+    } else {
+      businessContext = `**About ${businessName} (${websiteDomain}):**
+You are analyzing SEO performance for ${businessName}. Focus on their specific business context and how SEO metrics relate to their goals.`;
     }
 
     // Build context from dashboard data
@@ -1085,20 +1188,13 @@ Changes:
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
+        temperature: 0.5,
         messages: [
           {
             role: 'system',
-            content: `You are Stuchai AI, an expert SEO analyst specializing in property management and real estate SEO.
+            content: `You are Stuchai AI, an expert SEO analyst.
 
-**About BerganCo (www.berganco.com):**
-BerganCo is a property management company based in Denver, Colorado. They specialize in:
-- Property management services
-- Rental property management
-- Residential property management
-- Property maintenance and tenant relations
-- Real estate investment management in the Denver metro area
-
-The website serves property owners, investors, and tenants in the Denver, Colorado market. They provide comprehensive property management services including rent collection, maintenance coordination, tenant screening, and financial reporting.
+${businessContext}
 
 **CRITICAL ACCURACY REQUIREMENTS:**
 1. You MUST ONLY reference metrics, numbers, and data that are explicitly provided in the conversation context.
@@ -1110,14 +1206,14 @@ The website serves property owners, investors, and tenants in the Denver, Colora
 7. When interpreting data, base conclusions strictly on actual patterns visible in the provided numbers - do not extrapolate or assume trends beyond what the data shows.
 
 **Your Role:**
-You provide concise, accurate, actionable insights based ONLY on the SEO data provided for www.berganco.com. You understand their business model, target market (Denver property owners and investors), and can relate SEO performance to their property management business goals - but always ground your analysis in the actual data provided.
+You provide concise, accurate, actionable insights based ONLY on the SEO data provided for ${websiteDomain}. You understand their business model and can relate SEO performance to their business goals - but always ground your analysis in the actual data provided.
 
 **Guidelines:**
 - Be helpful, specific, accurate, and focus on actionable recommendations based on actual data
 - Relate SEO metrics to business outcomes (lead generation, visibility, market presence) only using provided metrics
-- Consider local Denver market dynamics and competition (general knowledge is acceptable here)
+- Consider local market dynamics and competition (general knowledge is acceptable here)
 - Keep responses under 200 words unless more detail is needed
-- Reference BerganCo's services and market position when relevant
+- Reference the business's services and market position when relevant
 - If you don't have data to answer a question, say so clearly rather than guessing`
           },
           {
@@ -1125,7 +1221,6 @@ You provide concise, accurate, actionable insights based ONLY on the SEO data pr
             content: `${contextPrompt}\n\nUser Question: ${message}`
           }
         ],
-        temperature: 0.5, // Lower temperature for more accurate, factual responses
         max_tokens: 500,
       }),
     });
