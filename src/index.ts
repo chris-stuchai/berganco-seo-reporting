@@ -169,9 +169,26 @@ app.get('/api/users', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req,
 
 app.post('/api/users', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, name, role, sendOnboardingEmail: sendEmail } = req.body;
     const user = await authService.createUser(email, password, name, role || Role.CLIENT);
-    res.json(user);
+    
+    // Send onboarding email if requested
+    let emailSent = false;
+    if (sendEmail) {
+      try {
+        const { sendOnboardingEmail } = await import('./services/email-service');
+        const loginUrl = process.env.APP_URL || (req.headers.origin || 'http://localhost:3000');
+        await sendOnboardingEmail(user.name, user.email, password, `${loginUrl}/login`);
+        emailSent = true;
+        console.log(`✓ Onboarding email sent to ${user.email}`);
+      } catch (emailError) {
+        console.error('Failed to send onboarding email:', emailError);
+        // Don't fail user creation if email fails
+        emailSent = false;
+      }
+    }
+    
+    res.json({ ...user, emailSent });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

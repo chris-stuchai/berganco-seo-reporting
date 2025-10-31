@@ -473,6 +473,161 @@ export function getEmailPreview(reportData: ReportData): string {
 }
 
 /**
+ * Generates onboarding email HTML for new users
+ */
+function generateOnboardingEmailHTML(name: string, email: string, password: string, loginUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
+  <title>Welcome to Stuchai SEO Platform</title>
+  <style>
+    @media (prefers-color-scheme: light) {
+      .dark-mode-bg { background-color: #1C1C1E !important; }
+      .dark-mode-card { background-color: #2C2C2E !important; }
+      .dark-mode-text { color: #FFFFFF !important; }
+      .dark-mode-text-secondary { color: #E5E5EA !important; }
+      .dark-mode-text-tertiary { color: #98989D !important; }
+      .dark-mode-border { border-color: #48484A !important; }
+    }
+    @media (prefers-color-scheme: dark) {
+      .dark-mode-bg { background-color: #1C1C1E !important; }
+      .dark-mode-card { background-color: #2C2C2E !important; }
+      .dark-mode-text { color: #FFFFFF !important; }
+      .dark-mode-text-secondary { color: #E5E5EA !important; }
+      .dark-mode-text-tertiary { color: #98989D !important; }
+      .dark-mode-border { border-color: #48484A !important; }
+    }
+  </style>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; line-height: 1.47; color: #FFFFFF; max-width: 600px; margin: 0 auto; padding: 32px 24px; background-color: #1C1C1E;" class="dark-mode-bg">
+  
+  <!-- Main Container -->
+  <div style="background-color: #2C2C2E; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); border: 1px solid #48484A;" class="dark-mode-card dark-mode-border">
+    
+    <!-- Logo Header -->
+    <div style="margin-bottom: 32px; text-align: center; border-bottom: 1px solid #48484A; padding-bottom: 24px;">
+      <img src="https://framerusercontent.com/images/AhyGPdkv1Kr9JeLtiQvJBU0uJE.png?scale-down-to=1024&width=2088&height=518" alt="StuchAI Logo" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
+    </div>
+    
+    <!-- Header -->
+    <div style="margin-bottom: 32px;">
+      <h1 style="margin: 0 0 8px 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;" class="dark-mode-text">Welcome to Stuchai SEO Platform</h1>
+      <p style="margin: 0; color: #98989D; font-size: 17px; font-weight: 400;" class="dark-mode-text-tertiary">
+        Hello ${name},
+      </p>
+    </div>
+    
+    <!-- Welcome Message -->
+    <div style="margin-bottom: 32px; padding: 24px; background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; border-left: 4px solid #0A84FF;" class="dark-mode-card dark-mode-border">
+      <p style="color: #E5E5EA; font-size: 17px; line-height: 1.6; margin: 0;" class="dark-mode-text-secondary">
+        You've been invited to join the Stuchai SEO Platform! Your account has been created and you can now access your personalized SEO dashboard to track performance, view insights, and monitor your website's search engine visibility.
+      </p>
+    </div>
+    
+    <!-- Login Credentials -->
+    <div style="margin-bottom: 32px;">
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;" class="dark-mode-text">Your Login Credentials</h2>
+      
+      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 20px; margin-bottom: 16px;" class="dark-mode-card dark-mode-border">
+        <div style="margin-bottom: 12px;">
+          <div style="color: #98989D; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Email</div>
+          <div style="color: #FFFFFF; font-size: 17px; font-weight: 500;" class="dark-mode-text">${email}</div>
+        </div>
+        <div>
+          <div style="color: #98989D; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Password</div>
+          <div style="color: #FFFFFF; font-size: 17px; font-weight: 500; font-family: 'Courier New', monospace; letter-spacing: 2px;" class="dark-mode-text">${password}</div>
+        </div>
+      </div>
+      
+      <p style="color: #98989D; font-size: 13px; margin: 0; text-align: center;" class="dark-mode-text-tertiary">
+        For security, please change your password after first login.
+      </p>
+    </div>
+    
+    <!-- Login Button -->
+    <div style="margin-bottom: 32px; text-align: center;">
+      <a href="${loginUrl}" style="display: inline-block; background-color: #0A84FF; color: #FFFFFF; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 17px; font-weight: 600; transition: opacity 0.2s;">
+        Access Your Dashboard
+      </a>
+    </div>
+    
+    <!-- What's Next -->
+    <div style="margin-bottom: 32px;">
+      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;" class="dark-mode-text">What's Next?</h2>
+      
+      <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 24px;" class="dark-mode-card dark-mode-border">
+        <ul style="margin: 0; padding-left: 20px; color: #E5E5EA; font-size: 17px; line-height: 1.8;" class="dark-mode-text-secondary">
+          <li style="margin-bottom: 12px;">Log in to your dashboard using the credentials above</li>
+          <li style="margin-bottom: 12px;">Explore your SEO performance metrics and insights</li>
+          <li style="margin-bottom: 12px;">Review your top-performing pages and search queries</li>
+          <li style="margin-bottom: 12px;">Update your profile and customize your dashboard</li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div style="border-top: 1px solid #48484A; padding-top: 32px; margin-top: 32px;">
+      <table style="width: 100%;">
+        <tr>
+          <td style="text-align: center;">
+            <p style="margin: 0 0 8px 0; color: #98989D; font-size: 13px; font-weight: 400;">Need help? Contact us at support@stuchai.com</p>
+            <p style="margin: 0; color: #98989D; font-size: 13px; font-weight: 400;">Powered by Stuchai LLC</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+
+</body>
+</html>
+  `;
+}
+
+/**
+ * Sends onboarding email to new user
+ */
+export async function sendOnboardingEmail(
+  name: string,
+  email: string,
+  password: string,
+  loginUrl: string
+) {
+  const emailFrom = process.env.SMTP_USER || process.env.REPORT_EMAIL_FROM;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPassword = process.env.SMTP_PASSWORD;
+
+  if (!emailFrom || !smtpUser || !smtpPassword) {
+    throw new Error('SMTP configuration missing. Cannot send onboarding email.');
+  }
+
+  const subject = 'Welcome to Stuchai SEO Platform - Your Account is Ready';
+  const html = generateOnboardingEmailHTML(name, email, password, loginUrl);
+
+  try {
+    await transporter.verify();
+    console.log('✓ SMTP server is ready to send onboarding email');
+
+    const result = await transporter.sendMail({
+      from: `"Stuchai SEO Platform" <${emailFrom}>`,
+      to: email,
+      subject,
+      html,
+    });
+
+    console.log('✓ Onboarding email sent successfully:', result.messageId);
+    return result;
+  } catch (error) {
+    console.error('Error sending onboarding email:', error);
+    throw error;
+  }
+}
+
+/**
  * Sends the weekly report via email using Gmail/Google Workspace SMTP
  */
 export async function sendWeeklyReport(reportData: ReportData) {

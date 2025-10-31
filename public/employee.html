@@ -261,7 +261,10 @@
         
         <div class="form-group">
           <label class="form-label" for="createPassword">Password</label>
-          <input type="password" id="createPassword" placeholder="Enter a secure password" required>
+          <div style="display: flex; gap: var(--spacing-2); align-items: center;">
+            <input type="password" id="createPassword" placeholder="Enter a secure password" required style="flex: 1;">
+            <button type="button" onclick="generatePassword('createPassword')" class="btn" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary); white-space: nowrap; font-size: var(--font-footnote);">Generate</button>
+          </div>
         </div>
         
         <div class="form-group" style="margin-bottom: var(--spacing-6);">
@@ -276,6 +279,49 @@
         <div style="display: flex; gap: var(--spacing-3);">
           <button type="submit" class="btn btn-primary" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; font-weight: 500;">Create</button>
           <button type="button" onclick="closeCreateUserModal()" class="btn" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary);">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="editUserModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: var(--spacing-4);">
+    <div style="background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); border-radius: 16px; padding: var(--spacing-6); width: 100%; max-width: 500px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);">
+      <h2 style="font-size: 28px; font-weight: 700; color: var(--color-label-primary); margin-bottom: var(--spacing-6);">Edit User</h2>
+      
+      <form onsubmit="event.preventDefault(); updateUser();">
+        <input type="hidden" id="editUserId">
+        
+        <div class="form-group">
+          <label class="form-label" for="editName">Name</label>
+          <input type="text" id="editName" placeholder="Full Name" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="editEmail">Email</label>
+          <input type="email" id="editEmail" placeholder="user@example.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="editPassword">Password (leave blank to keep current)</label>
+          <div style="display: flex; gap: var(--spacing-2); align-items: center;">
+            <input type="password" id="editPassword" placeholder="Enter new password (optional)" style="flex: 1;">
+            <button type="button" onclick="generatePassword('editPassword')" class="btn" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary); white-space: nowrap; font-size: var(--font-footnote);">Generate</button>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: var(--spacing-6);">
+          <label class="form-label" for="editRole">Role</label>
+          <select id="editRole" required>
+            <option value="CLIENT">Client</option>
+            <option value="EMPLOYEE">Employee</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </div>
+        
+        <div style="display: flex; gap: var(--spacing-3);">
+          <button type="submit" class="btn btn-primary" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; font-weight: 500;">Update</button>
+          <button type="button" onclick="closeEditUserModal()" class="btn" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary);">Cancel</button>
         </div>
       </form>
     </div>
@@ -374,23 +420,130 @@
       document.getElementById('createRole').value = 'CLIENT';
     }
 
+    // Generate secure random password
+    function generatePassword(inputId) {
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+      let password = '';
+      for (let i = 0; i < 16; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById(inputId).value = password;
+      document.getElementById(inputId).type = 'text'; // Show generated password
+      setTimeout(() => {
+        document.getElementById(inputId).type = 'password'; // Hide after 3 seconds
+      }, 3000);
+    }
+
     async function createUser() {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: document.getElementById('createName').value,
-          email: document.getElementById('createEmail').value,
-          password: document.getElementById('createPassword').value,
-          role: document.getElementById('createRole').value
-        })
-      });
-      if (res.ok) {
-        closeCreateUserModal();
-        loadUsers();
-      } else {
-        alert('Error creating user');
+      const name = document.getElementById('createName').value;
+      const email = document.getElementById('createEmail').value;
+      const password = document.getElementById('createPassword').value;
+      const role = document.getElementById('createRole').value;
+      
+      if (!password) {
+        alert('Please enter or generate a password');
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            role,
+            sendOnboardingEmail: true // Request onboarding email
+          })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          alert(`User created successfully! ${data.emailSent ? 'Onboarding email sent.' : 'Note: Email could not be sent.'}`);
+          closeCreateUserModal();
+          loadUsers();
+        } else {
+          const error = await res.json();
+          alert(`Error creating user: ${error.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error creating user:', error);
+        alert('Failed to create user. Please try again.');
+      }
+    }
+
+    async function editUser(id) {
+      try {
+        // Fetch user data
+        const res = await fetch(`/api/users`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load users');
+        
+        const users = await res.json();
+        const user = users.find(u => u.id === id);
+        
+        if (!user) {
+          alert('User not found');
+          return;
+        }
+        
+        // Populate form
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('editName').value = user.name || '';
+        document.getElementById('editEmail').value = user.email || '';
+        document.getElementById('editPassword').value = '';
+        document.getElementById('editRole').value = user.role || 'CLIENT';
+        
+        // Show modal
+        document.getElementById('editUserModal').style.display = 'flex';
+      } catch (error) {
+        console.error('Error loading user:', error);
+        alert('Failed to load user data');
+      }
+    }
+
+    function closeEditUserModal() {
+      document.getElementById('editUserModal').style.display = 'none';
+      // Reset form
+      document.getElementById('editUserId').value = '';
+      document.getElementById('editName').value = '';
+      document.getElementById('editEmail').value = '';
+      document.getElementById('editPassword').value = '';
+      document.getElementById('editRole').value = 'CLIENT';
+    }
+
+    async function updateUser() {
+      const id = document.getElementById('editUserId').value;
+      const name = document.getElementById('editName').value;
+      const email = document.getElementById('editEmail').value;
+      const password = document.getElementById('editPassword').value;
+      const role = document.getElementById('editRole').value;
+      
+      try {
+        const body = { name, email, role };
+        if (password) {
+          body.password = password;
+        }
+        
+        const res = await fetch(`/api/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body)
+        });
+        
+        if (res.ok) {
+          alert('User updated successfully!');
+          closeEditUserModal();
+          loadUsers();
+        } else {
+          const error = await res.json();
+          alert(`Error updating user: ${error.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error updating user:', error);
+        alert('Failed to update user. Please try again.');
       }
     }
 
