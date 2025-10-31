@@ -373,12 +373,13 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
   }
 });
 
-// Manual data collection endpoint (protected)
-app.post('/api/collect', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+// Manual data collection endpoint (all authenticated users can sync)
+app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
+    // Collect data for 3 days ago (GSC data has 2-3 day delay)
     const date = subDays(new Date(), 3);
     await collectAllMetrics(date);
-    res.json({ success: true, date: format(date, 'yyyy-MM-dd') });
+    res.json({ success: true, date: format(date, 'yyyy-MM-dd'), message: 'Data sync started successfully' });
   } catch (error) {
     console.error('Error collecting data:', error);
     res.status(500).json({ error: 'Failed to collect data' });

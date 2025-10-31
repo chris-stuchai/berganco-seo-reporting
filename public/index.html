@@ -497,11 +497,16 @@
         <h1 class="page-title">SEO Dashboard</h1>
         <p class="page-subtitle">Track performance and insights for www.berganco.com</p>
       </div>
-      <div class="date-filters">
-        <button class="date-filter-btn active" onclick="setDateFilter(7)" id="filter-7">7 Days</button>
-        <button class="date-filter-btn" onclick="setDateFilter(14)" id="filter-14">14 Days</button>
-        <button class="date-filter-btn" onclick="setDateFilter(30)" id="filter-30">30 Days</button>
-        <button class="date-filter-btn" onclick="setDateFilter(90)" id="filter-90">90 Days</button>
+      <div style="display: flex; align-items: center; gap: var(--spacing-3);">
+        <div class="date-filters">
+          <button class="date-filter-btn active" onclick="setDateFilter(7)" id="filter-7">7 Days</button>
+          <button class="date-filter-btn" onclick="setDateFilter(14)" id="filter-14">14 Days</button>
+          <button class="date-filter-btn" onclick="setDateFilter(30)" id="filter-30">30 Days</button>
+          <button class="date-filter-btn" onclick="setDateFilter(90)" id="filter-90">90 Days</button>
+        </div>
+        <button class="btn btn-primary" onclick="syncData()" id="syncButton" style="padding: var(--spacing-2) var(--spacing-4); font-size: var(--font-footnote); white-space: nowrap;">
+          <span id="syncButtonText">Sync</span>
+        </button>
       </div>
     </header>
 
@@ -736,6 +741,64 @@
       loadDashboard();
     }
 
+    // Sync data manually
+    async function syncData() {
+      const syncButton = document.getElementById('syncButton');
+      const syncButtonText = document.getElementById('syncButtonText');
+      
+      if (!syncButton || !syncButtonText) return;
+      
+      try {
+        syncButton.disabled = true;
+        syncButtonText.textContent = 'Syncing...';
+        syncButton.style.opacity = '0.6';
+        
+        const res = await fetch('/api/collect', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          syncButtonText.textContent = 'Synced!';
+          syncButton.style.opacity = '1';
+          
+          // Show success message
+          const successMsg = document.createElement('div');
+          successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--color-green); color: white; padding: var(--spacing-3) var(--spacing-4); border-radius: 8px; font-size: var(--font-footnote); z-index: 1000; box-shadow: var(--shadow-md);';
+          successMsg.textContent = '✓ Data sync started. Data will be available shortly.';
+          document.body.appendChild(successMsg);
+          
+          // Remove message after 3 seconds
+          setTimeout(() => {
+            successMsg.remove();
+          }, 3000);
+          
+          // Reload dashboard after a short delay
+          setTimeout(() => {
+            loadDashboard();
+          }, 2000);
+        } else {
+          syncButtonText.textContent = 'Sync Failed';
+          syncButton.style.opacity = '1';
+          
+          alert(`Failed to sync: ${data.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error syncing data:', error);
+        syncButtonText.textContent = 'Sync Failed';
+        syncButton.style.opacity = '1';
+        alert('Failed to sync data. Please try again.');
+      } finally {
+        setTimeout(() => {
+          syncButton.disabled = false;
+          syncButtonText.textContent = 'Sync';
+          syncButton.style.opacity = '1';
+        }, 3000);
+      }
+    }
+    
     // Load dashboard
     async function loadDashboard() {
       const loadingEl = document.getElementById('loading');
