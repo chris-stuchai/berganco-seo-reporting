@@ -11,18 +11,24 @@ datasource db {
 
 model DailyMetric {
   id          String   @id @default(cuid())
-  date        DateTime @unique
+  siteId      String   // Which site this metric belongs to
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  date        DateTime
   clicks      Int
   impressions Int
   ctr         Float
   position    Float
   createdAt   DateTime @default(now())
   
+  @@unique([siteId, date])
+  @@index([siteId])
   @@index([date])
 }
 
 model PageMetric {
   id          String   @id @default(cuid())
+  siteId      String   // Which site this metric belongs to
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   date        DateTime
   page        String
   clicks      Int
@@ -31,13 +37,16 @@ model PageMetric {
   position    Float
   createdAt   DateTime @default(now())
   
-  @@unique([date, page])
+  @@unique([siteId, date, page])
+  @@index([siteId])
   @@index([date])
   @@index([page])
 }
 
 model QueryMetric {
   id          String   @id @default(cuid())
+  siteId      String   // Which site this metric belongs to
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   date        DateTime
   query       String
   clicks      Int
@@ -46,32 +55,71 @@ model QueryMetric {
   position    Float
   createdAt   DateTime @default(now())
   
-  @@unique([date, query])
+  @@unique([siteId, date, query])
+  @@index([siteId])
   @@index([date])
   @@index([query])
 }
 
 model WeeklyReport {
   id                String   @id @default(cuid())
-  weekStartDate     DateTime
-  weekEndDate       DateTime
-  totalClicks       Int
-  totalImpressions  Int
-  averageCtr        Float
-  averagePosition   Float
-  clicksChange      Float
-  impressionsChange Float
-  ctrChange         Float
-  positionChange    Float
-  insights          String
-  topPages          String
-  topQueries        String
-  recommendations   String
-  sentAt            DateTime?
-  createdAt         DateTime @default(now())
+  siteId             String   // Which site this report belongs to
+  site               Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  weekStartDate      DateTime
+  weekEndDate        DateTime
+  totalClicks        Int
+  totalImpressions   Int
+  averageCtr         Float
+  averagePosition    Float
+  clicksChange       Float
+  impressionsChange  Float
+  ctrChange          Float
+  positionChange     Float
+  insights           String
+  topPages           String
+  topQueries         String
+  recommendations    String
+  sentAt             DateTime?
+  createdAt          DateTime @default(now())
   
-  @@unique([weekStartDate, weekEndDate])
+  @@unique([siteId, weekStartDate, weekEndDate])
+  @@index([siteId])
   @@index([weekStartDate])
+}
+
+model Site {
+  id            String   @id @default(cuid())
+  domain        String   @unique // e.g., "www.stuchai.com"
+  displayName   String   // e.g., "Stuchai"
+  googleSiteUrl String   // Full URL for Google Search Console: "https://www.stuchai.com"
+  ownerId       String   // Primary owner/client user ID
+  owner         User     @relation("SiteOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  clientSites   ClientSite[]
+  dailyMetrics  DailyMetric[]
+  pageMetrics   PageMetric[]
+  queryMetrics  QueryMetric[]
+  reports       WeeklyReport[]
+  
+  @@index([ownerId])
+  @@index([domain])
+}
+
+model ClientSite {
+  id        String   @id @default(cuid())
+  userId    String   // Client user ID
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  siteId    String   // Site ID
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, siteId])
+  @@index([userId])
+  @@index([siteId])
 }
 
 model User {
@@ -86,8 +134,12 @@ model User {
   logoUrl       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  
+  // Relations
   sessions      Session[]
   tasks         Task[]
+  ownedSites    Site[]   @relation("SiteOwner") // Sites owned by this user
+  clientSites   ClientSite[] // Sites this user has access to
   
   @@index([email])
   @@index([role])

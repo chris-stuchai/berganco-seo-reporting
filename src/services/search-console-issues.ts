@@ -9,7 +9,7 @@ import { google } from 'googleapis';
 import { getOAuth2Client } from '../config/google-auth';
 import { logGoogleApiCall } from './api-tracking';
 
-const SITE_URL = process.env.SITE_URL || 'https://www.berganco.com';
+const DEFAULT_SITE_URL = process.env.SITE_URL || 'https://www.berganco.com';
 
 export interface IndexingIssue {
   page: string;
@@ -27,14 +27,16 @@ export interface CoverageIssue {
 
 /**
  * Fetches sitemaps and their submission status
+ * @param siteUrl - Google Search Console site URL (optional)
  */
-export async function fetchSitemapIssues() {
+export async function fetchSitemapIssues(siteUrl?: string) {
   const auth = getOAuth2Client();
   const searchConsole = google.searchconsole({ version: 'v1', auth });
+  const targetSiteUrl = siteUrl || DEFAULT_SITE_URL;
 
   try {
     const response = await searchConsole.sitemaps.list({
-      siteUrl: SITE_URL,
+      siteUrl: targetSiteUrl,
     });
 
     await logGoogleApiCall('/searchconsole/v1/sitemaps/list', true);
@@ -82,10 +84,13 @@ export async function fetchSitemapIssues() {
 /**
  * Inspects specific URLs for indexing issues
  * Note: This requires the URL Inspection API which may have limitations
+ * @param urls - Array of URLs to inspect
+ * @param siteUrl - Google Search Console site URL (optional)
  */
-export async function inspectUrlForIssues(urls: string[]): Promise<IndexingIssue[]> {
+export async function inspectUrlForIssues(urls: string[], siteUrl?: string): Promise<IndexingIssue[]> {
   const auth = getOAuth2Client();
   const searchConsole = google.searchconsole({ version: 'v1', auth });
+  const targetSiteUrl = siteUrl || DEFAULT_SITE_URL;
 
   const issues: IndexingIssue[] = [];
 
@@ -97,7 +102,7 @@ export async function inspectUrlForIssues(urls: string[]): Promise<IndexingIssue
       const response = await searchConsole.urlInspection.index.inspect({
         requestBody: {
           inspectionUrl: url,
-          siteUrl: SITE_URL,
+          siteUrl: targetSiteUrl,
         },
       });
 
@@ -137,15 +142,19 @@ export async function inspectUrlForIssues(urls: string[]): Promise<IndexingIssue
 /**
  * Fetches pages with low CTR that might indicate indexing or content issues
  * Pages with many impressions but zero clicks might not be properly indexed or have poor content
+ * @param startDate - Start date in YYYY-MM-DD format
+ * @param endDate - End date in YYYY-MM-DD format
+ * @param siteUrl - Google Search Console site URL (optional)
  */
-export async function identifyPotentialIndexingIssues(startDate: string, endDate: string): Promise<IndexingIssue[]> {
+export async function identifyPotentialIndexingIssues(startDate: string, endDate: string, siteUrl?: string): Promise<IndexingIssue[]> {
   const auth = getOAuth2Client();
   const searchConsole = google.searchconsole({ version: 'v1', auth });
+  const targetSiteUrl = siteUrl || DEFAULT_SITE_URL;
 
   try {
     // Fetch pages with high impressions but zero clicks (potential indexing issues)
     const response = await searchConsole.searchanalytics.query({
-      siteUrl: SITE_URL,
+      siteUrl: targetSiteUrl,
       requestBody: {
         startDate,
         endDate,
@@ -192,8 +201,11 @@ export async function identifyPotentialIndexingIssues(startDate: string, endDate
 
 /**
  * Aggregates all indexing and technical issues
+ * @param startDate - Start date in YYYY-MM-DD format
+ * @param endDate - End date in YYYY-MM-DD format
+ * @param siteUrl - Google Search Console site URL (optional)
  */
-export async function getAllTechnicalIssues(startDate: string, endDate: string): Promise<{
+export async function getAllTechnicalIssues(startDate: string, endDate: string, siteUrl?: string): Promise<{
   sitemapIssues: IndexingIssue[];
   potentialIssues: IndexingIssue[];
   totalErrors: number;
@@ -201,8 +213,8 @@ export async function getAllTechnicalIssues(startDate: string, endDate: string):
 }> {
   try {
     const [sitemapIssues, potentialIssues] = await Promise.all([
-      fetchSitemapIssues(),
-      identifyPotentialIndexingIssues(startDate, endDate),
+      fetchSitemapIssues(siteUrl),
+      identifyPotentialIndexingIssues(startDate, endDate, siteUrl),
     ]);
 
     const allIssues = [...sitemapIssues, ...potentialIssues];

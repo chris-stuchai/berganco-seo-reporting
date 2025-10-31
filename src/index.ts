@@ -17,6 +17,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { requireAuth, requireRole, optionalAuth, AuthenticatedRequest } from './middleware/auth';
 import * as authService from './services/auth-service';
+import * as siteService from './services/site-service';
+import { getUserAccessibleSiteIds } from './utils/site-access';
 
 dotenv.config();
 
@@ -271,6 +273,81 @@ app.post('/api/auth/stop-impersonate', async (req, res) => {
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Site Management & Onboarding Endpoints (Admin/Employee only)
+app.get('/api/sites', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const sites = await siteService.getAllSites();
+    res.json(sites);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/sites', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const { domain, displayName, googleSiteUrl, ownerId } = req.body;
+    
+    if (!domain || !displayName || !ownerId) {
+      return res.status(400).json({ error: 'domain, displayName, and ownerId are required' });
+    }
+
+    const site = await siteService.createSite({
+      domain,
+      displayName,
+      googleSiteUrl: googleSiteUrl || `https://${domain}`,
+      ownerId,
+    });
+
+    res.json(site);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/sites/:siteId/assign', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const { siteId } = req.params;
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    const assignment = await siteService.assignSiteToClient(siteId, userId);
+    res.json(assignment);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete('/api/sites/:siteId/assign/:userId', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const { siteId, userId } = req.params;
+    await siteService.unassignSiteFromClient(siteId, userId);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get('/api/sites/my-sites', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const sites = await siteService.getUserSites(req.user!.userId);
+    res.json(sites);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/sites/my-primary', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const site = await siteService.getUserPrimarySite(req.user!.userId);
+    res.json(site);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Dashboard endpoint - returns latest metrics with calculated 7-day stats
