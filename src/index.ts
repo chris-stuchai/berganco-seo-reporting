@@ -1892,29 +1892,60 @@ cron.schedule('0 8 * * 1', async () => {
       return;
     }
     
-    const result = await generateWeeklyReport();
-    
-    const reportData = {
-      weekStartDate: result.report.weekStartDate,
-      weekEndDate: result.report.weekEndDate,
-      currentMetrics: result.currentMetrics,
-      previousMetrics: result.previousMetrics,
-      clicksChange: result.report.clicksChange,
-      impressionsChange: result.report.impressionsChange,
-      ctrChange: result.report.ctrChange,
-      positionChange: result.report.positionChange,
-      topPages: result.topPages,
-      topQueries: result.topQueries,
-      insights: result.insights,
-      recommendations: result.recommendations,
-    };
-
-    await sendWeeklyReport(reportData);
-
-    await prisma.weeklyReport.update({
-      where: { id: result.report.id },
-      data: { sentAt: new Date() },
+    // Generate reports for all active sites
+    const activeSites = await prisma.site.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'asc' },
     });
+
+    if (activeSites.length === 0) {
+      console.log('⚠️  No active sites found. Skipping report generation.');
+      return;
+    }
+
+    // Generate and send report for each site
+    for (const site of activeSites) {
+      try {
+        console.log(`📊 Generating report for ${site.displayName} (${site.domain})...`);
+        
+        const result = await generateReport(undefined, undefined, 'week', site.id);
+        
+        // Get site info for email
+        const siteInfo = await prisma.site.findUnique({
+          where: { id: site.id },
+          select: { domain: true, displayName: true },
+        });
+        
+        const reportData = {
+          weekStartDate: result.report.weekStartDate,
+          weekEndDate: result.report.weekEndDate,
+          periodType: 'week' as const,
+          currentMetrics: result.currentMetrics,
+          previousMetrics: result.previousMetrics,
+          clicksChange: result.report.clicksChange,
+          impressionsChange: result.report.impressionsChange,
+          ctrChange: result.report.ctrChange,
+          positionChange: result.report.positionChange,
+          topPages: result.topPages,
+          topQueries: result.topQueries,
+          insights: result.insights,
+          recommendations: result.recommendations,
+          websiteDomain: siteInfo?.domain || 'unknown',
+        };
+
+        await sendWeeklyReport(reportData);
+
+        await prisma.weeklyReport.update({
+          where: { id: result.report.id },
+          data: { sentAt: new Date() },
+        });
+
+        console.log(`✅ Report sent for ${site.displayName}`);
+      } catch (siteError) {
+        console.error(`❌ Failed to generate report for ${site.displayName}:`, siteError);
+        // Continue with other sites even if one fails
+      }
+    }
     
     // Update last run time
     if (config) {
@@ -1924,7 +1955,7 @@ cron.schedule('0 8 * * 1', async () => {
       });
     }
 
-    console.log('✅ Scheduled weekly report sent');
+    console.log('✅ Scheduled weekly reports completed');
   } catch (error) {
     console.error('❌ Scheduled weekly report failed:', error);
   }

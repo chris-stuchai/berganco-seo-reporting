@@ -704,6 +704,28 @@
 
   <!-- Main Content -->
   <div class="main-content">
+    <!-- View As Banner (shown when admin/employee viewing as client) -->
+    <div id="viewAsBanner" style="display: none; background: linear-gradient(135deg, #FF9F0A 0%, #FF6B35 100%); color: white; padding: var(--spacing-3) var(--spacing-4); margin-bottom: var(--spacing-4); border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(255, 159, 10, 0.3); position: sticky; top: 0; z-index: 100;">
+      <div style="display: flex; align-items: center; justify-content: space-between; max-width: 1400px; margin: 0 auto;">
+        <div style="display: flex; align-items: center; gap: var(--spacing-3);">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink: 0;">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <div>
+            <strong style="font-weight: 600; font-size: var(--font-body);">Viewing as Client</strong>
+            <span style="margin: 0 var(--spacing-2); opacity: 0.9;">•</span>
+            <span style="font-size: var(--font-footnote); opacity: 0.9;" id="viewAsClientName">Client Dashboard</span>
+          </div>
+        </div>
+        <a href="/employee" id="bannerBackToEmployee" style="display: inline-flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2) var(--spacing-4); background: rgba(255, 255, 255, 0.2); color: white; border-radius: 8px; font-size: var(--font-footnote); font-weight: 600; text-decoration: none; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.3);" onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='none'">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to Employee Portal
+        </a>
+      </div>
+    </div>
+    
     <!-- Top Bar -->
     <header class="top-bar">
       <div>
@@ -1873,6 +1895,21 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
             // Don't redirect automatically - allow them to view client dashboard
             if ((userRole === 'ADMIN' || userRole === 'EMPLOYEE') && !originalAdminToken) {
               console.log('Admin/Employee viewing client dashboard - showing back button');
+              // Show prominent banner at top
+              const viewAsBanner = document.getElementById('viewAsBanner');
+              const clientNameSpan = document.getElementById('viewAsClientName');
+              if (viewAsBanner) {
+                viewAsBanner.style.display = 'block';
+                if (clientNameSpan && data.user.businessName) {
+                  clientNameSpan.textContent = data.user.businessName;
+                }
+              }
+              // Update banner link
+              const bannerBackLink = document.getElementById('bannerBackToEmployee');
+              if (bannerBackLink) {
+                bannerBackLink.href = '/employee';
+                bannerBackLink.onclick = null;
+              }
               // Show prominent back button in top bar
               const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
               if (backToEmployeeBtn) {
@@ -1909,7 +1946,24 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
               const stopImpersonationBtn = document.getElementById('stopImpersonationBtn');
               
               if (originalAdminToken && data.user.role === 'CLIENT') {
-                // Actually impersonating a client - show top bar button
+                // Actually impersonating a client - show banner
+                const viewAsBanner = document.getElementById('viewAsBanner');
+                const clientNameSpan = document.getElementById('viewAsClientName');
+                if (viewAsBanner) {
+                  viewAsBanner.style.display = 'block';
+                  if (clientNameSpan && data.user.businessName) {
+                    clientNameSpan.textContent = data.user.businessName;
+                  }
+                }
+                // Update banner link to stop impersonation
+                const bannerBackLink = document.getElementById('bannerBackToEmployee');
+                if (bannerBackLink) {
+                  bannerBackLink.onclick = async (e) => {
+                    e.preventDefault();
+                    await stopImpersonation();
+                  };
+                }
+                // Show top bar button
                 const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
                 if (backToEmployeeBtn) {
                   backToEmployeeBtn.style.display = 'inline-flex';
@@ -1936,6 +1990,21 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
                 }
               } else if ((data.user.role === 'ADMIN' || data.user.role === 'EMPLOYEE')) {
                 // Admin/employee viewing client dashboard (not impersonating, just viewing)
+                // Show banner
+                const viewAsBanner = document.getElementById('viewAsBanner');
+                const clientNameSpan = document.getElementById('viewAsClientName');
+                if (viewAsBanner) {
+                  viewAsBanner.style.display = 'block';
+                  if (clientNameSpan && data.user.businessName) {
+                    clientNameSpan.textContent = data.user.businessName;
+                  }
+                }
+                // Update banner link
+                const bannerBackLink = document.getElementById('bannerBackToEmployee');
+                if (bannerBackLink) {
+                  bannerBackLink.href = '/employee';
+                  bannerBackLink.onclick = null;
+                }
                 // Show top bar button with direct link
                 const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
                 if (backToEmployeeBtn) {
