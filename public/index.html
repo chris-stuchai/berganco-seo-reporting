@@ -676,20 +676,6 @@
         </a>
       </div>
       
-      <div class="nav-section" id="impersonationSection" style="display: none; margin-top: auto; padding-top: var(--spacing-6); border-top: 1px solid var(--color-separator);">
-        <a href="/employee" class="nav-item" style="background: rgba(255, 159, 10, 0.15); color: var(--color-orange);">
-          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M9 5l7 7-7 7"/>
-          </svg>
-          <span id="backToEmployeeText">Back to Employee Portal</span>
-        </a>
-        <a href="#" onclick="stopImpersonation(); return false;" class="nav-item" id="stopImpersonationBtn" style="background: rgba(255, 69, 58, 0.15); color: var(--color-red); display: none;">
-          <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <span>Stop Viewing As</span>
-        </a>
-      </div>
       
       <div class="nav-section" style="margin-top: auto; padding-top: var(--spacing-6); border-top: 1px solid var(--color-separator);">
         <a href="#" onclick="handleLogout()" class="nav-item">
@@ -1914,52 +1900,37 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
                 console.error('Banner element not found!');
               }
               
-              // Update banner link
+              // Update banner link - always handle click to stop impersonation if needed
               const bannerBackLink = document.getElementById('bannerBackToEmployee');
               if (bannerBackLink) {
-                if (isImpersonating) {
-                  bannerBackLink.onclick = async (e) => {
-                    e.preventDefault();
+                bannerBackLink.onclick = async (e) => {
+                  e.preventDefault();
+                  if (isImpersonating) {
                     await stopImpersonation();
-                  };
-                  bannerBackLink.href = '#';
-                } else {
-                  bannerBackLink.href = '/employee';
-                  bannerBackLink.onclick = null;
-                }
+                  } else {
+                    // Not impersonating, just redirect directly
+                    window.location.replace('/employee');
+                  }
+                };
+                bannerBackLink.href = '#';
               }
               
-              // Show prominent back button in top bar
+              // Hide top bar button - only use banner button
               const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
               if (backToEmployeeBtn) {
-                backToEmployeeBtn.style.display = 'inline-flex';
-                backToEmployeeBtn.style.alignItems = 'center';
-                if (isImpersonating) {
-                  backToEmployeeBtn.onclick = async (e) => {
-                    e.preventDefault();
-                    await stopImpersonation();
-                  };
-                  backToEmployeeBtn.href = '#';
-                } else {
-                  backToEmployeeBtn.href = '/employee';
-                  backToEmployeeBtn.onclick = null;
-                }
+                backToEmployeeBtn.style.display = 'none';
               }
               
-              // Show admin section with "Back to Employee Portal" button
+              // Show admin section
               const adminNavSection = document.getElementById('adminNavSection');
               if (adminNavSection) {
                 adminNavSection.style.display = 'block';
               }
-              // Also show a prominent back button in the impersonation section
+              
+              // Hide sidebar impersonation section - only show top banner
               const impersonationSection = document.getElementById('impersonationSection');
               if (impersonationSection) {
-                impersonationSection.style.display = 'block';
-                // Change the text to indicate they can go back
-                const backLink = impersonationSection.querySelector('a[href="/employee"]');
-                if (backLink) {
-                  backLink.querySelector('span').textContent = 'Back to Employee Portal';
-                }
+                impersonationSection.style.display = 'none';
               }
             }
             
