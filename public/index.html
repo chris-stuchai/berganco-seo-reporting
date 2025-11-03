@@ -1985,18 +1985,26 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
     }
 
     async function stopImpersonation() {
-      const res = await fetch('/api/auth/stop-impersonate', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        // Update session token and redirect
-        window.location.href = '/employee';
+      try {
+        console.log('Stopping impersonation...');
+        const res = await fetch('/api/auth/stop-impersonate', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          console.log('Impersonation stopped, redirecting to employee portal...');
+          // Use replace to prevent back button from going back to client view
+          window.location.replace('/employee');
         } else {
-        const error = await res.json();
-        alert(`Failed to stop impersonation: ${error.error || 'Unknown error'}`);
+          const error = await res.json();
+          console.error('Failed to stop impersonation:', error);
+          showError(`Failed to stop impersonation: ${error.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error stopping impersonation:', error);
+        showError('Failed to stop impersonation. Please try again.');
       }
     }
     
