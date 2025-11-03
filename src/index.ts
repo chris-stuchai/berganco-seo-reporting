@@ -11,7 +11,7 @@ import cookieParser from 'cookie-parser';
 import { PrismaClient, Role } from '@prisma/client';
 import { subDays, format, startOfWeek, subWeeks } from 'date-fns';
 import { collectAllMetrics } from './services/data-collector';
-import { generateWeeklyReport } from './services/report-generator';
+import { generateWeeklyReport, generateReport } from './services/report-generator';
 import { sendWeeklyReport } from './services/email-service';
 import { exec } from 'child_process';
 import { promisify } from 'util';
