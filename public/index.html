@@ -1977,9 +1977,8 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
                 adminNavSection.style.display = 'block';
               }
             }
-            } catch (e) {
-              console.error('Error updating navigation:', e);
-            }
+            
+            // Load dashboard after auth check passes
             
             // Load dashboard after auth check passes
             loadDashboard();
