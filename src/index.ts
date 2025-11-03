@@ -332,6 +332,38 @@ app.delete('/api/sites/:siteId/assign/:userId', requireAuth, requireRole('ADMIN'
   }
 });
 
+// Update site endpoint
+app.put('/api/sites/:siteId', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), async (req, res) => {
+  try {
+    const { siteId } = req.params;
+    const { displayName, googleSiteUrl, domain } = req.body;
+    
+    // Validate googleSiteUrl if provided
+    if (googleSiteUrl) {
+      try {
+        new URL(googleSiteUrl);
+      } catch {
+        return res.status(400).json({ error: 'Invalid Google Site URL format. Must be a valid URL (e.g., https://www.example.com)' });
+      }
+    }
+    
+    const updates: any = {};
+    if (displayName !== undefined) updates.displayName = displayName;
+    if (googleSiteUrl !== undefined) updates.googleSiteUrl = googleSiteUrl;
+    if (domain !== undefined) updates.domain = domain;
+    
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+    
+    const updatedSite = await siteService.updateSite(siteId, updates);
+    
+    res.json(updatedSite);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/sites/my-sites', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const sites = await siteService.getUserSites(req.user!.userId);

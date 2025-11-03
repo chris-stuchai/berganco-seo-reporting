@@ -855,9 +855,14 @@
             <div style="margin-top: var(--spacing-3); padding-top: var(--spacing-3); border-top: 0.5px solid var(--color-separator);">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-2);">
               <span style="font-size: var(--font-caption); color: var(--color-label-tertiary);">Assigned Users:</span>
-              <button onclick="showAssignUserModal('${site.id}')" class="btn" style="padding: 4px 8px; font-size: var(--font-caption); background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary); cursor: pointer;">
-                + Assign User
-              </button>
+              <div style="display: flex; gap: var(--spacing-2);">
+                <button onclick="editSite('${site.id}', '${site.displayName.replace(/'/g, "\\'")}', '${site.domain.replace(/'/g, "\\'")}', '${site.googleSiteUrl.replace(/'/g, "\\'")}')" class="btn" style="padding: 4px 8px; font-size: var(--font-caption); background: var(--color-blue); color: white; border: none; cursor: pointer;">
+                  Edit
+                </button>
+                <button onclick="showAssignUserModal('${site.id}')" class="btn" style="padding: 4px 8px; font-size: var(--font-caption); background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary); cursor: pointer;">
+                  + Assign User
+                </button>
+              </div>
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-2);">
               ${uniqueUsers.length > 0 ? uniqueUsers.map(user => `
@@ -1876,6 +1881,79 @@
       } catch (error) {
         alert(`❌ Error: ${error.message || 'Failed to remove user'}`);
         console.error(error);
+      }
+    }
+    
+    function editSite(siteId, displayName, domain, googleSiteUrl) {
+      // Create modal
+      const modal = document.createElement('div');
+      modal.id = 'editSiteModal';
+      modal.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: var(--spacing-4);';
+      modal.innerHTML = `
+        <div style="background: var(--color-bg-secondary); border: 0.5px solid var(--color-separator); border-radius: 16px; padding: var(--spacing-6); width: 100%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+          <h2 style="font-size: 22px; font-weight: 600; margin-bottom: var(--spacing-2);">Edit Site</h2>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">
+            Update site information
+          </p>
+          <form onsubmit="event.preventDefault(); saveSiteEdit('${siteId}');">
+            <div class="form-group">
+              <label class="form-label" for="editDisplayName">Display Name *</label>
+              <input type="text" id="editDisplayName" value="${displayName.replace(/"/g, '&quot;')}" required style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary);">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="editDomain">Domain *</label>
+              <input type="text" id="editDomain" value="${domain.replace(/"/g, '&quot;')}" required style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary);">
+              <small style="font-size: var(--font-caption); color: var(--color-label-tertiary);">Without https:// (e.g., www.example.com)</small>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="editGoogleSiteUrl">Google Search Console URL *</label>
+              <input type="url" id="editGoogleSiteUrl" value="${googleSiteUrl.replace(/"/g, '&quot;')}" required style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary);">
+              <small style="font-size: var(--font-caption); color: var(--color-label-tertiary);">Full URL as it appears in Google Search Console (e.g., https://www.example.com)</small>
+            </div>
+            <div style="display: flex; gap: var(--spacing-3); margin-top: var(--spacing-6);">
+              <button type="submit" class="btn btn-primary" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; font-weight: 500;">Save Changes</button>
+              <button type="button" onclick="closeEditSiteModal()" class="btn" style="flex: 1; padding: var(--spacing-3) var(--spacing-4); border-radius: 12px; background: var(--color-bg-tertiary); border: 0.5px solid var(--color-separator); color: var(--color-label-primary);">Cancel</button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    function closeEditSiteModal() {
+      const modal = document.getElementById('editSiteModal');
+      if (modal) modal.remove();
+    }
+    
+    async function saveSiteEdit(siteId) {
+      const displayName = document.getElementById('editDisplayName').value.trim();
+      const domain = document.getElementById('editDomain').value.trim();
+      const googleSiteUrl = document.getElementById('editGoogleSiteUrl').value.trim();
+      
+      if (!displayName || !domain || !googleSiteUrl) {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      try {
+        const res = await fetch(`/api/sites/${siteId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ displayName, domain, googleSiteUrl }),
+        });
+        
+        if (res.ok) {
+          alert('✅ Site updated successfully!');
+          closeEditSiteModal();
+          loadSites(); // Refresh sites list
+        } else {
+          const error = await res.json();
+          alert(`❌ Error: ${error.error || 'Failed to update site'}`);
+        }
+      } catch (error) {
+        console.error('Error updating site:', error);
+        alert(`❌ Error: ${error.message || 'Failed to update site'}`);
       }
     }
 
