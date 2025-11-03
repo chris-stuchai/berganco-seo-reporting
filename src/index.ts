@@ -1499,16 +1499,51 @@ You provide concise, accurate, actionable insights based ONLY on the SEO data pr
   }
 });
 
-// Competitive Analysis endpoint
-app.get('/api/competitors', optionalAuth, async (req, res) => {
+// Competitive Analysis endpoint (site-aware)
+app.get('/api/competitors', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
+    // Get user's accessible sites to determine context
+    let accessibleSiteIds: string[] = [];
+    let primarySite = null;
+    
+    if (req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+      
+      if (accessibleSiteIds.length > 0) {
+        primarySite = await prisma.site.findUnique({
+          where: { id: accessibleSiteIds[0] },
+          select: { domain: true, displayName: true },
+        });
+      }
+    } else {
+      // For unauthenticated, get first active site
+      primarySite = await prisma.site.findFirst({
+        where: { isActive: true },
+        select: { domain: true, displayName: true },
+      });
+    }
+    
+    // Check if this is a property management company (BerganCo)
+    const isPropertyManagement = primarySite?.domain?.includes('berganco') || 
+                                  primarySite?.displayName?.toLowerCase().includes('bergan');
+    
+    if (!isPropertyManagement) {
+      // For non-property-management clients, return a generic message
+      return res.json({
+        summary: `Competitive analysis for ${primarySite?.displayName || 'your website'} is not available. This feature is currently optimized for property management companies.`,
+        topCompetitors: [],
+        bergancoAdvantages: [],
+        competitorAdvantages: [],
+      });
+    }
+    
+    // Only show competitive analysis for BerganCo
     const { getCompetitiveSummary } = await import('./services/competitor-analysis');
-    // Pass shared Prisma instance for better performance
     const summary = await getCompetitiveSummary(prisma);
     res.json(summary);
   } catch (error) {
     console.error('Error fetching competitor analysis:', error);
-    // Return cached/fallback data instead of error to avoid blocking UI
     res.json({
       summary: 'Competitive analysis unavailable. Please try again later.',
       topCompetitors: [],
