@@ -75,8 +75,17 @@ export async function collectDailyMetrics(date: Date, siteId: string, siteUrl?: 
 
     console.log(`✓ Stored daily metrics for ${dateStr} (site: ${siteId})`);
   } catch (error) {
-    console.error(`Error collecting daily metrics for ${dateStr}:`, error);
-    throw error;
+    // Log error but don't throw - we want to continue collecting for other sites/dates
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error collecting daily metrics for ${dateStr} (site: ${siteId}):`, errorMessage);
+    
+    // If it's an invalid URL error, log it clearly
+    if (errorMessage.includes('not a valid Search Console site URL')) {
+      console.error(`⚠️  Invalid Google Site URL for site ${siteId}. Please check the site configuration.`);
+    }
+    
+    // Don't throw - allow sync to continue with other dates/sites
+    // This prevents one bad site from blocking all data collection
   }
 }
 

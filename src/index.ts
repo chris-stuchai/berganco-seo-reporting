@@ -419,15 +419,20 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
     let totalImpressions = 0;
     let totalCtr = 0;
     let totalPosition = 0;
-    let metricCount = 0;
-
+    
+    // Count unique dates across all accessible sites (not just record count)
+    // This ensures we accurately detect missing dates
+    const uniqueDates = new Set<string>();
+    
     dailyMetrics.forEach((metric) => {
       totalClicks += metric.clicks;
       totalImpressions += metric.impressions;
       totalCtr += metric.ctr;
       totalPosition += metric.position;
-      metricCount++;
+      uniqueDates.add(format(metric.date, 'yyyy-MM-dd'));
     });
+    
+    const metricCount = uniqueDates.size;
 
     const avgCtr = metricCount > 0 ? totalCtr / metricCount : 0;
     const avgPosition = metricCount > 0 ? totalPosition / metricCount : 0;
@@ -588,19 +593,44 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
     (async () => {
       try {
         let syncedCount = 0;
+        let failedDates: string[] = [];
+        
         for (const date of missingDates) {
           try {
+            let dateSuccess = true;
             // Collect metrics for each active site
             for (const site of activeSites) {
-              await collectAllMetrics(date, site.id, site.googleSiteUrl);
+              try {
+                // Validate site URL before attempting collection
+                if (!site.googleSiteUrl || !site.googleSiteUrl.includes('://')) {
+                  console.error(`⚠️  Skipping site ${site.id} (${site.domain}): Invalid Google Site URL: ${site.googleSiteUrl}`);
+                  continue;
+                }
+                await collectAllMetrics(date, site.id, site.googleSiteUrl);
+              } catch (siteError) {
+                // Log site-specific error but continue with other sites
+                console.error(`Error collecting for site ${site.id} (${site.domain}) on ${format(date, 'yyyy-MM-dd')}:`, siteError);
+                dateSuccess = false;
+              }
             }
-            syncedCount++;
-            console.log(`✓ Synced data for ${format(date, 'yyyy-MM-dd')} (${activeSites.length} sites)`);
+            
+            if (dateSuccess) {
+              syncedCount++;
+              console.log(`✓ Synced data for ${format(date, 'yyyy-MM-dd')}`);
+            } else {
+              failedDates.push(format(date, 'yyyy-MM-dd'));
+            }
           } catch (error) {
             console.error(`Error syncing ${format(date, 'yyyy-MM-dd')}:`, error);
+            failedDates.push(format(date, 'yyyy-MM-dd'));
           }
         }
-        console.log(`✅ Sync complete: ${syncedCount}/${missingDates.length} days synced`);
+        
+        if (failedDates.length > 0) {
+          console.log(`⚠️  Sync completed with errors: ${syncedCount}/${missingDates.length} days synced successfully. Failed dates: ${failedDates.join(', ')}`);
+        } else {
+          console.log(`✅ Sync complete: ${syncedCount}/${missingDates.length} days synced successfully`);
+        }
       } catch (error) {
         console.error('Error during sync:', error);
       }
@@ -1815,4 +1845,5 @@ startServer().catch((error) => {
   console.error('❌ Failed to start server:', error);
   process.exit(1);
 });
+
 
