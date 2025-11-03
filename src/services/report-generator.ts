@@ -427,7 +427,8 @@ export async function generateReport(
     : recommendations;
 
   // Store report in database (use upsert to handle duplicates)
-  const report = await prisma.weeklyReport.upsert({
+  // Check if report already exists first
+  const existingReport = await prisma.weeklyReport.findUnique({
     where: {
       siteId_weekStartDate_weekEndDate: {
         siteId: targetSiteId,
@@ -435,38 +436,43 @@ export async function generateReport(
         weekEndDate: calculatedEndDate,
       },
     },
-    update: {
-      totalClicks: currentMetrics.totalClicks,
-      totalImpressions: currentMetrics.totalImpressions,
-      averageCtr: currentMetrics.averageCtr,
-      averagePosition: currentMetrics.averagePosition,
-      clicksChange,
-      impressionsChange,
-      ctrChange,
-      positionChange,
-      insights: enhancedInsights,
-      topPages: JSON.stringify(topPages),
-      topQueries: JSON.stringify(topQueries),
-      recommendations: enhancedRecommendations,
-    },
-    create: {
-      siteId: targetSiteId,
-      weekStartDate: calculatedStartDate,
-      weekEndDate: calculatedEndDate,
-      totalClicks: currentMetrics.totalClicks,
-      totalImpressions: currentMetrics.totalImpressions,
-      averageCtr: currentMetrics.averageCtr,
-      averagePosition: currentMetrics.averagePosition,
-      clicksChange,
-      impressionsChange,
-      ctrChange,
-      positionChange,
-      insights: enhancedInsights,
-      topPages: JSON.stringify(topPages),
-      topQueries: JSON.stringify(topQueries),
-      recommendations: enhancedRecommendations,
-    },
   });
+
+  const reportData = {
+    totalClicks: currentMetrics.totalClicks,
+    totalImpressions: currentMetrics.totalImpressions,
+    averageCtr: currentMetrics.averageCtr,
+    averagePosition: currentMetrics.averagePosition,
+    clicksChange,
+    impressionsChange,
+    ctrChange,
+    positionChange,
+    insights: enhancedInsights,
+    topPages: JSON.stringify(topPages),
+    topQueries: JSON.stringify(topQueries),
+    recommendations: enhancedRecommendations,
+  };
+
+  let report;
+  if (existingReport) {
+    // Update existing report
+    report = await prisma.weeklyReport.update({
+      where: { id: existingReport.id },
+      data: reportData,
+    });
+    console.log(`✓ Updated existing report for ${format(calculatedStartDate, 'MMM d')} - ${format(calculatedEndDate, 'MMM d')}`);
+  } else {
+    // Create new report
+    report = await prisma.weeklyReport.create({
+      data: {
+        siteId: targetSiteId,
+        weekStartDate: calculatedStartDate,
+        weekEndDate: calculatedEndDate,
+        ...reportData,
+      },
+    });
+    console.log(`✓ Created new report for ${format(calculatedStartDate, 'MMM d')} - ${format(calculatedEndDate, 'MMM d')}`);
+  }
 
   console.log('✓ Report generated successfully');
 
