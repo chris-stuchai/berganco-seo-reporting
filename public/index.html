@@ -1970,112 +1970,13 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
               console.error('Error updating sidebar:', e);
             }
             
-            // Check if impersonating or admin viewing client dashboard
-            try {
-              const impersonationSection = document.getElementById('impersonationSection');
-              const stopImpersonationBtn = document.getElementById('stopImpersonationBtn');
-              
-              if (originalAdminToken && data.user.role === 'CLIENT') {
-                // Actually impersonating a client - show banner
-                console.log('Impersonating client - showing banner');
-                const viewAsBanner = document.getElementById('viewAsBanner');
-                const clientNameSpan = document.getElementById('viewAsClientName');
-                if (viewAsBanner) {
-                  viewAsBanner.style.display = 'block';
-                  console.log('Banner shown');
-                  if (clientNameSpan) {
-                    clientNameSpan.textContent = data.user.businessName || data.user.name || 'Client Dashboard';
-                  }
-                } else {
-                  console.error('Banner element not found!');
-                }
-                // Update banner link to stop impersonation
-                const bannerBackLink = document.getElementById('bannerBackToEmployee');
-                if (bannerBackLink) {
-                  bannerBackLink.onclick = async (e) => {
-                    e.preventDefault();
-                    await stopImpersonation();
-                  };
-                }
-                // Show top bar button
-                const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
-                if (backToEmployeeBtn) {
-                  backToEmployeeBtn.style.display = 'inline-flex';
-                  backToEmployeeBtn.style.alignItems = 'center';
-                  // Update to stop impersonation, then redirect
-                  backToEmployeeBtn.onclick = async (e) => {
-                    e.preventDefault();
-                    await stopImpersonation();
-                  };
-                }
-                // Update sidebar link to also stop impersonation
-                const sidebarBackLink = document.getElementById('sidebarBackToEmployee');
-                if (sidebarBackLink) {
-                  sidebarBackLink.onclick = async (e) => {
-                    e.preventDefault();
-                    await stopImpersonation();
-                  };
-                }
-                if (impersonationSection) {
-                  impersonationSection.style.display = 'block';
-                  if (stopImpersonationBtn) {
-                    stopImpersonationBtn.style.display = 'block';
-                  }
-                }
-              } else if ((data.user.role === 'ADMIN' || data.user.role === 'EMPLOYEE')) {
-                // Admin/employee viewing client dashboard (not impersonating, just viewing)
-                // Show banner
-                console.log('Admin/Employee viewing client dashboard (role check) - showing banner');
-                const viewAsBanner = document.getElementById('viewAsBanner');
-                const clientNameSpan = document.getElementById('viewAsClientName');
-                if (viewAsBanner) {
-                  viewAsBanner.style.display = 'block';
-                  console.log('Banner shown for admin/employee (role check)');
-                  if (clientNameSpan) {
-                    clientNameSpan.textContent = data.user.businessName || data.user.name || 'Client Dashboard';
-                  }
-                } else {
-                  console.error('Banner element not found!');
-                }
-                // Update banner link
-                const bannerBackLink = document.getElementById('bannerBackToEmployee');
-                if (bannerBackLink) {
-                  bannerBackLink.href = '/employee';
-                  bannerBackLink.onclick = null;
-                }
-                // Show top bar button with direct link
-                const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
-                if (backToEmployeeBtn) {
-                  backToEmployeeBtn.style.display = 'inline-flex';
-                  backToEmployeeBtn.style.alignItems = 'center';
-                  backToEmployeeBtn.onclick = null; // Remove any click handler
-                  backToEmployeeBtn.href = '/employee'; // Direct link
-                }
-                // Sidebar link can go directly
-                const sidebarBackLink = document.getElementById('sidebarBackToEmployee');
-                if (sidebarBackLink) {
-                  sidebarBackLink.onclick = null;
-                  sidebarBackLink.href = '/employee';
-                }
-                if (impersonationSection) {
-                  impersonationSection.style.display = 'block';
-                  if (stopImpersonationBtn) {
-                    stopImpersonationBtn.style.display = 'none'; // Hide stop button, just show back button
-                  }
-                  const backText = document.getElementById('backToEmployeeText');
-                  if (backText) {
-                    backText.textContent = 'Back to Employee Portal';
-                  }
-                }
+            // Show admin section if employee/admin
+            if (data.user.role !== 'CLIENT') {
+              const adminNavSection = document.getElementById('adminNavSection');
+              if (adminNavSection) {
+                adminNavSection.style.display = 'block';
               }
-              
-              // Show admin section if employee/admin
-              if (data.user.role !== 'CLIENT') {
-                const adminNavSection = document.getElementById('adminNavSection');
-                if (adminNavSection) {
-                  adminNavSection.style.display = 'block';
-                }
-              }
+            }
             } catch (e) {
               console.error('Error updating navigation:', e);
             }
