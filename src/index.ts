@@ -397,8 +397,43 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
     if (req.user) {
       const { getUserAccessibleSiteIds } = await import('./utils/site-access');
       accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+      
+      // CRITICAL: Log for debugging multi-tenant issues
+      console.log(`[Dashboard] User ${req.user.userId} (${req.user.email}, role: ${req.user.role}) accessing sites:`, accessibleSiteIds);
+      
+      // For CLIENT users, ensure they ONLY have access to their assigned sites
+      // Never return all sites for CLIENT role
+      if (req.user.role === 'CLIENT' && accessibleSiteIds.length === 0) {
+        console.warn(`[Dashboard] CLIENT user ${req.user.userId} has no accessible sites - returning empty data`);
+        return res.json({
+          period: { days, startDate, endDate },
+          metrics: {
+            totalClicks: 0,
+            totalImpressions: 0,
+            averageCtr: 0,
+            averagePosition: 0,
+            clicksChange: 0,
+            impressionsChange: 0,
+            ctrChange: 0,
+            positionChange: 0,
+            dataPoints: 0,
+            expectedDataPoints: days,
+            dataCoverage: 0,
+          },
+          latestMetrics: [],
+          latestReport: null,
+          lastUpdate: null,
+          diagnostics: {
+            missingDays: days,
+            oldestDate: null,
+            newestDate: null,
+          },
+        });
+      }
     } else {
       // For unauthenticated requests, get all active sites (public view)
+      // WARNING: This should only be used for public demo/preview
+      console.warn('[Dashboard] Unauthenticated request - returning all sites (public view)');
       const allSites = await prisma.site.findMany({
         where: { isActive: true },
         select: { id: true },
