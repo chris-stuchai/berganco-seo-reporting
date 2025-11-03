@@ -711,6 +711,13 @@
         <p class="page-subtitle">Track performance and insights for www.berganco.com</p>
       </div>
       <div style="display: flex; align-items: center; gap: var(--spacing-3);">
+        <!-- Back to Employee Portal button (shown when viewing as client) -->
+        <a href="/employee" id="backToEmployeeBtn" style="display: none; padding: var(--spacing-2) var(--spacing-4); background: var(--color-orange); color: white; border-radius: 8px; font-size: var(--font-footnote); font-weight: 600; text-decoration: none; white-space: nowrap; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to Employee Portal
+        </a>
         <div class="date-filters">
           <button class="date-filter-btn active" onclick="setDateFilter(7)" id="filter-7">7 Days</button>
           <button class="date-filter-btn" onclick="setDateFilter(14)" id="filter-14">14 Days</button>
@@ -1866,6 +1873,12 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
             // Don't redirect automatically - allow them to view client dashboard
             if ((userRole === 'ADMIN' || userRole === 'EMPLOYEE') && !originalAdminToken) {
               console.log('Admin/Employee viewing client dashboard - showing back button');
+              // Show prominent back button in top bar
+              const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
+              if (backToEmployeeBtn) {
+                backToEmployeeBtn.style.display = 'inline-flex';
+                backToEmployeeBtn.style.alignItems = 'center';
+              }
               // Show admin section with "Back to Employee Portal" button
               const adminNavSection = document.getElementById('adminNavSection');
               if (adminNavSection) {
@@ -1896,7 +1909,25 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
               const stopImpersonationBtn = document.getElementById('stopImpersonationBtn');
               
               if (originalAdminToken && data.user.role === 'CLIENT') {
-                // Actually impersonating a client
+                // Actually impersonating a client - show top bar button
+                const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
+                if (backToEmployeeBtn) {
+                  backToEmployeeBtn.style.display = 'inline-flex';
+                  backToEmployeeBtn.style.alignItems = 'center';
+                  // Update to stop impersonation, then redirect
+                  backToEmployeeBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    await stopImpersonation();
+                  };
+                }
+                // Update sidebar link to also stop impersonation
+                const sidebarBackLink = document.getElementById('sidebarBackToEmployee');
+                if (sidebarBackLink) {
+                  sidebarBackLink.onclick = async (e) => {
+                    e.preventDefault();
+                    await stopImpersonation();
+                  };
+                }
                 if (impersonationSection) {
                   impersonationSection.style.display = 'block';
                   if (stopImpersonationBtn) {
@@ -1905,6 +1936,20 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
                 }
               } else if ((data.user.role === 'ADMIN' || data.user.role === 'EMPLOYEE')) {
                 // Admin/employee viewing client dashboard (not impersonating, just viewing)
+                // Show top bar button with direct link
+                const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
+                if (backToEmployeeBtn) {
+                  backToEmployeeBtn.style.display = 'inline-flex';
+                  backToEmployeeBtn.style.alignItems = 'center';
+                  backToEmployeeBtn.onclick = null; // Remove any click handler
+                  backToEmployeeBtn.href = '/employee'; // Direct link
+                }
+                // Sidebar link can go directly
+                const sidebarBackLink = document.getElementById('sidebarBackToEmployee');
+                if (sidebarBackLink) {
+                  sidebarBackLink.onclick = null;
+                  sidebarBackLink.href = '/employee';
+                }
                 if (impersonationSection) {
                   impersonationSection.style.display = 'block';
                   if (stopImpersonationBtn) {
