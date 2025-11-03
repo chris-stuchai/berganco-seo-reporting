@@ -1894,15 +1894,18 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
             // If admin/employee is viewing client dashboard, show "Back to Employee Portal" button
             // Don't redirect automatically - allow them to view client dashboard
             if ((userRole === 'ADMIN' || userRole === 'EMPLOYEE') && !originalAdminToken) {
-              console.log('Admin/Employee viewing client dashboard - showing back button');
+              console.log('Admin/Employee viewing client dashboard - showing banner');
               // Show prominent banner at top
               const viewAsBanner = document.getElementById('viewAsBanner');
               const clientNameSpan = document.getElementById('viewAsClientName');
               if (viewAsBanner) {
                 viewAsBanner.style.display = 'block';
-                if (clientNameSpan && data.user.businessName) {
-                  clientNameSpan.textContent = data.user.businessName;
+                console.log('Banner shown for admin/employee view');
+                if (clientNameSpan) {
+                  clientNameSpan.textContent = data.user.businessName || data.user.name || 'Client Dashboard';
                 }
+              } else {
+                console.error('Banner element not found!');
               }
               // Update banner link
               const bannerBackLink = document.getElementById('bannerBackToEmployee');
@@ -1947,13 +1950,17 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
               
               if (originalAdminToken && data.user.role === 'CLIENT') {
                 // Actually impersonating a client - show banner
+                console.log('Impersonating client - showing banner');
                 const viewAsBanner = document.getElementById('viewAsBanner');
                 const clientNameSpan = document.getElementById('viewAsClientName');
                 if (viewAsBanner) {
                   viewAsBanner.style.display = 'block';
-                  if (clientNameSpan && data.user.businessName) {
-                    clientNameSpan.textContent = data.user.businessName;
+                  console.log('Banner shown');
+                  if (clientNameSpan) {
+                    clientNameSpan.textContent = data.user.businessName || data.user.name || 'Client Dashboard';
                   }
+                } else {
+                  console.error('Banner element not found!');
                 }
                 // Update banner link to stop impersonation
                 const bannerBackLink = document.getElementById('bannerBackToEmployee');
@@ -1991,13 +1998,17 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
               } else if ((data.user.role === 'ADMIN' || data.user.role === 'EMPLOYEE')) {
                 // Admin/employee viewing client dashboard (not impersonating, just viewing)
                 // Show banner
+                console.log('Admin/Employee viewing client dashboard (role check) - showing banner');
                 const viewAsBanner = document.getElementById('viewAsBanner');
                 const clientNameSpan = document.getElementById('viewAsClientName');
                 if (viewAsBanner) {
                   viewAsBanner.style.display = 'block';
-                  if (clientNameSpan && data.user.businessName) {
-                    clientNameSpan.textContent = data.user.businessName;
+                  console.log('Banner shown for admin/employee (role check)');
+                  if (clientNameSpan) {
+                    clientNameSpan.textContent = data.user.businessName || data.user.name || 'Client Dashboard';
                   }
+                } else {
+                  console.error('Banner element not found!');
                 }
                 // Update banner link
                 const bannerBackLink = document.getElementById('bannerBackToEmployee');
