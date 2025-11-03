@@ -1096,11 +1096,28 @@ app.get('/api/top-pages', optionalAuth, async (req: AuthenticatedRequest, res) =
   }
 });
 
-// Get top queries
-app.get('/api/top-queries', async (req, res) => {
+// Get top queries (optional auth - filters by user's sites if authenticated)
+app.get('/api/top-queries', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const days = parseInt(req.query.days as string) || 7;
     const limit = parseInt(req.query.limit as string) || 20;
+    
+    // Get user's accessible site IDs
+    let accessibleSiteIds: string[] = [];
+    if (req.user) {
+      const { getUserAccessibleSiteIds } = await import('./utils/site-access');
+      accessibleSiteIds = await getUserAccessibleSiteIds(req.user.userId);
+    } else {
+      const allSites = await prisma.site.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      accessibleSiteIds = allSites.map(s => s.id);
+    }
+    
+    if (accessibleSiteIds.length === 0) {
+      return res.json([]);
+    }
     
     // Google Search Console has a 2-3 day delay - use 3 days ago as end date for complete data
     const endDate = subDays(new Date(), 3);
@@ -1109,6 +1126,7 @@ app.get('/api/top-queries', async (req, res) => {
     const queries = await prisma.queryMetric.groupBy({
       by: ['query'],
       where: {
+        siteId: { in: accessibleSiteIds },
         date: {
           gte: startDate,
           lte: endDate,
