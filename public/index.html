@@ -1890,35 +1890,62 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
             // Handle admin/employee viewing client dashboard
             const originalAdminToken = getCookie('originalAdminToken');
             const userRole = data.user.role;
+            const isImpersonating = originalAdminToken && userRole === 'CLIENT';
+            const isAdminViewingClient = (userRole === 'ADMIN' || userRole === 'EMPLOYEE') && !originalAdminToken;
             
-            // If admin/employee is viewing client dashboard, show "Back to Employee Portal" button
-            // Don't redirect automatically - allow them to view client dashboard
-            if ((userRole === 'ADMIN' || userRole === 'EMPLOYEE') && !originalAdminToken) {
-              console.log('Admin/Employee viewing client dashboard - showing banner');
+            // Check URL for client ID
+            const urlPath = window.location.pathname;
+            const clientMatch = urlPath.match(/\/client\/([^\/]+)/);
+            const clientUserId = clientMatch ? clientMatch[1] : null;
+            
+            // Show banner if impersonating OR admin viewing client dashboard OR URL has client ID
+            if (isImpersonating || isAdminViewingClient || clientUserId) {
+              console.log('Showing view-as banner', { isImpersonating, isAdminViewingClient, clientUserId, userRole });
               // Show prominent banner at top
               const viewAsBanner = document.getElementById('viewAsBanner');
               const clientNameSpan = document.getElementById('viewAsClientName');
               if (viewAsBanner) {
                 viewAsBanner.style.display = 'block';
-                console.log('Banner shown for admin/employee view');
+                console.log('Banner element found and displayed');
                 if (clientNameSpan) {
                   clientNameSpan.textContent = data.user.businessName || data.user.name || 'Client Dashboard';
                 }
               } else {
                 console.error('Banner element not found!');
               }
+              
               // Update banner link
               const bannerBackLink = document.getElementById('bannerBackToEmployee');
               if (bannerBackLink) {
-                bannerBackLink.href = '/employee';
-                bannerBackLink.onclick = null;
+                if (isImpersonating) {
+                  bannerBackLink.onclick = async (e) => {
+                    e.preventDefault();
+                    await stopImpersonation();
+                  };
+                  bannerBackLink.href = '#';
+                } else {
+                  bannerBackLink.href = '/employee';
+                  bannerBackLink.onclick = null;
+                }
               }
+              
               // Show prominent back button in top bar
               const backToEmployeeBtn = document.getElementById('backToEmployeeBtn');
               if (backToEmployeeBtn) {
                 backToEmployeeBtn.style.display = 'inline-flex';
                 backToEmployeeBtn.style.alignItems = 'center';
+                if (isImpersonating) {
+                  backToEmployeeBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    await stopImpersonation();
+                  };
+                  backToEmployeeBtn.href = '#';
+                } else {
+                  backToEmployeeBtn.href = '/employee';
+                  backToEmployeeBtn.onclick = null;
+                }
               }
+              
               // Show admin section with "Back to Employee Portal" button
               const adminNavSection = document.getElementById('adminNavSection');
               if (adminNavSection) {
@@ -2110,9 +2137,9 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
           method: 'POST',
           credentials: 'include'
         });
-        window.location.href = '/login.html';
+        window.location.href = '/login';
       } catch (error) {
-        window.location.href = '/login.html';
+        window.location.href = '/login';
       }
     }
     

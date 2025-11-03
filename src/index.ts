@@ -68,6 +68,16 @@ app.get('/login', (req, res) => {
   res.sendFile('login.html', { root: 'public' });
 });
 
+// Client view route - shows dashboard for specific client
+app.get('/client/:userId', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
+});
+
+// View-as route (alias for client view)
+app.get('/view/:userId', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
+});
+
 app.get('/employee', (req, res) => {
   res.sendFile('employee.html', { root: 'public' });
 });

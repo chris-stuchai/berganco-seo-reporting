@@ -1775,9 +1775,11 @@
       });
       
       if (res.ok) {
-        window.location.href = '/';
+        // Redirect to client-specific URL
+        window.location.href = `/client/${userId}`;
       } else {
-        alert('Failed to impersonate user');
+        const error = await res.json();
+        showError(`Failed to impersonate user: ${error.error || 'Unknown error'}`);
       }
     }
 
