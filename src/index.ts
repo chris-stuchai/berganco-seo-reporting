@@ -556,11 +556,14 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
 app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { days } = req.body;
+    // Use the selected days, but also check up to 90 days back to catch any older missing data
     const selectedDays = days || 7; // Default to 7 days if not specified
+    const maxCheckDays = Math.max(selectedDays, 90); // Always check at least 90 days to catch any missing data
     
     // Calculate date range (respecting GSC 2-3 day delay)
     const endDate = subDays(new Date(), 3); // GSC data available up to 3 days ago
-    const startDate = subDays(endDate, selectedDays - 1);
+    // Check for missing days in the requested range, but also extend to catch any older missing data
+    const startDate = subDays(endDate, maxCheckDays - 1);
     
     // Get all active sites first
     const activeSites = await prisma.site.findMany({
@@ -576,11 +579,13 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
     
     // Check which days are missing per-site (a date is missing if ANY site doesn't have data for it)
     const siteIds = activeSites.map(s => s.id);
+    // Query for the extended range (90 days) to find all existing metrics
+    const extendedStartDate = subDays(endDate, maxCheckDays - 1);
     const existingMetrics = await prisma.dailyMetric.findMany({
       where: {
         siteId: { in: siteIds },
         date: {
-          gte: startDate,
+          gte: extendedStartDate,
           lte: endDate,
         },
       },
@@ -601,8 +606,9 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
     }
     
     // Find missing days - a date is missing if not all active sites have data for it
+    // Check all dates in the extended range (up to 90 days) to catch any missing data
     const missingDates: Date[] = [];
-    for (let i = 3; i < selectedDays + 3; i++) {
+    for (let i = 3; i < maxCheckDays + 3; i++) {
       const checkDate = subDays(new Date(), i);
       const dateStr = format(checkDate, 'yyyy-MM-dd');
       const sitesWithData = dateSiteMap.get(dateStr);
@@ -613,12 +619,25 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
       }
     }
     
+    // If we extended beyond the selected range, filter to only show dates within selected range in response
+    // But still collect all missing dates in the background
+    const missingDatesInRange = missingDates.filter(date => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const rangeStart = subDays(endDate, selectedDays - 1);
+      return date >= rangeStart && date <= endDate;
+    });
+    
     if (missingDates.length === 0) {
       return res.json({ 
         success: true, 
         message: 'All data is already synced for this period',
         synced: 0 
       });
+    }
+    
+    // Log how many days we're syncing (including those beyond the selected range)
+    if (missingDates.length > missingDatesInRange.length) {
+      console.log(`📊 Found ${missingDates.length} missing days total (${missingDatesInRange.length} in selected ${selectedDays}-day range, ${missingDates.length - missingDatesInRange.length} beyond range)`);
     }
 
     // Start syncing missing days in background (don't block response)
@@ -629,28 +648,41 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
         
         for (const date of missingDates) {
           try {
-            let dateSuccess = true;
+            let siteSuccessCount = 0;
+            let siteErrorCount = 0;
+            
             // Collect metrics for each active site
             for (const site of activeSites) {
               try {
                 // Validate site URL before attempting collection
                 if (!site.googleSiteUrl || !site.googleSiteUrl.includes('://')) {
                   console.error(`⚠️  Skipping site ${site.id} (${site.domain}): Invalid Google Site URL: ${site.googleSiteUrl}`);
+                  siteErrorCount++;
                   continue;
                 }
                 await collectAllMetrics(date, site.id, site.googleSiteUrl);
+                siteSuccessCount++;
+                console.log(`✓ Collected data for ${site.domain} on ${format(date, 'yyyy-MM-dd')}`);
               } catch (siteError) {
                 // Log site-specific error but continue with other sites
                 console.error(`Error collecting for site ${site.id} (${site.domain}) on ${format(date, 'yyyy-MM-dd')}:`, siteError);
-                dateSuccess = false;
+                siteErrorCount++;
               }
             }
             
-            if (dateSuccess) {
+            // Mark date as successful if at least one site succeeded
+            // This ensures we don't mark dates as "failed" if some sites succeed
+            if (siteSuccessCount > 0) {
               syncedCount++;
-              console.log(`✓ Synced data for ${format(date, 'yyyy-MM-dd')}`);
+              if (siteErrorCount > 0) {
+                console.log(`⚠️  Partially synced ${format(date, 'yyyy-MM-dd')}: ${siteSuccessCount} site(s) succeeded, ${siteErrorCount} failed`);
+              } else {
+                console.log(`✓ Synced data for ${format(date, 'yyyy-MM-dd')} (${siteSuccessCount} site(s))`);
+              }
             } else {
+              // Only mark as failed if ALL sites failed
               failedDates.push(format(date, 'yyyy-MM-dd'));
+              console.error(`❌ Failed to sync ${format(date, 'yyyy-MM-dd')}: All sites failed`);
             }
           } catch (error) {
             console.error(`Error syncing ${format(date, 'yyyy-MM-dd')}:`, error);
@@ -672,7 +704,8 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
       success: true, 
       message: `Syncing ${missingDates.length} missing day${missingDates.length > 1 ? 's' : ''}...`,
       syncing: missingDates.length,
-      dates: missingDates.map(d => format(d, 'yyyy-MM-dd'))
+      dates: missingDatesInRange.map(d => format(d, 'yyyy-MM-dd')), // Show only dates in selected range
+      totalDates: missingDates.length // But include total count
     });
   } catch (error) {
     console.error('Error collecting data:', error);

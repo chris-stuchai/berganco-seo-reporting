@@ -990,13 +990,16 @@
             successMsg.textContent = `✓ Syncing ${data.syncing} missing day${data.syncing > 1 ? 's' : ''}... Please wait.`;
             document.body.appendChild(successMsg);
             
+            // Calculate wait time based on number of days to sync (allow ~2 seconds per day)
+            const waitTime = Math.max(5000, data.syncing * 2000);
+            
             // Reload dashboard after sync completes (longer delay to allow background sync)
             setTimeout(() => {
               loadDashboard();
               successMsg.textContent = '✓ Sync complete! Dashboard refreshed.';
               successMsg.style.background = 'var(--color-green)';
               setTimeout(() => successMsg.remove(), 3000);
-            }, 5000); // Give it 5 seconds for background sync
+            }, waitTime);
             
           } else {
             syncButtonText.textContent = 'All Synced';
@@ -1103,11 +1106,23 @@
         if (loadingEl) loadingEl.classList.add('hidden');
         if (dashboardEl) dashboardEl.classList.remove('hidden');
         
-        // Show error message to user
+        // Show error message to user with helpful troubleshooting
         const errorMsg = document.createElement('div');
         errorMsg.id = 'dashboardError';
         errorMsg.style.cssText = 'padding: var(--spacing-4); background: rgba(255, 59, 48, 0.15); border: 1px solid var(--color-red); border-radius: 8px; margin-bottom: var(--spacing-4); color: var(--color-red);';
-        errorMsg.textContent = `Failed to load dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        
+        let errorText = `Failed to load dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        
+        // Add helpful message for "Failed to fetch" errors (server not running)
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          errorText += '\n\n💡 The server may not be running. To start the server:\n\n' +
+            '1. Open terminal in the project directory\n' +
+            '2. Run: npm run dev\n' +
+            '3. Wait for "Server running on port 3000"\n' +
+            '4. Refresh this page';
+        }
+        
+        errorMsg.innerHTML = errorText.replace(/\n/g, '<br>').replace(/💡/g, '💡');
         const dashboardDiv = document.getElementById('dashboard');
         if (dashboardDiv) {
           // Remove existing error if any
