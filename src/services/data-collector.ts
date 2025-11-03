@@ -40,12 +40,15 @@ export async function collectDailyMetrics(date: Date, siteId: string, siteUrl?: 
 
     const response = await fetchSiteMetrics(dateStr, dateStr, targetSiteUrl);
 
+    // Even if Google returns no data, we should store a record with zeros
+    // This ensures the dashboard knows we've checked this date
+    const row = response.rows && response.rows.length > 0 
+      ? response.rows[0]
+      : { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+    
     if (!response.rows || response.rows.length === 0) {
-      console.log(`No data available for ${dateStr}`);
-      return;
+      console.log(`No data available for ${dateStr} - storing zero values`);
     }
-
-    const row = response.rows[0];
 
     await prisma.dailyMetric.upsert({
       where: {

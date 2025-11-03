@@ -355,8 +355,10 @@ app.get('/api/sites/my-primary', requireAuth, async (req: AuthenticatedRequest, 
 app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const days = parseInt(req.query.days as string) || 7;
-    const endDate = new Date();
-    const startDate = subDays(endDate, days);
+    // Google Search Console has a 2-3 day delay - use 3 days ago as end date for complete data
+    const endDate = subDays(new Date(), 3);
+    // Calculate start date to get exactly 'days' days of data (endDate inclusive)
+    const startDate = subDays(endDate, days - 1);
 
     // Get user's accessible site IDs (if authenticated)
     let accessibleSiteIds: string[] = [];
@@ -430,15 +432,16 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
     const avgCtr = metricCount > 0 ? totalCtr / metricCount : 0;
     const avgPosition = metricCount > 0 ? totalPosition / metricCount : 0;
 
-    // Get previous period for comparison (in parallel with current period calculation)
-    const prevStartDate = subDays(startDate, days);
+    // Get previous period for comparison (same duration, ending just before startDate)
+    const prevEndDate = subDays(startDate, 1);
+    const prevStartDate = subDays(prevEndDate, days - 1);
     const [prevDailyMetrics, latestReport] = await Promise.all([
       prisma.dailyMetric.findMany({
         where: {
           siteId: { in: accessibleSiteIds },
           date: {
             gte: prevStartDate,
-            lt: startDate,
+            lte: prevEndDate,
           },
         },
       }),
@@ -522,29 +525,53 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
     const endDate = subDays(new Date(), 3); // GSC data available up to 3 days ago
     const startDate = subDays(endDate, selectedDays - 1);
     
-    // Check which days are missing in the database
+    // Get all active sites first
+    const activeSites = await prisma.site.findMany({
+      where: { isActive: true },
+    });
+    
+    if (activeSites.length === 0) {
+      return res.json({ 
+        success: false, 
+        message: 'No active sites found. Please create a site first.' 
+      });
+    }
+    
+    // Check which days are missing per-site (a date is missing if ANY site doesn't have data for it)
+    const siteIds = activeSites.map(s => s.id);
     const existingMetrics = await prisma.dailyMetric.findMany({
       where: {
+        siteId: { in: siteIds },
         date: {
           gte: startDate,
           lte: endDate,
         },
       },
       select: {
+        siteId: true,
         date: true,
       },
     });
     
-    const existingDates = new Set(
-      existingMetrics.map(m => format(m.date, 'yyyy-MM-dd'))
-    );
+    // Create a map of date -> set of siteIds that have data for that date
+    const dateSiteMap = new Map<string, Set<string>>();
+    for (const metric of existingMetrics) {
+      const dateStr = format(metric.date, 'yyyy-MM-dd');
+      if (!dateSiteMap.has(dateStr)) {
+        dateSiteMap.set(dateStr, new Set());
+      }
+      dateSiteMap.get(dateStr)!.add(metric.siteId);
+    }
     
-    // Find missing days (only dates that are 3+ days ago, as GSC has delay)
+    // Find missing days - a date is missing if not all active sites have data for it
     const missingDates: Date[] = [];
     for (let i = 3; i < selectedDays + 3; i++) {
       const checkDate = subDays(new Date(), i);
       const dateStr = format(checkDate, 'yyyy-MM-dd');
-      if (!existingDates.has(dateStr)) {
+      const sitesWithData = dateSiteMap.get(dateStr);
+      
+      // If the date doesn't exist in the map, or not all sites have data, it's missing
+      if (!sitesWithData || sitesWithData.size < siteIds.length) {
         missingDates.push(checkDate);
       }
     }
@@ -554,18 +581,6 @@ app.post('/api/collect', requireAuth, async (req: AuthenticatedRequest, res) => 
         success: true, 
         message: 'All data is already synced for this period',
         synced: 0 
-      });
-    }
-    
-    // Get all active sites to collect for
-    const activeSites = await prisma.site.findMany({
-      where: { isActive: true },
-    });
-
-    if (activeSites.length === 0) {
-      return res.json({ 
-        success: false, 
-        message: 'No active sites found. Please create a site first.' 
       });
     }
 
@@ -870,11 +885,16 @@ app.get('/api/trends', optionalAuth, async (req: AuthenticatedRequest, res) => {
       return res.json([]);
     }
     
+    // Google Search Console has a 2-3 day delay - use 3 days ago as end date for complete data
+    const endDate = subDays(new Date(), 3);
+    const startDate = subDays(endDate, days - 1);
+    
     const metrics = await prisma.dailyMetric.findMany({
       where: {
         siteId: { in: accessibleSiteIds },
         date: {
-          gte: subDays(new Date(), days),
+          gte: startDate,
+          lte: endDate,
         },
       },
       orderBy: { date: 'asc' },
@@ -910,12 +930,17 @@ app.get('/api/top-pages', optionalAuth, async (req: AuthenticatedRequest, res) =
       return res.json([]);
     }
     
+    // Google Search Console has a 2-3 day delay - use 3 days ago as end date for complete data
+    const endDate = subDays(new Date(), 3);
+    const startDate = subDays(endDate, days - 1);
+    
     const pages = await prisma.pageMetric.groupBy({
       by: ['page'],
       where: {
         siteId: { in: accessibleSiteIds },
         date: {
-          gte: subDays(new Date(), days),
+          gte: startDate,
+          lte: endDate,
         },
       },
       _sum: {
@@ -947,11 +972,16 @@ app.get('/api/top-queries', async (req, res) => {
     const days = parseInt(req.query.days as string) || 7;
     const limit = parseInt(req.query.limit as string) || 20;
     
+    // Google Search Console has a 2-3 day delay - use 3 days ago as end date for complete data
+    const endDate = subDays(new Date(), 3);
+    const startDate = subDays(endDate, days - 1);
+    
     const queries = await prisma.queryMetric.groupBy({
       by: ['query'],
       where: {
         date: {
-          gte: subDays(new Date(), days),
+          gte: startDate,
+          lte: endDate,
         },
       },
       _sum: {
@@ -981,9 +1011,13 @@ app.get('/api/top-queries', async (req, res) => {
 app.get('/api/ai-insights', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const days = parseInt(req.query.days as string) || 7;
-    const endDate = new Date();
-    const startDate = subDays(endDate, days);
-    const prevStartDate = subDays(startDate, days);
+    // Google Search Console has a 2-3 day delay - use 3 days ago as end date for complete data
+    const endDate = subDays(new Date(), 3);
+    // Calculate start date to get exactly 'days' days of data (endDate inclusive)
+    const startDate = subDays(endDate, days - 1);
+    // Previous period: same duration, ending just before startDate
+    const prevEndDate = subDays(startDate, 1);
+    const prevStartDate = subDays(prevEndDate, days - 1);
 
     // Get user's accessible site IDs
     let accessibleSiteIds: string[] = [];
@@ -1033,7 +1067,7 @@ app.get('/api/ai-insights', optionalAuth, async (req: AuthenticatedRequest, res)
         siteId: { in: accessibleSiteIds },
         date: {
           gte: prevStartDate,
-          lt: startDate,
+          lte: prevEndDate,
         },
       },
     });
