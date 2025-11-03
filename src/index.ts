@@ -1327,20 +1327,38 @@ The website serves property owners, investors, and tenants. They provide compreh
 You are analyzing SEO performance for ${businessName}. Focus on their specific business context and how SEO metrics relate to their goals.`;
     }
 
-    // Build context from dashboard data
+    // Build comprehensive context with actual data
+    const topPagesText = context?.topPages && context.topPages.length > 0
+      ? '\n\n**Top Performing Pages:**\n' + context.topPages.map((page: any, i: number) => 
+          `${i + 1}. ${page.page || page.keys?.[0] || 'Unknown'} - ${page._sum?.clicks || page.clicks || 0} clicks, ${page._sum?.impressions || page.impressions || 0} impressions`
+        ).join('\n')
+      : '';
+    
+    const topQueriesText = context?.topQueries && context.topQueries.length > 0
+      ? '\n\n**Top Search Queries:**\n' + context.topQueries.map((query: any, i: number) => 
+          `${i + 1}. "${query.query || query.keys?.[0] || 'Unknown'}" - ${query._sum?.clicks || query.clicks || 0} clicks, Position ${(query._avg?.position || query.position || 0).toFixed(1)}`
+        ).join('\n')
+      : '';
+    
+    const dailyTrendText = context?.dailyMetrics && context.dailyMetrics.length > 0
+      ? '\n\n**Daily Trend (most recent):**\n' + context.dailyMetrics.slice(0, 7).map((m: any) => 
+          `${format(new Date(m.date), 'MMM d')}: ${m.clicks} clicks, ${m.impressions} impressions`
+        ).join('\n')
+      : '';
+
     const contextPrompt = context ? `
-Current SEO Metrics:
+Current SEO Metrics for ${websiteDomain}:
 - Total Clicks: ${context.metrics?.totalClicks || 0}
 - Total Impressions: ${context.metrics?.totalImpressions || 0}
 - Average CTR: ${((context.metrics?.averageCtr || 0) * 100).toFixed(2)}%
 - Average Position: ${(context.metrics?.averagePosition || 0).toFixed(1)}
-- Period: ${context.days} days
+- Period: Last ${context.days} days
 
-Changes:
+**Performance Changes (vs previous period):**
 - Clicks: ${(context.metrics?.clicksChange || 0).toFixed(1)}%
 - Impressions: ${(context.metrics?.impressionsChange || 0).toFixed(1)}%
 - CTR: ${(context.metrics?.ctrChange || 0).toFixed(1)}%
-- Position: ${(context.metrics?.positionChange || 0).toFixed(1)}
+- Position: ${(context.metrics?.positionChange || 0).toFixed(1)}${topPagesText}${topQueriesText}${dailyTrendText}
 ` : '';
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -1372,12 +1390,19 @@ ${businessContext}
 You provide concise, accurate, actionable insights based ONLY on the SEO data provided for ${websiteDomain}. You understand their business model and can relate SEO performance to their business goals - but always ground your analysis in the actual data provided.
 
 **Guidelines:**
+- Format responses in a clean, easy-to-read way with:
+  * Clear paragraphs with proper spacing
+  * Bullet points (•) for lists of recommendations
+  * Numbered lists (1. 2. 3.) for step-by-step actions
+  * Bold text (**text**) for key points and metrics
 - Be helpful, specific, accurate, and focus on actionable recommendations based on actual data
 - Relate SEO metrics to business outcomes (lead generation, visibility, market presence) only using provided metrics
+- Use actual page names, query terms, and numbers from the provided data when discussing specific performance
 - Consider local market dynamics and competition (general knowledge is acceptable here)
-- Keep responses under 200 words unless more detail is needed
+- Keep responses concise but comprehensive (2-4 paragraphs with bullet points)
 - Reference the business's services and market position when relevant
-- If you don't have data to answer a question, say so clearly rather than guessing`
+- If you don't have data to answer a question, say so clearly rather than guessing
+- Always ground your analysis in the specific data provided - mention actual pages, queries, and numbers when relevant`
           },
           {
             role: 'user',

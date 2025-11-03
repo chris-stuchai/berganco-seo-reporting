@@ -1165,14 +1165,23 @@
                       white-space: nowrap;
                     ">AI</span>` : ''}
                   </div>
+                  <div style="display: flex; align-items: center; gap: var(--spacing-2); flex-wrap: wrap; margin-bottom: var(--spacing-2);">
+                    <span style="
+                      padding: 4px 10px;
+                      background: rgba(10, 132, 255, 0.15);
+                      color: var(--color-blue);
+                      border-radius: 6px;
+                      font-size: var(--font-caption);
+                      font-weight: 600;
+                      white-space: nowrap;
+                    ">👤 ${task.user.businessName || task.user.name || task.user.email}</span>
+                  </div>
                   <p style="
                     font-size: var(--font-footnote);
                     color: var(--color-label-tertiary);
                     margin: 0;
                     line-height: 1.47;
                   ">
-                    <span style="color: var(--color-label-secondary);">${task.user.businessName || task.user.name}</span>
-                    <span style="margin: 0 var(--spacing-1);">•</span>
                     Due: <strong style="color: var(--color-label-primary);">${dueDate}</strong>
                     ${task.assignedTo ? `<span style="margin: 0 var(--spacing-1);">•</span>Assigned by: ${task.assignedTo}` : ''}
                   </p>
@@ -1425,17 +1434,18 @@
     }
 
     function toggleTaskCollapse(id) {
+      const taskCard = document.getElementById(`task-${id}`);
       const contentDiv = document.getElementById(`task-content-${id}`);
       const btn = document.getElementById(`collapse-btn-${id}`);
       
-      if (!contentDiv || !btn) return;
+      if (!taskCard || !contentDiv || !btn) return;
       
       const svg = btn.querySelector('svg path');
-      const currentHeight = contentDiv.style.maxHeight;
-      const isCollapsed = currentHeight === '0px' || (!currentHeight && contentDiv.offsetHeight === 0);
+      const isCollapsed = taskCard.dataset.collapsed === 'true';
       
       if (isCollapsed) {
-        // Expand - measure content height first
+        // Expand - show content
+        contentDiv.style.display = 'block';
         contentDiv.style.maxHeight = 'none';
         const height = contentDiv.scrollHeight;
         contentDiv.style.maxHeight = '0px';
@@ -1444,14 +1454,27 @@
         // Now animate to full height
         requestAnimationFrame(() => {
           contentDiv.style.maxHeight = height + 'px';
+          setTimeout(() => {
+            contentDiv.style.maxHeight = 'none';
+          }, 300);
         });
         svg.setAttribute('d', 'M4 6l4 4 4-4'); // Down arrow (can collapse)
         btn.setAttribute('aria-label', 'Collapse task');
+        taskCard.dataset.collapsed = 'false';
       } else {
-        // Collapse
-        contentDiv.style.maxHeight = '0px';
+        // Collapse - hide content
+        contentDiv.style.maxHeight = contentDiv.scrollHeight + 'px';
+        // Force reflow
+        contentDiv.offsetHeight;
+        requestAnimationFrame(() => {
+          contentDiv.style.maxHeight = '0px';
+          setTimeout(() => {
+            contentDiv.style.display = 'none';
+          }, 300);
+        });
         svg.setAttribute('d', 'M4 10l4-4 4-4'); // Up arrow (can expand)
         btn.setAttribute('aria-label', 'Expand task');
+        taskCard.dataset.collapsed = 'true';
       }
     }
 

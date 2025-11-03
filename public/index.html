@@ -1146,7 +1146,9 @@
       if (diagnostics && diagnostics.dataCoverage < 100) {
         const missingDays = diagnostics.missingDays || 0;
         if (missingDays > 0) {
-          const warningMsg = `Missing data for ${missingDays} day${missingDays > 1 ? 's' : ''}. Numbers may be lower than Google Search Console. Click the "Sync" button above to sync missing days.`;
+          const warningMsg = `Missing data for ${missingDays} day${missingDays > 1 ? 's' : ''}. Numbers may be lower than Google Search Console. Click the "Sync" button above to sync missing days.
+
+Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 days" here = 7 complete days ending 3 days ago. Google's "Last 7 days" includes today/yesterday which may have incomplete data.`;
           // Remove existing warning if any
           const existingWarning = document.getElementById('dataCoverageWarning');
           if (existingWarning) {
@@ -1545,9 +1547,16 @@
       const loadingId = addChatMessage('assistant', 'Thinking...', true);
 
       try {
-        // Get current dashboard metrics for context
-        const dashboardResponse = await fetch(`/api/dashboard?days=${currentDays}`);
+        // Get comprehensive dashboard data for context
+        const [dashboardResponse, pagesResponse, queriesResponse] = await Promise.all([
+          fetch(`/api/dashboard?days=${currentDays}`),
+          fetch(`/api/top-pages?days=${currentDays}&limit=10`),
+          fetch(`/api/top-queries?days=${currentDays}&limit=10`)
+        ]);
+        
         const dashboardData = await dashboardResponse.json();
+        const pagesData = await pagesResponse.json();
+        const queriesData = await queriesResponse.json();
 
         const response = await fetch('/api/ai-chat', {
           method: 'POST',
@@ -1557,7 +1566,9 @@
             context: {
               days: currentDays,
               metrics: dashboardData.metrics,
-              topPages: dashboardData.latestMetrics?.slice(0, 5) || [],
+              topPages: pagesData.slice(0, 10) || [],
+              topQueries: queriesData.slice(0, 10) || [],
+              dailyMetrics: dashboardData.latestMetrics || [],
             }
           })
         });
@@ -1595,9 +1606,19 @@
       messageDiv.id = messageId;
       messageDiv.style.cssText = `${alignStyle} margin-bottom: var(--spacing-3);`;
       
+      // Format AI messages with better styling
+      let formattedMessage = message;
+      if (!isUser && !isLoading) {
+        // Format markdown-style lists and sections
+        formattedMessage = formatAIResponse(message);
+      }
+      
       messageDiv.innerHTML = `
-        <div style="padding: var(--spacing-3) var(--spacing-4); background: ${bgColor}; border-radius: 12px; display: inline-block; max-width: 100%;">
-          <p style="font-size: var(--font-body); color: ${textColor}; margin: 0; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+        <div style="padding: var(--spacing-3) var(--spacing-4); background: ${bgColor}; border-radius: 12px; display: inline-block; max-width: 100%; border: ${isUser ? 'none' : '0.5px solid var(--color-separator)'};">
+          ${isUser ? 
+            `<p style="font-size: var(--font-body); color: ${textColor}; margin: 0; line-height: 1.6; white-space: pre-wrap;">${message}</p>` :
+            `<div style="font-size: var(--font-body); color: ${textColor}; line-height: 1.6;">${formattedMessage}</div>`
+          }
           ${isLoading ? '<div class="spinner" style="width: 16px; height: 16px; margin-top: var(--spacing-2);"></div>' : ''}
         </div>
       `;
@@ -1606,6 +1627,29 @@
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
       
       return messageId;
+    }
+    
+    // Format AI response for better readability
+    function formatAIResponse(text) {
+      // Split by double newlines to create paragraphs
+      let formatted = text
+        // Format numbered lists (1. 2. 3.)
+        .replace(/^(\d+\.\s+)(.+)$/gm, '<div style="margin: var(--spacing-2) 0; padding-left: var(--spacing-4);"><strong style="color: var(--color-blue);">$1</strong>$2</div>')
+        // Format bullet points (- or •)
+        .replace(/^[-•]\s+(.+)$/gm, '<div style="margin: var(--spacing-2) 0; padding-left: var(--spacing-4); display: flex; align-items: flex-start;"><span style="color: var(--color-blue); margin-right: var(--spacing-2); margin-top: 6px;">•</span><span>$1</span></div>')
+        // Format **bold** text
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="color: var(--color-label-primary); font-weight: 600;">$1</strong>')
+        // Format paragraphs
+        .split('\n\n')
+        .map(para => {
+          if (para.trim() && !para.includes('<div')) {
+            return `<p style="margin: var(--spacing-3) 0; line-height: 1.7;">${para.trim()}</p>`;
+          }
+          return para;
+        })
+        .join('');
+      
+      return formatted;
     }
 
     // Remove message from chat
