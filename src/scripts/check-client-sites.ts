@@ -125,10 +125,10 @@ async function checkClientSites(email?: string) {
         console.log(`   Assigned: ${user.clientSites.length} site(s)`);
         console.log(`   Accessible: ${accessibleSiteIds.length} site(s)`);
         if (accessibleSiteIds.length > 0) {
-          accessibleSiteIds.forEach(id => {
+          for (const id of accessibleSiteIds) {
             const site = await prisma.site.findUnique({ where: { id }, select: { domain: true } });
             console.log(`      - ${site?.domain || id}`);
-          });
+          }
         }
       }
     }
