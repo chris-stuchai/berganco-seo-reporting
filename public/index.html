@@ -1994,9 +1994,14 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
         
         if (res.ok) {
           const data = await res.json();
-          console.log('Impersonation stopped, redirecting to employee portal...');
+          console.log('Impersonation stopped, redirecting to employee portal...', data);
+          
+          // Use the redirectUrl from response, or default to /employee
+          const redirectUrl = data.redirectUrl || '/employee';
+          
+          // Force a full page reload to ensure cookies are updated
           // Use replace to prevent back button from going back to client view
-          window.location.replace('/employee');
+          window.location.replace(redirectUrl);
         } else {
           const error = await res.json();
           console.error('Failed to stop impersonation:', error);

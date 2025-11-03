@@ -59,9 +59,51 @@ app.use(express.static('public', {
   extensions: ['html', 'js', 'css', 'png', 'jpg', 'svg']
 }));
 
-// Clean routes without .html extension
-app.get('/', (req, res) => {
-  res.sendFile('index.html', { root: 'public' });
+// Root route - redirect based on authentication and role
+app.get('/', async (req, res) => {
+  try {
+    // Check if user is authenticated
+    const sessionToken = req.cookies?.sessionToken || req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!sessionToken) {
+      // Not logged in - redirect to login
+      return res.redirect('/login');
+    }
+    
+    // Verify session
+    const session = await authService.verifySession(sessionToken);
+    
+    if (!session) {
+      // Invalid session - redirect to login
+      return res.redirect('/login');
+    }
+    
+    // Get user details
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { id: true, role: true, email: true }
+    });
+    
+    if (!user) {
+      return res.redirect('/login');
+    }
+    
+    // Redirect based on role
+    if (user.role === 'ADMIN' || user.role === 'EMPLOYEE') {
+      // Admin/Employee should go to employee portal, not client dashboard
+      return res.redirect('/employee');
+    } else if (user.role === 'CLIENT') {
+      // Client goes to their dashboard
+      res.sendFile('index.html', { root: 'public' });
+    } else {
+      // Unknown role - redirect to login
+      return res.redirect('/login');
+    }
+  } catch (error) {
+    console.error('Error in root route:', error);
+    // On error, redirect to login
+    return res.redirect('/login');
+  }
 });
 
 app.get('/login', (req, res) => {
