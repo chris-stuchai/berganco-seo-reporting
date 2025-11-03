@@ -1,3 +1,4 @@
+
 # Client Onboarding Guide
 
 This guide explains how to onboard new clients and their websites to the SEO platform.
@@ -173,6 +174,31 @@ If you have existing data from before multi-tenant support:
 1. A default "BerganCo" site will be created automatically
 2. Existing data will need to be migrated to include `siteId`
 3. Run the migration: `npx prisma migrate deploy`
+
+## Google Search Console Authentication
+
+**Important:** Your system uses **one OAuth account** that has access to **all sites** in your Google Search Console. 
+
+### How It Works:
+
+1. **Single OAuth Account**: Your `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REFRESH_TOKEN` are used for all sites
+2. **Site-Specific Queries**: Each Site record has a `googleSiteUrl` field (e.g., `https://www.stuchai.com`) that tells the API which property to query
+3. **Application-Level Isolation**: Even though the OAuth account can access all sites, clients only see data for sites they're assigned to (enforced in code)
+
+### When Adding a New Site:
+
+1. Add the site to Google Search Console (if not already there)
+2. Ensure your OAuth account has access to it (it should if you authorized it previously)
+3. Create the Site record with the correct `googleSiteUrl`
+4. The system will automatically use that URL when collecting data
+
+### Security:
+
+- ✅ **Application-layer isolation** prevents clients from seeing each other's data
+- ✅ **Data is stored with `siteId`** in the database
+- ✅ **ClientSite table** controls which users can access which sites
+
+For more details on authentication architecture and security considerations, see [Google Auth Architecture Guide](../docs/GOOGLE_AUTH_ARCHITECTURE.md).
 
 ## Next Steps After Onboarding
 
