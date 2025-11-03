@@ -120,8 +120,43 @@ app.get('/view/:userId', (req, res) => {
   res.sendFile('index.html', { root: 'public' });
 });
 
-app.get('/employee', (req, res) => {
-  res.sendFile('employee.html', { root: 'public' });
+app.get('/employee', async (req, res) => {
+  try {
+    // Check if user is authenticated
+    const sessionToken = req.cookies?.sessionToken || req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!sessionToken) {
+      return res.redirect('/login');
+    }
+    
+    // Verify session
+    const session = await authService.verifySession(sessionToken);
+    
+    if (!session) {
+      return res.redirect('/login');
+    }
+    
+    // Get user details
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { id: true, role: true }
+    });
+    
+    if (!user) {
+      return res.redirect('/login');
+    }
+    
+    // Only ADMIN and EMPLOYEE can access employee portal
+    if (user.role !== 'ADMIN' && user.role !== 'EMPLOYEE') {
+      // CLIENT users should be redirected to their dashboard
+      return res.redirect('/');
+    }
+    
+    res.sendFile('employee.html', { root: 'public' });
+  } catch (error) {
+    console.error('Error in employee route:', error);
+    return res.redirect('/login');
+  }
 });
 
 app.get('/analytics', (req, res) => {
@@ -308,6 +343,7 @@ app.post('/api/auth/stop-impersonate', async (req, res) => {
 
     const result = await authService.endImpersonation(impersonationToken, originalAdmin.userId);
     
+    // Set the admin's session token
     res.cookie('sessionToken', result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -315,8 +351,18 @@ app.post('/api/auth/stop-impersonate', async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     
-    res.clearCookie('originalAdminToken');
-    res.json(result);
+    // Clear impersonation cookie
+    res.clearCookie('originalAdminToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    
+    // Return success with redirect URL
+    res.json({ 
+      ...result,
+      redirectUrl: '/employee' // Explicitly tell client where to go
+    });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
