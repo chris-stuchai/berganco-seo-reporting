@@ -336,19 +336,25 @@ app.post('/api/auth/stop-impersonate', async (req, res) => {
       return res.status(400).json({ error: 'No original session found' });
     }
 
+    // Verify the original admin session is still valid
     const originalAdmin = await authService.verifySession(originalAdminToken);
     if (!originalAdmin) {
       return res.status(401).json({ error: 'Original session expired' });
     }
 
-    const result = await authService.endImpersonation(impersonationToken, originalAdmin.userId);
-    
-    // Set the admin's session token
-    res.cookie('sessionToken', result.token, {
+    // Delete the impersonation session
+    await prisma.session.deleteMany({
+      where: { token: impersonationToken },
+    });
+
+    // Restore the original admin session token directly (don't create new one)
+    // This ensures we use the exact same session that was stored
+    res.cookie('sessionToken', originalAdminToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
     });
     
     // Clear impersonation cookie
@@ -356,14 +362,14 @@ app.post('/api/auth/stop-impersonate', async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
+      path: '/',
     });
     
-    // Return success with redirect URL
-    res.json({ 
-      ...result,
-      redirectUrl: '/employee' // Explicitly tell client where to go
-    });
+    // Return success with redirect URL - use server-side redirect instead of client-side
+    // This ensures cookies are set before redirect
+    return res.redirect('/employee');
   } catch (error: any) {
+    console.error('Error stopping impersonation:', error);
     res.status(400).json({ error: error.message });
   }
 });

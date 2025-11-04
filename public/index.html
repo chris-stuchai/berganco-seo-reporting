@@ -1987,26 +1987,15 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
     async function stopImpersonation() {
       try {
         console.log('Stopping impersonation...');
-        const res = await fetch('/api/auth/stop-impersonate', {
-          method: 'POST',
-          credentials: 'include'
-        });
         
-        if (res.ok) {
-          const data = await res.json();
-          console.log('Impersonation stopped, redirecting to employee portal...', data);
-          
-          // Use the redirectUrl from response, or default to /employee
-          const redirectUrl = data.redirectUrl || '/employee';
-          
-          // Force a full page reload to ensure cookies are updated
-          // Use replace to prevent back button from going back to client view
-          window.location.replace(redirectUrl);
-        } else {
-          const error = await res.json();
-          console.error('Failed to stop impersonation:', error);
-          showError(`Failed to stop impersonation: ${error.error || 'Unknown error'}`);
-        }
+        // Use form submission instead of fetch to ensure cookies are set before redirect
+        // This prevents redirect loops
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/auth/stop-impersonate';
+        form.style.display = 'none';
+        document.body.appendChild(form);
+        form.submit();
       } catch (error) {
         console.error('Error stopping impersonation:', error);
         showError('Failed to stop impersonation. Please try again.');
