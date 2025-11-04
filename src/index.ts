@@ -126,6 +126,7 @@ app.get('/employee', async (req, res) => {
     const sessionToken = req.cookies?.sessionToken || req.headers.authorization?.replace('Bearer ', '');
     
     if (!sessionToken) {
+      console.log('Employee route: No session token, redirecting to login');
       return res.redirect('/login');
     }
     
@@ -133,25 +134,31 @@ app.get('/employee', async (req, res) => {
     const session = await authService.verifySession(sessionToken);
     
     if (!session) {
+      console.log('Employee route: Invalid session, redirecting to login');
       return res.redirect('/login');
     }
     
     // Get user details
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { id: true, role: true }
+      select: { id: true, role: true, email: true }
     });
     
     if (!user) {
+      console.log('Employee route: User not found, redirecting to login');
       return res.redirect('/login');
     }
     
+    console.log('Employee route: User authenticated', { userId: user.id, role: user.role, email: user.email });
+    
     // Only ADMIN and EMPLOYEE can access employee portal
     if (user.role !== 'ADMIN' && user.role !== 'EMPLOYEE') {
+      console.log('Employee route: User is not admin/employee, redirecting to dashboard');
       // CLIENT users should be redirected to their dashboard
       return res.redirect('/');
     }
     
+    // All checks passed - serve employee portal
     res.sendFile('employee.html', { root: 'public' });
   } catch (error) {
     console.error('Error in employee route:', error);
