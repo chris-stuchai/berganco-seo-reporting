@@ -516,6 +516,12 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
       // Never return all sites for CLIENT role
       if (req.user.role === 'CLIENT' && accessibleSiteIds.length === 0) {
         console.warn(`[Dashboard] CLIENT user ${req.user.userId} has no accessible sites - returning empty data`);
+        // Get primary site even if no accessible sites (for display purposes)
+        const fallbackSite = await prisma.site.findFirst({
+          where: { isActive: true },
+          select: { domain: true, googleSiteUrl: true },
+        });
+        
         return res.json({
           period: { days, startDate, endDate },
           metrics: {
@@ -534,6 +540,7 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
           latestMetrics: [],
           latestReport: null,
           lastUpdate: null,
+          site: fallbackSite,
           diagnostics: {
             missingDays: days,
             oldestDate: null,
@@ -550,6 +557,18 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
         select: { id: true },
       });
       accessibleSiteIds = allSites.map(s => s.id);
+    }
+
+    // Get primary site information (first accessible site)
+    let primarySite: { domain: string; googleSiteUrl: string } | null = null;
+    if (accessibleSiteIds.length > 0) {
+      const site = await prisma.site.findFirst({
+        where: { id: accessibleSiteIds[0], isActive: true },
+        select: { domain: true, googleSiteUrl: true },
+      });
+      if (site) {
+        primarySite = site;
+      }
     }
 
     // If no sites accessible, return empty data
@@ -572,6 +591,7 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
         latestMetrics: [],
         latestReport: null,
         lastUpdate: null,
+        site: primarySite,
         diagnostics: {
           missingDays: days,
           oldestDate: null,
@@ -686,6 +706,7 @@ app.get('/api/dashboard', optionalAuth, async (req: AuthenticatedRequest, res) =
       latestMetrics: dailyMetrics,
       latestReport,
       lastUpdate: dailyMetrics[0]?.date || null,
+      site: primarySite, // Include site information for display
       diagnostics: {
         missingDays: days - metricCount,
         oldestDate: dailyMetrics.length > 0 ? dailyMetrics[dailyMetrics.length - 1]?.date : null,

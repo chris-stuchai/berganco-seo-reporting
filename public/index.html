@@ -716,7 +716,7 @@
     <header class="top-bar">
       <div>
         <h1 class="page-title">SEO Dashboard</h1>
-        <p class="page-subtitle">Track performance and insights for www.berganco.com</p>
+        <p class="page-subtitle" id="pageSubtitle">Track performance and insights</p>
       </div>
       <div style="display: flex; align-items: center; gap: var(--spacing-3);">
         <!-- Back to Employee Portal button (shown when viewing as client) -->
@@ -1080,6 +1080,16 @@
         
         const data = await response.json();
         console.log('Dashboard data received:', data);
+        
+        // Update page subtitle with site domain
+        if (data.site && data.site.domain) {
+          const subtitleEl = document.getElementById('pageSubtitle');
+          if (subtitleEl) {
+            subtitleEl.textContent = `Track performance and insights for ${data.site.domain}`;
+          }
+          // Store site URL for use in page URL replacement
+          window.currentSiteUrl = data.site.googleSiteUrl || `https://${data.site.domain}`;
+        }
         
         // Always show dashboard, even if metrics are missing
         loadingEl.classList.add('hidden');
@@ -1455,7 +1465,9 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
         }
 
         const html = data.map(page => {
-          const url = page.page.replace('https://www.berganco.com', '') || '/';
+          // Use dynamic site URL if available, otherwise fallback to berganco.com
+          const siteUrl = window.currentSiteUrl || 'https://www.berganco.com';
+          const url = page.page.replace(siteUrl, '') || '/';
           return `
             <div style="padding: var(--spacing-3) 0; border-bottom: 1px solid var(--color-separator);">
               <div style="font-size: var(--font-body); font-weight: 500; color: var(--color-label-primary); margin-bottom: var(--spacing-1);">${url}</div>
