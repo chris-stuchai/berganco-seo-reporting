@@ -110,6 +110,10 @@ app.get('/login', (req, res) => {
   res.sendFile('login.html', { root: 'public' });
 });
 
+app.get('/reset-password', (req, res) => {
+  res.sendFile('reset-password.html', { root: 'public' });
+});
+
 // Client view route - shows dashboard for specific client
 app.get('/client/:userId', (req, res) => {
   res.sendFile('index.html', { root: 'public' });
@@ -215,6 +219,77 @@ app.post('/api/auth/logout', async (req, res) => {
   }
   res.clearCookie('sessionToken');
   res.json({ success: true });
+});
+
+// Password reset routes (public)
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const resetToken = await authService.requestPasswordReset(email);
+    
+    // Always return success to prevent email enumeration
+    // But only send email if user exists
+    if (resetToken) {
+      try {
+        const { sendPasswordResetEmail } = await import('./services/email-service');
+        const user = await prisma.user.findUnique({
+          where: { email: email.toLowerCase() },
+          select: { name: true },
+        });
+        
+        if (user) {
+          const appUrl = process.env.APP_URL || (req.headers.origin || 'http://localhost:3000');
+          await sendPasswordResetEmail(email, user.name, resetToken);
+          console.log(`✓ Password reset email sent to ${email}`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send password reset email:', emailError);
+        // Don't fail the request if email fails
+      }
+    }
+    
+    // Always return success message (security best practice)
+    res.json({ 
+      success: true, 
+      message: 'If an account with that email exists, a password reset link has been sent.' 
+    });
+  } catch (error: any) {
+    console.error('Error processing password reset request:', error);
+    // Still return success to prevent email enumeration
+    res.json({ 
+      success: true, 
+      message: 'If an account with that email exists, a password reset link has been sent.' 
+    });
+  }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Token and password are required' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    const result = await authService.resetPassword(token, password);
+    
+    res.json({ 
+      success: true, 
+      message: 'Password has been reset successfully. You can now log in with your new password.',
+      email: result.email 
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Invalid or expired reset token' });
+  }
 });
 
 app.get('/api/auth/me', requireAuth, async (req: AuthenticatedRequest, res) => {

@@ -731,6 +731,81 @@ export async function sendOnboardingEmail(
 /**
  * Sends the weekly report via email using Gmail/Google Workspace SMTP
  */
+/**
+ * Sends password reset email
+ */
+export async function sendPasswordResetEmail(email: string, name: string, resetToken: string) {
+  const emailFrom = process.env.REPORT_EMAIL_FROM || process.env.SMTP_USER || 'noreply@berganco.com';
+  const appUrl = process.env.APP_URL || 'http://localhost:3000';
+  const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
+
+  const subject = 'Reset Your Password - BerganCo SEO';
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; line-height: 1.6; color: #FFFFFF; max-width: 600px; margin: 0 auto; padding: 32px 24px; background-color: #1C1C1E;">
+  <div style="background-color: #2C2C2E; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); border: 1px solid #48484A;">
+    <div style="text-align: center; margin-bottom: 32px;">
+      <img src="https://framerusercontent.com/images/AhyGPdkv1Kr9JeLtiQvJBU0uJE.png?scale-down-to=1024&width=2088&height=518" alt="StuchAI Logo" style="max-width: 200px; height: auto;" />
+    </div>
+    
+    <h1 style="color: #FFFFFF; font-size: 28px; font-weight: 700; margin-bottom: 16px; text-align: center;">Reset Your Password</h1>
+    
+    <p style="color: #E5E5EA; font-size: 17px; margin-bottom: 24px;">
+      Hi ${name},
+    </p>
+    
+    <p style="color: #E5E5EA; font-size: 17px; margin-bottom: 24px;">
+      We received a request to reset your password for your BerganCo SEO account. Click the button below to create a new password:
+    </p>
+    
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${resetUrl}" style="display: inline-block; padding: 16px 32px; background-color: #0A84FF; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 17px;">Reset Password</a>
+    </div>
+    
+    <p style="color: #98989D; font-size: 13px; margin-top: 32px; margin-bottom: 8px;">
+      Or copy and paste this link into your browser:
+    </p>
+    <p style="color: #0A84FF; font-size: 13px; word-break: break-all; margin-bottom: 24px;">
+      ${resetUrl}
+    </p>
+    
+    <p style="color: #98989D; font-size: 13px; margin-top: 24px; padding-top: 24px; border-top: 1px solid #48484A;">
+      This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+    </p>
+    
+    <p style="color: #98989D; font-size: 13px; margin-top: 16px;">
+      If you're having trouble, contact your administrator for assistance.
+    </p>
+  </div>
+</body>
+</html>
+  `;
+
+  try {
+    await transporter.verify();
+    
+    const result = await transporter.sendMail({
+      from: `"BerganCo SEO Monitor" <${emailFrom}>`,
+      to: email,
+      subject,
+      html,
+    });
+
+    console.log('✓ Password reset email sent successfully:', result.messageId);
+    return result;
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
+}
+
 export async function sendWeeklyReport(reportData: ReportData) {
   const emailTo = process.env.REPORT_EMAIL_TO;
   const emailFrom = process.env.REPORT_EMAIL_FROM || process.env.SMTP_USER;

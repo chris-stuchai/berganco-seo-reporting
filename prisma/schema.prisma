@@ -136,10 +136,11 @@ model User {
   updatedAt     DateTime @updatedAt
   
   // Relations
-  sessions      Session[]
-  tasks         Task[]
-  ownedSites    Site[]   @relation("SiteOwner") // Sites owned by this user
-  clientSites   ClientSite[] // Sites this user has access to
+  sessions            Session[]
+  tasks               Task[]
+  ownedSites          Site[]   @relation("SiteOwner") // Sites owned by this user
+  clientSites         ClientSite[] // Sites this user has access to
+  passwordResetTokens PasswordResetToken[]
   
   @@index([email])
   @@index([role])
@@ -190,6 +191,20 @@ model LoginLog {
   @@index([userId])
   @@index([email])
   @@index([createdAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
 }
 
 model ScheduleConfig {

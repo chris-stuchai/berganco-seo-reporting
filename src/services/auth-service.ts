@@ -293,6 +293,109 @@ export async function createImpersonationSession(adminUserId: string, targetUser
 }
 
 /**
+ * Request password reset - creates a reset token
+ */
+export async function requestPasswordReset(email: string): Promise<string | null> {
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+  });
+
+  // Don't reveal if user exists or not (security best practice)
+  if (!user || !user.isActive) {
+    return null;
+  }
+
+  // Generate reset token
+  const token = generateToken();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
+
+  // Invalidate any existing reset tokens for this user
+  await prisma.passwordResetToken.updateMany({
+    where: {
+      userId: user.id,
+      used: false,
+    },
+    data: {
+      used: true,
+    },
+  });
+
+  // Create new reset token
+  await prisma.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      token,
+      expiresAt,
+    },
+  });
+
+  return token;
+}
+
+/**
+ * Reset password using token
+ */
+export async function resetPassword(token: string, newPassword: string) {
+  const resetToken = await prisma.passwordResetToken.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!resetToken) {
+    throw new Error('Invalid or expired reset token');
+  }
+
+  if (resetToken.used) {
+    throw new Error('Reset token has already been used');
+  }
+
+  if (resetToken.expiresAt < new Date()) {
+    throw new Error('Reset token has expired');
+  }
+
+  if (!resetToken.user.isActive) {
+    throw new Error('User account is inactive');
+  }
+
+  // Update password
+  const passwordHash = hashPassword(newPassword);
+  await prisma.user.update({
+    where: { id: resetToken.userId },
+    data: { passwordHash },
+  });
+
+  // Mark token as used
+  await prisma.passwordResetToken.update({
+    where: { id: resetToken.id },
+    data: { used: true },
+  });
+
+  // Invalidate all existing sessions for security
+  await prisma.session.deleteMany({
+    where: { userId: resetToken.userId },
+  });
+
+  return {
+    email: resetToken.user.email,
+    name: resetToken.user.name,
+  };
+}
+
+/**
+ * Clean up expired reset tokens (call periodically)
+ */
+export async function cleanupExpiredResetTokens() {
+  await prisma.passwordResetToken.deleteMany({
+    where: {
+      OR: [
+        { expiresAt: { lt: new Date() } },
+        { used: true },
+      ],
+    },
+  });
+}
+
+/**
  * End impersonation - return to admin session
  */
 export async function endImpersonation(impersonationToken: string, originalAdminUserId: string) {
