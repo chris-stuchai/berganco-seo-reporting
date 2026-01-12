@@ -44,17 +44,17 @@ interface ReportData {
     totalImpressions: number;
     averageCtr: number;
     averagePosition: number;
-  };
+  } | null;
   monthlyPreviousMetrics?: {
     totalClicks: number;
     totalImpressions: number;
     averageCtr: number;
     averagePosition: number;
-  };
-  monthlyClicksChange?: number;
-  monthlyImpressionsChange?: number;
-  monthlyCtrChange?: number;
-  monthlyPositionChange?: number;
+  } | null;
+  monthlyClicksChange?: number | null;
+  monthlyImpressionsChange?: number | null;
+  monthlyCtrChange?: number | null;
+  monthlyPositionChange?: number | null;
   topPages: any[];
   topQueries: any[];
   insights: string;
@@ -397,7 +397,7 @@ function generateEmailHTML(data: ReportData): string {
                 ${formatNumber(data.monthlyCurrentMetrics.totalClicks)}
               </div>
               <div style="font-size: 11px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
-                ${formatChange(data.monthlyClicksChange)}
+                ${formatChange(data.monthlyClicksChange || 0)}
                 <span style="color: #98989D;">vs prev 30 days</span>
               </div>
             </div>
@@ -411,7 +411,7 @@ function generateEmailHTML(data: ReportData): string {
                 ${formatNumber(data.monthlyCurrentMetrics.totalImpressions)}
               </div>
               <div style="font-size: 11px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
-                ${formatChange(data.monthlyImpressionsChange)}
+                ${formatChange(data.monthlyImpressionsChange || 0)}
                 <span style="color: #98989D;">vs prev 30 days</span>
               </div>
             </div>

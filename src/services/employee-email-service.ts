@@ -99,10 +99,10 @@ function generateEmployeeWeeklyEmail(tasks: any[], weekStart: Date, weekEnd: Dat
     <!-- Tasks by Client -->
     <h2 style="font-size: 22px; font-weight: 600; color: #FFFFFF; margin-bottom: 24px;">Tasks by Client</h2>
     
-    ${Object.entries(tasksByClient).map(([clientName, clientTasks]) => {
-      const pendingCount = clientTasks.filter(t => t.status === 'PENDING').length;
-      const inProgressCount = clientTasks.filter(t => t.status === 'IN_PROGRESS').length;
-      const completedCount = clientTasks.filter(t => t.status === 'COMPLETED').length;
+    ${(Object.entries(tasksByClient) as [string, any[]][]).map(([clientName, clientTasks]) => {
+      const pendingCount = clientTasks.filter((t: any) => t.status === 'PENDING').length;
+      const inProgressCount = clientTasks.filter((t: any) => t.status === 'IN_PROGRESS').length;
+      const completedCount = clientTasks.filter((t: any) => t.status === 'COMPLETED').length;
       
       return `
         <div style="margin-bottom: 32px; padding: 24px; background: #1C1C1E; border: 1px solid #48484A; border-radius: 12px;">
@@ -116,7 +116,7 @@ function generateEmployeeWeeklyEmail(tasks: any[], weekStart: Date, weekEnd: Dat
           </div>
           
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            ${clientTasks.map(task => {
+            ${clientTasks.map((task: any) => {
               const priorityColors = {
                 LOW: '#98989D',
                 MEDIUM: '#0A84FF',
