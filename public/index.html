@@ -827,7 +827,7 @@
             </div>
             <button class="btn btn-ai-glow" onclick="loadAIInsights()" id="generateAI" style="padding: var(--spacing-3) var(--spacing-6); font-weight: 600;">Generate Insights</button>
           </div>
-          <div id="aiInsights">
+          <div id="aiInsights" style="max-width: 100%; overflow: hidden;">
             <div style="padding: var(--spacing-8); text-align: center;">
               <p style="color: var(--color-label-tertiary); margin-bottom: var(--spacing-4);">
                 Click "Generate Insights" to get AI-powered analysis for the selected time period.
@@ -932,7 +932,7 @@
       <!-- Latest Report Insights -->
         <div class="card">
           <h2 class="section-title mb-4">Latest Report Insights</h2>
-          <div id="reportInsights">
+          <div id="reportInsights" style="max-width: 100%; overflow: hidden;">
             <p style="color: var(--color-label-tertiary);">No reports available yet. Generate your first report to see insights.</p>
         </div>
       </div>
@@ -1534,8 +1534,8 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
 
         if (data.insight) {
           document.getElementById('aiInsights').innerHTML = `
-            <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 12px;">
-              <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0;">${data.insight}</p>
+            <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 12px; overflow-wrap: break-word; word-wrap: break-word; overflow: hidden; max-width: 100%;">
+              <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0; word-break: break-word; white-space: pre-wrap;">${data.insight}</p>
               <p style="font-size: var(--font-caption); color: var(--color-label-tertiary); margin-top: var(--spacing-2);">
                 Generated ${new Date(data.generatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </p>
@@ -1863,15 +1863,15 @@ Note: Our dashboard excludes the last 3 days (Google's data delay), so "Last 7 d
       document.getElementById('reportInsights').innerHTML = `
         <div style="margin-bottom: var(--spacing-6);">
           <h3 style="font-size: var(--font-title-3); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-3);">Insights</h3>
-          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-left: 3px solid #FF9F0A; border-radius: 12px;">
-            <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0;">${insights}</p>
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-left: 3px solid #FF9F0A; border-radius: 12px; overflow-wrap: break-word; word-wrap: break-word; overflow: hidden;">
+            <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0; word-break: break-word; white-space: pre-wrap;">${insights}</p>
           </div>
         </div>
         ${recommendations ? `
         <div>
           <h3 style="font-size: var(--font-title-3); font-weight: 600; color: var(--color-label-primary); margin-bottom: var(--spacing-3);">Recommendations</h3>
-          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-left: 3px solid #0A84FF; border-radius: 12px;">
-            <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0;">${recommendations}</p>
+          <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-left: 3px solid #0A84FF; border-radius: 12px; overflow-wrap: break-word; word-wrap: break-word; overflow: hidden;">
+            <p style="font-size: var(--font-body); color: var(--color-label-primary); line-height: 1.6; margin: 0; word-break: break-word; white-space: pre-wrap;">${recommendations}</p>
           </div>
         </div>
         ` : ''}

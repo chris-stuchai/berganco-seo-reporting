@@ -1149,6 +1149,13 @@ app.post('/api/generate-report', requireAuth, requireRole('ADMIN', 'EMPLOYEE'), 
       impressionsChange: result.report.impressionsChange,
       ctrChange: result.report.ctrChange,
       positionChange: result.report.positionChange,
+      // Monthly comparison
+      monthlyCurrentMetrics: result.monthlyCurrentMetrics,
+      monthlyPreviousMetrics: result.monthlyPreviousMetrics,
+      monthlyClicksChange: result.monthlyComparison?.clicksChange,
+      monthlyImpressionsChange: result.monthlyComparison?.impressionsChange,
+      monthlyCtrChange: result.monthlyComparison?.ctrChange,
+      monthlyPositionChange: result.monthlyComparison?.positionChange,
       topPages: result.topPages,
       topQueries: result.topQueries,
       insights: result.insights,
@@ -2137,6 +2144,13 @@ cron.schedule('0 8 * * 1', async () => {
           impressionsChange: result.report.impressionsChange,
           ctrChange: result.report.ctrChange,
           positionChange: result.report.positionChange,
+          // Monthly comparison
+          monthlyCurrentMetrics: result.monthlyCurrentMetrics,
+          monthlyPreviousMetrics: result.monthlyPreviousMetrics,
+          monthlyClicksChange: result.monthlyComparison?.clicksChange,
+          monthlyImpressionsChange: result.monthlyComparison?.impressionsChange,
+          monthlyCtrChange: result.monthlyComparison?.ctrChange,
+          monthlyPositionChange: result.monthlyComparison?.positionChange,
           topPages: result.topPages,
           topQueries: result.topQueries,
           insights: result.insights,
@@ -2169,6 +2183,158 @@ cron.schedule('0 8 * * 1', async () => {
     console.log('✅ Scheduled weekly reports completed');
   } catch (error) {
     console.error('❌ Scheduled weekly report failed:', error);
+  }
+});
+
+// Schedule employee/admin weekly task summary (runs at 9 AM every Monday)
+cron.schedule('0 9 * * 1', async () => {
+  console.log('📬 Running scheduled employee weekly task summary...');
+  try {
+    const employeeEmails = process.env.EMPLOYEE_EMAILS || 'chris@stuchai.com';
+    
+    if (!employeeEmails) {
+      console.log('⏭️  No EMPLOYEE_EMAILS configured, skipping employee email');
+      return;
+    }
+
+    // Parse comma-separated emails (format: "Name <email>, Name2 <email2>" or "email1, email2")
+    const recipients: Array<{ name: string; email: string }> = employeeEmails
+      .split(',')
+      .map(entry => entry.trim())
+      .map(entry => {
+        // Match "Name <email>" format
+        const match = entry.match(/^(.*?)\s*<(.+?)>$/);
+        if (match) {
+          return { name: match[1].trim(), email: match[2].trim() };
+        }
+        // Just email format
+        return { name: entry, email: entry };
+      });
+
+    const { sendEmployeeWeeklySummary } = await import('./services/employee-email-service');
+    const result = await sendEmployeeWeeklySummary(recipients);
+
+    console.log(`✅ Employee weekly summary sent to ${recipients.length} recipient(s): ${result?.taskCount} tasks`);
+  } catch (error) {
+    console.error('❌ Scheduled employee email failed:', error);
+  }
+});
+
+// Test: Send employee weekly email now
+app.post('/api/admin/test-employee-email', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('🧪 Testing employee weekly email...');
+    
+    const employeeEmails = process.env.EMPLOYEE_EMAILS || 'chris@stuchai.com';
+    
+    const recipients: Array<{ name: string; email: string }> = employeeEmails
+      .split(',')
+      .map(entry => entry.trim())
+      .map(entry => {
+        const match = entry.match(/^(.*?)\s*<(.+?)>$/);
+        if (match) {
+          return { name: match[1].trim(), email: match[2].trim() };
+        }
+        return { name: entry, email: entry };
+      });
+
+    const { sendEmployeeWeeklySummary } = await import('./services/employee-email-service');
+    const result = await sendEmployeeWeeklySummary(recipients);
+
+    res.json({ 
+      success: true, 
+      message: `Employee weekly summary sent to ${recipients.length} recipient(s)`,
+      recipients: recipients.map(r => r.email),
+      taskCount: result?.taskCount || 0
+    });
+  } catch (error: any) {
+    console.error('Error sending test employee email:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Test: Send client weekly report (BerganCo only, to test email)
+app.post('/api/admin/test-client-report', requireAuth, requireRole('ADMIN'), async (req: AuthenticatedRequest, res) => {
+  try {
+    console.log('🧪 Testing client weekly report...');
+    
+    const { testEmail } = req.body;
+    const emailTo = testEmail || 'chris@stuchai.com';
+    
+    // Find BerganCo site or first active site
+    const site = await prisma.site.findFirst({
+      where: { 
+        OR: [
+          { domain: { contains: 'berganco', mode: 'insensitive' } },
+          { isActive: true }
+        ]
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+    
+    if (!site) {
+      return res.status(404).json({ error: 'No sites found' });
+    }
+    
+    console.log(`📊 Generating report for ${site.displayName} (${site.domain})...`);
+    
+    const { generateReport } = await import('./services/report-generator');
+    const result = await generateReport(undefined, undefined, 'week', site.id);
+    
+    const reportData = {
+      weekStartDate: result.report.weekStartDate,
+      weekEndDate: result.report.weekEndDate,
+      periodType: 'week' as const,
+      currentMetrics: result.currentMetrics,
+      previousMetrics: result.previousMetrics,
+      clicksChange: result.report.clicksChange,
+      impressionsChange: result.report.impressionsChange,
+      ctrChange: result.report.ctrChange,
+      positionChange: result.report.positionChange,
+      monthlyCurrentMetrics: result.monthlyCurrentMetrics,
+      monthlyPreviousMetrics: result.monthlyPreviousMetrics,
+      monthlyClicksChange: result.monthlyComparison?.clicksChange,
+      monthlyImpressionsChange: result.monthlyComparison?.impressionsChange,
+      monthlyCtrChange: result.monthlyComparison?.ctrChange,
+      monthlyPositionChange: result.monthlyComparison?.positionChange,
+      topPages: result.topPages,
+      topQueries: result.topQueries,
+      insights: result.insights,
+      recommendations: result.recommendations,
+      aiSummary: result.aiInsights ? {
+        executiveSummary: result.aiInsights.executiveSummary,
+        wins: result.aiInsights.wins,
+        awareness: result.aiInsights.awareness,
+        nextSteps: result.aiInsights.nextSteps,
+      } : undefined,
+      trendsData: result.trendsData,
+      websiteDomain: site.domain,
+    };
+    
+    // Temporarily override email recipient for testing
+    const originalEmailTo = process.env.REPORT_EMAIL_TO;
+    process.env.REPORT_EMAIL_TO = emailTo;
+    
+    const { sendWeeklyReport } = await import('./services/email-service');
+    await sendWeeklyReport(reportData);
+    
+    // Restore original
+    process.env.REPORT_EMAIL_TO = originalEmailTo;
+    
+    res.json({ 
+      success: true, 
+      message: `Test report sent to ${emailTo}`,
+      site: site.displayName,
+      reportData: {
+        clicks: result.currentMetrics.totalClicks,
+        impressions: result.currentMetrics.totalImpressions,
+        weekStart: result.report.weekStartDate,
+        weekEnd: result.report.weekEndDate
+      }
+    });
+  } catch (error: any) {
+    console.error('Error sending test client report:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

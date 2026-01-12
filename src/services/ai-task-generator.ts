@@ -205,13 +205,16 @@ ${technicalIssuesSection}
 **Current Recommendations:**
 ${recommendations}
 
-**CRITICAL:** Generate 3-5 specific, actionable SEO tasks based ONLY on this data. Each task should:
-- Address a specific issue or opportunity identified in the data
+**CRITICAL:** Generate EXACTLY 2 specific, actionable SEO tasks based ONLY on this data. Each task should:
+- Focus on the highest-impact opportunities or most critical issues
+- Address a specific improvement or fix identified in the data
 - Prioritize technical issues (indexing, 404 errors, sitemap problems) as URGENT or HIGH priority
 - Be achievable within a week
 - Have clear priority (URGENT for critical drops or technical errors, HIGH for high-impact improvements, MEDIUM for standard optimizations, LOW for nice-to-haves)
 - Include specific pages or queries to target if mentioned in the data
-- If technical issues are detected, create tasks to fix them (e.g., "Fix indexing issue for [page]" or "Resolve sitemap submission error")
+- If technical issues are detected, prioritize tasks to fix them first
+
+IMPORTANT: Generate exactly 2 tasks - no more, no less. Focus on the most impactful actions only.
 
 Return JSON format:
 {

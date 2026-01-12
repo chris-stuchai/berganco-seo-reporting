@@ -280,12 +280,14 @@ async function getTrendsData(startDate: Date, endDate: Date, siteId: string): Pr
  * @param endDate - Optional end date
  * @param periodType - Type of period ('week' | 'month' | 'custom')
  * @param siteId - Optional site ID (if not provided, will use first active site)
+ * @param includeMonthlyComparison - Whether to include monthly comparison data (default: true for weekly reports)
  */
 export async function generateReport(
   startDate?: Date,
   endDate?: Date,
   periodType: 'week' | 'month' | 'custom' = 'week',
-  siteId?: string
+  siteId?: string,
+  includeMonthlyComparison: boolean = true
 ) {
   let calculatedStartDate: Date;
   let calculatedEndDate: Date;
@@ -345,6 +347,51 @@ export async function generateReport(
   // Calculate current and previous period metrics
   const currentMetrics = await calculateWeekMetrics(calculatedStartDate, calculatedEndDate, targetSiteId);
   const previousMetrics = await calculateWeekMetrics(calculatedPrevStartDate, calculatedPrevEndDate, targetSiteId);
+  
+  // Calculate monthly comparison if enabled (for weekly reports)
+  let monthlyCurrentMetrics: WeeklyMetrics | null = null;
+  let monthlyPreviousMetrics: WeeklyMetrics | null = null;
+  let monthlyComparison: ComparisonMetrics | null = null;
+  
+  if (includeMonthlyComparison && periodType === 'week') {
+    // Last 30 days
+    const monthEndDate = new Date(calculatedEndDate);
+    const monthStartDate = new Date(monthEndDate);
+    monthStartDate.setDate(monthStartDate.getDate() - 30);
+    
+    // Previous 30 days
+    const prevMonthEndDate = new Date(monthStartDate);
+    prevMonthEndDate.setDate(prevMonthEndDate.getDate() - 1);
+    const prevMonthStartDate = new Date(prevMonthEndDate);
+    prevMonthStartDate.setDate(prevMonthStartDate.getDate() - 30);
+    
+    monthlyCurrentMetrics = await calculateWeekMetrics(monthStartDate, monthEndDate, targetSiteId);
+    monthlyPreviousMetrics = await calculateWeekMetrics(prevMonthStartDate, prevMonthEndDate, targetSiteId);
+    
+    const monthlyClicksChange = monthlyPreviousMetrics.totalClicks > 0
+      ? ((monthlyCurrentMetrics.totalClicks - monthlyPreviousMetrics.totalClicks) / monthlyPreviousMetrics.totalClicks) * 100
+      : 0;
+    
+    const monthlyImpressionsChange = monthlyPreviousMetrics.totalImpressions > 0
+      ? ((monthlyCurrentMetrics.totalImpressions - monthlyPreviousMetrics.totalImpressions) / monthlyPreviousMetrics.totalImpressions) * 100
+      : 0;
+    
+    const monthlyCtrChange = monthlyPreviousMetrics.averageCtr > 0
+      ? ((monthlyCurrentMetrics.averageCtr - monthlyPreviousMetrics.averageCtr) / monthlyPreviousMetrics.averageCtr) * 100
+      : 0;
+    
+    const monthlyPositionChange = monthlyCurrentMetrics.averagePosition - monthlyPreviousMetrics.averagePosition;
+    
+    monthlyComparison = {
+      ...monthlyCurrentMetrics,
+      clicksChange: monthlyClicksChange,
+      impressionsChange: monthlyImpressionsChange,
+      ctrChange: monthlyCtrChange,
+      positionChange: monthlyPositionChange,
+    };
+    
+    console.log(`Monthly comparison: ${monthlyClicksChange >= 0 ? '+' : ''}${monthlyClicksChange.toFixed(1)}% clicks (last 30 days)`);
+  }
   
   // Get trends data for chart
   const trendsData = await getTrendsData(calculatedStartDate, calculatedEndDate, targetSiteId);
@@ -563,6 +610,9 @@ export async function generateReport(
     periodType,
     startDate: calculatedStartDate,
     endDate: calculatedEndDate,
+    monthlyComparison,
+    monthlyCurrentMetrics,
+    monthlyPreviousMetrics,
   };
 }
 

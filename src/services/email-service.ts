@@ -38,6 +38,23 @@ interface ReportData {
   impressionsChange: number;
   ctrChange: number;
   positionChange: number;
+  // Monthly comparison (optional)
+  monthlyCurrentMetrics?: {
+    totalClicks: number;
+    totalImpressions: number;
+    averageCtr: number;
+    averagePosition: number;
+  };
+  monthlyPreviousMetrics?: {
+    totalClicks: number;
+    totalImpressions: number;
+    averageCtr: number;
+    averagePosition: number;
+  };
+  monthlyClicksChange?: number;
+  monthlyImpressionsChange?: number;
+  monthlyCtrChange?: number;
+  monthlyPositionChange?: number;
   topPages: any[];
   topQueries: any[];
   insights: string;
@@ -259,7 +276,7 @@ function generateEmailHTML(data: ReportData): string {
 
     <!-- Key Metrics -->
     <div style="margin-bottom: 40px;">
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Key Metrics</h2>
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 24px; letter-spacing: -0.01em;">Weekly Performance</h2>
       
       <table style="width: 100%; border-collapse: separate; border-spacing: 0 16px;">
         <tr>
@@ -363,6 +380,76 @@ function generateEmailHTML(data: ReportData): string {
         </tr>
       </table>
     </div>
+    
+    <!-- Monthly Comparison (if available) -->
+    ${data.monthlyCurrentMetrics && data.monthlyClicksChange !== undefined ? `
+    <div style="margin-bottom: 40px;">
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em;">30-Day Trend</h2>
+      <p style="color: #98989D; font-size: 15px; margin-bottom: 24px;">How the last 30 days compare to the previous 30 days</p>
+      
+      <table style="width: 100%; border-collapse: separate; border-spacing: 0 16px;">
+        <tr>
+          <!-- Monthly Clicks Card -->
+          <td style="width: 50%; padding-right: 12px; vertical-align: top;">
+            <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+              <div style="color: #98989D; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">30-Day Clicks</div>
+              <div style="font-size: 36px; font-weight: 700; color: #FFFFFF; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.02em;">
+                ${formatNumber(data.monthlyCurrentMetrics.totalClicks)}
+              </div>
+              <div style="font-size: 11px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
+                ${formatChange(data.monthlyClicksChange)}
+                <span style="color: #98989D;">vs prev 30 days</span>
+              </div>
+            </div>
+          </td>
+          
+          <!-- Monthly Impressions Card -->
+          <td style="width: 50%; padding-left: 12px; vertical-align: top;">
+            <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+              <div style="color: #98989D; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">30-Day Impressions</div>
+              <div style="font-size: 36px; font-weight: 700; color: #FFFFFF; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.02em;">
+                ${formatNumber(data.monthlyCurrentMetrics.totalImpressions)}
+              </div>
+              <div style="font-size: 11px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
+                ${formatChange(data.monthlyImpressionsChange)}
+                <span style="color: #98989D;">vs prev 30 days</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        
+        <tr>
+          <!-- Monthly CTR Card -->
+          <td style="width: 50%; padding-right: 12px; vertical-align: top;">
+            <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+              <div style="color: #98989D; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">30-Day Avg CTR</div>
+              <div style="font-size: 36px; font-weight: 700; color: #FFFFFF; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.02em;">
+                ${(data.monthlyCurrentMetrics.averageCtr * 100).toFixed(2)}%
+              </div>
+              <div style="font-size: 11px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
+                ${formatChange(data.monthlyCtrChange || 0)}
+                <span style="color: #98989D;">vs prev 30 days</span>
+              </div>
+            </div>
+          </td>
+          
+          <!-- Monthly Position Card -->
+          <td style="width: 50%; padding-left: 12px; vertical-align: top;">
+            <div style="background-color: #2C2C2E; border: 1px solid #48484A; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);">
+              <div style="color: #98989D; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">30-Day Avg Position</div>
+              <div style="font-size: 36px; font-weight: 700; color: #FFFFFF; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.02em;">
+                ${data.monthlyCurrentMetrics.averagePosition.toFixed(1)}
+              </div>
+              <div style="font-size: 11px; color: #E5E5EA; display: flex; align-items: center; gap: 4px;">
+                ${formatChange(data.monthlyPositionChange || 0, true)}
+                <span style="color: #98989D;">vs prev 30 days</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    ` : ''}
     
         <!-- Trend Chart -->
         <div style="margin-bottom: 40px;">

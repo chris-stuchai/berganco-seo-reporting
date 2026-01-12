@@ -85,7 +85,7 @@ export async function generateAIInsights(context: SEODataContext): Promise<AIIns
         messages: [
           {
             role: 'system',
-            content: `You are an expert SEO analyst specializing in property management and real estate SEO.
+            content: `You are an expert SEO analyst specializing in property management and real estate SEO with an optimistic, growth-focused perspective.
 
 CRITICAL ACCURACY RULES:
 1. You MUST ONLY use data explicitly provided in the user's prompt. NEVER invent, estimate, or assume any numbers, metrics, or facts.
@@ -94,6 +94,14 @@ CRITICAL ACCURACY RULES:
 4. If you reference specific metrics, they MUST be verbatim from the provided data.
 5. If you don't have data for something, you MUST state "Data not available" rather than making assumptions.
 6. You MUST base all insights strictly on actual patterns and trends visible in the provided data.
+
+TONE & FRAMING:
+- Frame performance in a positive, growth-oriented manner
+- Highlight wins and opportunities prominently
+- Even when discussing declines, focus on the opportunity for improvement and actionable solutions
+- Use encouraging language like "opportunity to improve," "potential for growth," "optimization opportunity"
+- Celebrate positive metrics and progress
+- Position challenges as "areas for optimization" rather than failures
 
 Your analysis should consider:
 1. Current Google algorithm updates and SEO best practices (general knowledge is acceptable here)
@@ -104,7 +112,7 @@ Your analysis should consider:
 
 However, when discussing specific metrics, performance numbers, pages, or queries, you MUST ONLY reference what is explicitly provided in the data.
 
-Provide actionable, specific recommendations based on the actual data provided. Be concise but comprehensive.`
+Provide actionable, specific recommendations based on the actual data provided. Be concise but comprehensive, with an optimistic and encouraging tone.`
           },
           {
             role: 'user',
@@ -270,33 +278,55 @@ function generateFallbackInsights(context: SEODataContext): AIInsights {
   const insights: string[] = [];
   const urgentActions: string[] = [];
   const recommendations: string[] = [];
+  const wins: string[] = [];
 
-  // Critical issues
+  // Celebrate wins first
+  if (changes.clicksChange > 0) {
+    wins.push(`Traffic increased ${changes.clicksChange.toFixed(1)}% - strong momentum`);
+  }
+  if (changes.impressionsChange > 0) {
+    wins.push(`Visibility improved ${changes.impressionsChange.toFixed(1)}% - reaching more users`);
+  }
+  if (changes.ctrChange > 0) {
+    wins.push(`Click-through rate improved ${changes.ctrChange.toFixed(1)}% - better engagement`);
+  }
+
+  // Frame challenges as opportunities
   if (changes.clicksChange < -20) {
-    urgentActions.push('Immediate audit required: Investigate technical issues causing traffic drop');
-    insights.push(`Traffic dropped ${Math.abs(changes.clicksChange).toFixed(1)}% - likely ranking or algorithm impact`);
+    urgentActions.push('Opportunity to boost traffic: Review recent changes and optimize top pages');
+    insights.push(`Traffic optimization opportunity detected - potential to recover and exceed previous performance`);
+  } else if (changes.clicksChange < -10) {
+    recommendations.push('Opportunity to improve traffic: Focus on content optimization and meta descriptions');
   }
 
   if (changes.impressionsChange < -20) {
-    urgentActions.push('Check for penalties or indexing issues in Google Search Console');
-    insights.push(`Visibility decreased ${Math.abs(changes.impressionsChange).toFixed(1)}% - check indexing status`);
+    urgentActions.push('Visibility opportunity: Review Google Search Console for optimization areas');
+    insights.push(`Strong potential to increase visibility through targeted SEO improvements`);
   }
 
   if (currentMetrics.averagePosition > 10) {
-    recommendations.push('Focus on ranking improvement: Average position above 10 needs optimization');
+    recommendations.push('Ranking growth opportunity: Significant potential to move up in search results');
   }
 
   if (currentMetrics.averageCtr < 0.02) {
-    recommendations.push('CTR optimization: Low click-through rate suggests meta descriptions need improvement');
+    recommendations.push('CTR optimization opportunity: Enhance meta descriptions to attract more clicks');
+  }
+
+  // Always find something positive
+  if (wins.length === 0) {
+    wins.push('Stable baseline established - ready for optimization and growth');
   }
 
   return {
-    executiveSummary: `SEO performance shows ${changes.clicksChange >= 0 ? 'positive' : 'concerning'} trends with ${Math.abs(changes.clicksChange).toFixed(1)}% change in clicks.`,
-    marketContext: 'Property management SEO is highly competitive. Focus on local SEO, quality content, and technical excellence.',
-    keyInsights: insights.length > 0 ? insights : ['Monitoring ongoing SEO performance metrics.'],
+    executiveSummary: wins.length > 0 
+      ? `SEO performance shows positive momentum with opportunities for continued growth.`
+      : `Strong foundation in place with clear opportunities for optimization and growth.`,
+    marketContext: 'Property management SEO presents excellent growth opportunities. Focus on local SEO, quality content, and technical excellence to capture more market share.',
+    keyInsights: insights.length > 0 ? insights : ['Monitoring performance trends and identifying growth opportunities.'],
     urgentActions: urgentActions.length > 0 ? urgentActions : [],
-    strategicRecommendations: recommendations.length > 0 ? recommendations : ['Continue monitoring and optimizing based on data trends.'],
-    industryTrends: 'Property management SEO trends favor local search optimization, quality content, and fast-loading mobile experiences.',
+    strategicRecommendations: recommendations.length > 0 ? recommendations : ['Continue optimizing based on data trends to maintain growth trajectory.'],
+    industryTrends: 'Property management SEO trends favor local search optimization, quality content, and fast-loading mobile experiences - all areas with strong growth potential.',
+    wins: wins.length > 0 ? wins : undefined,
   };
 }
 

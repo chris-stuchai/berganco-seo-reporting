@@ -47,6 +47,13 @@ async function main() {
         impressionsChange: result.report.impressionsChange,
         ctrChange: result.report.ctrChange,
         positionChange: result.report.positionChange,
+        // Monthly comparison
+        monthlyCurrentMetrics: result.monthlyCurrentMetrics,
+        monthlyPreviousMetrics: result.monthlyPreviousMetrics,
+        monthlyClicksChange: result.monthlyComparison?.clicksChange,
+        monthlyImpressionsChange: result.monthlyComparison?.impressionsChange,
+        monthlyCtrChange: result.monthlyComparison?.ctrChange,
+        monthlyPositionChange: result.monthlyComparison?.positionChange,
         topPages: result.topPages,
         topQueries: result.topQueries,
         insights: result.insights,

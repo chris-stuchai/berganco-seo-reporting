@@ -333,13 +333,35 @@
         </div>
         <button class="btn btn-primary" onclick="showCreateTaskModal()" style="margin-left: var(--spacing-4);">+ Create Task</button>
       </div>
-      
-      <!-- Week Filter -->
-      <div style="margin-bottom: var(--spacing-4); display: flex; gap: var(--spacing-2); align-items: center;">
-        <label style="font-size: var(--font-footnote); color: var(--color-label-secondary);">Week:</label>
-        <input type="week" id="taskWeekFilter" onchange="loadTasks()" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote);">
+
+      <!-- Week Filter & Bulk Actions -->
+      <div style="margin-bottom: var(--spacing-4); display: flex; gap: var(--spacing-3); align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; gap: var(--spacing-2); align-items: center;">
+          <label style="font-size: var(--font-footnote); color: var(--color-label-secondary);">Week:</label>
+          <input type="week" id="taskWeekFilter" onchange="loadTasks()" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote);">
+        </div>
+        
+        <div style="display: flex; gap: var(--spacing-2); align-items: center;">
+          <label style="font-size: var(--font-footnote); color: var(--color-label-secondary);">Show:</label>
+          <select id="taskLimitFilter" onchange="loadTasks()" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-bg-tertiary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote);">
+            <option value="10">10 tasks</option>
+            <option value="25" selected>25 tasks</option>
+            <option value="50">50 tasks</option>
+            <option value="100">100 tasks</option>
+            <option value="all">All tasks</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: var(--spacing-2); margin-left: auto;">
+          <button class="btn" onclick="bulkCompleteAllTasks()" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-green); color: white; font-size: var(--font-footnote); font-weight: 600;">
+            ✓ Complete All
+          </button>
+          <button class="btn" onclick="bulkDeleteCompletedTasks()" style="padding: var(--spacing-2) var(--spacing-3); background: var(--color-red); color: white; font-size: var(--font-footnote); font-weight: 600;">
+            🗑️ Delete Completed
+          </button>
+        </div>
       </div>
-      
+
       <div id="tasksList" style="display: flex; flex-direction: column; gap: var(--spacing-4);">
         <div style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">Loading tasks...</div>
       </div>
@@ -386,6 +408,19 @@
             <button class="btn btn-secondary" onclick="previewReport()" style="flex: 1;">Preview Email</button>
             <button class="btn btn-primary" onclick="generateReport()" style="flex: 1;">Generate Now</button>
           </div>
+        </div>
+        
+        <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px; border: 1px solid var(--color-orange);">
+          <h3 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">📬 Test Employee Email</h3>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Send weekly task summary to EMPLOYEE_EMAILS</p>
+          <button class="btn" onclick="testEmployeeEmail()" style="width: 100%; background: var(--color-orange); color: white;">Send Now</button>
+        </div>
+        
+        <div style="padding: var(--spacing-4); background: var(--color-bg-tertiary); border-radius: 8px; border: 1px solid var(--color-blue);">
+          <h3 style="font-size: var(--font-body); font-weight: 600; margin-bottom: var(--spacing-2);">📧 Test Client Report</h3>
+          <p style="font-size: var(--font-footnote); color: var(--color-label-tertiary); margin-bottom: var(--spacing-3);">Send BerganCo report to test email</p>
+          <input type="email" id="testClientEmail" placeholder="chris@stuchai.com" value="chris@stuchai.com" style="width: 100%; padding: var(--spacing-2); background: var(--color-bg-secondary); border: 1px solid var(--color-separator); border-radius: 8px; color: var(--color-label-primary); font-size: var(--font-footnote); margin-bottom: var(--spacing-2);">
+          <button class="btn" onclick="testClientReport()" style="width: 100%; background: var(--color-blue); color: white;">Send Now</button>
         </div>
       </div>
     </div>
@@ -1081,34 +1116,46 @@
     }
 
     // Task Management Functions
+    // Store tasks globally for bulk actions
+    let currentTasks = [];
+
     async function loadTasks() {
       try {
         const weekFilter = document.getElementById('taskWeekFilter').value;
+        const limitFilter = document.getElementById('taskLimitFilter').value;
         let url = '/api/tasks';
-        
+
         if (weekFilter) {
           // Convert week format (YYYY-Www) to date range
           const [year, week] = weekFilter.split('-W');
           const weekStart = getDateOfISOWeek(parseInt(year), parseInt(week));
           const weekEnd = new Date(weekStart);
           weekEnd.setDate(weekEnd.getDate() + 6);
-          
+
           url += `?weekStartDate=${weekStart.toISOString().split('T')[0]}`;
         }
-        
+
         const res = await fetch(url, { credentials: 'include' });
         if (!res.ok) {
           throw new Error('Failed to load tasks');
         }
+
+        let tasks = await res.json();
+        currentTasks = tasks; // Store for bulk actions
         
-        const tasks = await res.json();
+        // Apply limit filter
+        if (limitFilter !== 'all') {
+          const limit = parseInt(limitFilter);
+          tasks = tasks.slice(0, limit);
+        }
+
         const tasksList = document.getElementById('tasksList');
-        
+
         if (!tasks || tasks.length === 0) {
           tasksList.innerHTML = '<div style="text-align: center; padding: var(--spacing-6); color: var(--color-label-tertiary);">No tasks for this week. Create one above.</div>';
           return;
         }
-        
+
         tasksList.innerHTML = tasks.map(task => {
           const priorityColors = {
             LOW: { bg: 'rgba(152, 152, 157, 0.15)', text: '#98989D', border: 'rgba(152, 152, 157, 0.3)' },
@@ -1312,6 +1359,83 @@
       return ISOweekStart;
     }
 
+    // Bulk Actions
+    async function bulkCompleteAllTasks() {
+      if (!confirm('Mark all visible tasks as complete? This cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const limitFilter = document.getElementById('taskLimitFilter').value;
+        const tasksToComplete = limitFilter === 'all' ? currentTasks : currentTasks.slice(0, parseInt(limitFilter));
+        const pendingTasks = tasksToComplete.filter(t => t.status !== 'COMPLETED');
+
+        if (pendingTasks.length === 0) {
+          alert('No pending tasks to complete.');
+          return;
+        }
+
+        let completed = 0;
+        for (const task of pendingTasks) {
+          try {
+            const res = await fetch(`/api/tasks/${task.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                ...task,
+                status: 'COMPLETED',
+                completedAt: new Date().toISOString()
+              })
+            });
+            if (res.ok) completed++;
+          } catch (error) {
+            console.error(`Failed to complete task ${task.id}:`, error);
+          }
+        }
+
+        alert(`✅ Marked ${completed} of ${pendingTasks.length} tasks as complete.`);
+        loadTasks();
+      } catch (error) {
+        console.error('Error bulk completing tasks:', error);
+        alert('Failed to complete tasks. Please try again.');
+      }
+    }
+
+    async function bulkDeleteCompletedTasks() {
+      const completedTasks = currentTasks.filter(t => t.status === 'COMPLETED');
+      
+      if (completedTasks.length === 0) {
+        alert('No completed tasks to delete.');
+        return;
+      }
+
+      if (!confirm(`Delete ${completedTasks.length} completed task(s)? This cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        let deleted = 0;
+        for (const task of completedTasks) {
+          try {
+            const res = await fetch(`/api/tasks/${task.id}`, {
+              method: 'DELETE',
+              credentials: 'include'
+            });
+            if (res.ok) deleted++;
+          } catch (error) {
+            console.error(`Failed to delete task ${task.id}:`, error);
+          }
+        }
+
+        alert(`🗑️ Deleted ${deleted} of ${completedTasks.length} completed tasks.`);
+        loadTasks();
+      } catch (error) {
+        console.error('Error bulk deleting tasks:', error);
+        alert('Failed to delete tasks. Please try again.');
+      }
+    }
+
     async function showCreateTaskModal() {
       // Load clients
       const usersRes = await fetch('/api/users', { credentials: 'include' });
@@ -1504,10 +1628,10 @@
         const btn = event.target;
         btn.disabled = true;
         btn.textContent = 'Collecting...';
-        
+
         const res = await fetch('/api/collect', { method: 'POST', credentials: 'include' });
         const data = await res.json();
-        
+
         if (res.ok) {
           alert('✅ Data collection started successfully');
           loadUsageStats(); // Refresh stats
@@ -1521,6 +1645,78 @@
         const btn = event.target;
         btn.disabled = false;
         btn.textContent = 'Collect Now';
+      }
+    }
+
+    async function testEmployeeEmail() {
+      if (!confirm('Send employee weekly task summary to EMPLOYEE_EMAILS recipients now?')) {
+        return;
+      }
+
+      try {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        const res = await fetch('/api/admin/test-employee-email', { 
+          method: 'POST', 
+          credentials: 'include' 
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          alert(`✅ Employee email sent successfully!\n\nRecipients: ${data.recipients.join(', ')}\nTasks: ${data.taskCount}`);
+        } else {
+          alert(`❌ Error: ${data.error || 'Failed to send email'}`);
+        }
+      } catch (error) {
+        alert('❌ Error: Failed to send employee email');
+        console.error(error);
+      } finally {
+        const btn = event.target;
+        btn.disabled = false;
+        btn.textContent = 'Send Now';
+      }
+    }
+
+    async function testClientReport() {
+      const emailInput = document.getElementById('testClientEmail');
+      const testEmail = emailInput.value.trim();
+      
+      if (!testEmail) {
+        alert('Please enter an email address');
+        return;
+      }
+
+      if (!confirm(`Send BerganCo weekly report to ${testEmail} now?`)) {
+        return;
+      }
+
+      try {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        const res = await fetch('/api/admin/test-client-report', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ testEmail })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          alert(`✅ Client report sent successfully!\n\nSite: ${data.site}\nSent to: ${testEmail}\nClicks: ${data.reportData.clicks}\nImpressions: ${data.reportData.impressions}`);
+        } else {
+          alert(`❌ Error: ${data.error || 'Failed to send report'}`);
+        }
+      } catch (error) {
+        alert('❌ Error: Failed to send client report');
+        console.error(error);
+      } finally {
+        const btn = event.target;
+        btn.disabled = false;
+        btn.textContent = 'Send Now';
       }
     }
 
