@@ -243,9 +243,13 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         });
         
         if (user) {
-          const appUrl = process.env.APP_URL || (req.headers.origin || 'http://localhost:3000');
-          await sendPasswordResetEmail(email, user.name, resetToken);
-          console.log(`✓ Password reset email sent to ${email}`);
+          // Use APP_URL from env, or detect from request headers, or fallback to localhost
+          const appUrl = process.env.APP_URL || 
+                        req.headers.origin || 
+                        (req.headers.host ? `${req.protocol || 'https'}://${req.headers.host}` : null) ||
+                        'http://localhost:3000';
+          await sendPasswordResetEmail(email, user.name, resetToken, appUrl);
+          console.log(`✓ Password reset email sent to ${email} with URL: ${appUrl}`);
         }
       } catch (emailError) {
         console.error('Failed to send password reset email:', emailError);

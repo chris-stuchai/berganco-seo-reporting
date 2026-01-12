@@ -734,10 +734,11 @@ export async function sendOnboardingEmail(
 /**
  * Sends password reset email
  */
-export async function sendPasswordResetEmail(email: string, name: string, resetToken: string) {
+export async function sendPasswordResetEmail(email: string, name: string, resetToken: string, appUrl?: string) {
   const emailFrom = process.env.REPORT_EMAIL_FROM || process.env.SMTP_USER || 'noreply@berganco.com';
-  const appUrl = process.env.APP_URL || 'http://localhost:3000';
-  const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
+  // Use provided appUrl, or fallback to env var, or localhost
+  const baseUrl = appUrl || process.env.APP_URL || 'http://localhost:3000';
+  const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
 
   const subject = 'Reset Your Password - BerganCo SEO';
 
